@@ -152,7 +152,7 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
           isDragActive
             ? 'border-blue-500 bg-slate-50'
-            : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'
+            : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
         } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
       >
         <input {...getInputProps()} />

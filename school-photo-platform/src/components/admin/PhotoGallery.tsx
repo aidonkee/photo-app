@@ -226,7 +226,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
               className={`group relative aspect-square bg-slate-100 rounded-lg border-2 transition-all overflow-hidden ${
                 isSelected
                   ? 'border-blue-500 ring-2 ring-blue-200'
-                  : 'border-slate-200 hover:border-blue-400'
+                  : 'border-slate-200 hover:border-slate-400'
               }`}
             >
               {/* Photo Image */}

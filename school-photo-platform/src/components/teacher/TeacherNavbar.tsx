@@ -82,7 +82,7 @@ export default function TeacherNavbar({
           {/* Logo & School Info */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-slate-600 to-slate-900 rounded-lg">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <div className="hidden sm:block">
@@ -104,7 +104,7 @@ export default function TeacherNavbar({
                   variant={isActive(item.href) ? 'default' : 'ghost'}
                   className={`gap-2 ${
                     isActive(item.href)
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600'
+                      ? 'bg-gradient-to-r from-indigo-600 to-slate-900'
                       : ''
                   }`}
                 >
@@ -138,7 +138,7 @@ export default function TeacherNavbar({
                         variant={isActive(item.href) ? 'default' : 'ghost'}
                         className={`w-full justify-start gap-3 ${
                           isActive(item.href)
-                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600'
+                            ? 'bg-gradient-to-r from-indigo-600 to-slate-900'
                             : ''
                         }`}
                       >
@@ -165,7 +165,7 @@ export default function TeacherNavbar({
               <DropdownMenuTrigger asChild className="hidden md:flex">
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold">
+                    <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-900 text-white font-bold">
                       T
                     </AvatarFallback>
                   </Avatar>

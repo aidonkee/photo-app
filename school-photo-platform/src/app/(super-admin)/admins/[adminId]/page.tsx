@@ -22,7 +22,7 @@ export default async function PlatformMetrics() {
         description="С всех завершённых заказов"
         color="text-slate-900"
         bgColor="bg-slate-50"
-        iconBgColor="bg-green-100"
+        iconBgColor="bg-slate-100"
       />
       <AdminStatsCard
         title="Фотографы"

@@ -43,7 +43,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       icon: DollarSign,
       color: 'text-slate-900',
       bgColor: 'bg-slate-50',
-      iconBgColor: 'bg-green-100',
+      iconBgColor: 'bg-slate-100',
     },
     {
       title: 'Photographers',
@@ -126,7 +126,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       </div>
 
       {/* Quick Actions Section */}
-      <Card className="border-2 border-slate-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg">
+      <Card className="border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-slate-900" />
@@ -140,9 +140,9 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
           <div className="grid grid-cols-1 md: grid-cols-3 gap-4">
             {/* Create New School */}
             <Link href="/admin/schools/new" className="block">
-              <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-400 cursor-pointer group">
+              <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-slate-400 cursor-pointer group">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition-colors">
                     <Plus className="w-6 h-6 text-slate-900" />
                   </div>
                   <h3 className="font-semibold text-slate-900">Create New School</h3>
@@ -161,7 +161,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
             <Link href="/admin/dashboard" className="block">
               <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover: border-indigo-400 cursor-pointer group">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition-colors">
                     <Camera className="w-6 h-6 text-slate-900" />
                   </div>
                   <h3 className="font-semibold text-slate-900">Photographer Workspace</h3>

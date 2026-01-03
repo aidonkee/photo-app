@@ -52,11 +52,11 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
       case 'PENDING':
         return 'bg-amber-100 text-amber-700';
       case 'APPROVED_BY_TEACHER':
-        return 'bg-green-100 text-slate-800';
+        return 'bg-slate-100 text-slate-800';
       case 'LOCKED': 
         return 'bg-slate-100 text-slate-800';
       case 'COMPLETED':
-        return 'bg-slate-100 text-purple-700';
+        return 'bg-slate-100 text-slate-700';
       default:
         return 'bg-slate-100 text-slate-700';
     }
@@ -109,14 +109,14 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
                 className={`cursor-pointer transition-all hover:shadow-md ${
                   selectedOrderId === order.id
                     ? 'ring-2 ring-slate-500 bg-slate-50'
-                    : 'hover:border-indigo-300'
+                    : 'hover:border-slate-300'
                 }`}
                 onClick={() => handleSelectOrder(order.id)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-900 rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-sm">
                           {order.parentName. charAt(0)}
                           {order.parentSurname.charAt(0)}

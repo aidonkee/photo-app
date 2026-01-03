@@ -15,10 +15,15 @@ export async function getSchoolsWithClassrooms() {
   }
 
   try {
+    const whereCondition: any = {};
+    
+    // ЗАЩИТА: Обычный админ видит только свои школы, SUPER_ADMIN видит все
+    if (session.role === 'ADMIN') {
+      whereCondition.adminId = session.userId;
+    }
+    
     const schools = await prisma.school. findMany({
-      where: {
-        adminId: session.userId,
-      },
+      where: whereCondition,
       include:  {
         classrooms: {
           orderBy: {

@@ -137,7 +137,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         <Card className="bg-slate-50 border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
+              <div className="p-2 bg-slate-100 rounded-lg">
                 <DollarSign className="w-5 h-5 text-slate-900" />
               </div>
               <div>

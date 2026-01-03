@@ -120,7 +120,7 @@ export default async function AdminsPage() {
                   <div className="flex items-center gap-4 flex-1">
                     {/* Avatar */}
                     <Avatar className="w-12 h-12">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
+                      <AvatarFallback className="bg-gradient-to-br from-slate-500 to-indigo-600 text-white font-bold">
                         {getInitials(admin.firstName, admin.lastName)}
                       </AvatarFallback>
                     </Avatar>
@@ -132,7 +132,7 @@ export default async function AdminsPage() {
                           {admin.firstName} {admin.lastName}
                         </h3>
                         {admin.isActive ? (
-                          <Badge className="bg-green-100 text-slate-800 hover:bg-green-100">
+                          <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Активен
                           </Badge>

@@ -42,7 +42,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
           <div
             key={photo.id}
             onClick={() => setSelectedPhoto(photo)}
-            className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-blue-400 transition-all hover:shadow-xl"
+            className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-slate-400 transition-all hover:shadow-xl"
           >
             {/* Use WatermarkedImage component with proper error handling */}
             <WatermarkedImage

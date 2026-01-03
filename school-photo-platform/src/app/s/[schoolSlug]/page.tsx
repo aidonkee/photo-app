@@ -80,7 +80,7 @@ export default async function SchoolLandingPage({ params }: PageProps) {
                   key={classroom.id}
                   href={`/s/${school.slug}/${classroom.id}`}
                 >
-                  <Card className="hover:shadow-2xl transition-all duration-300 border-2 hover:border-blue-400 cursor-pointer group h-full">
+                  <Card className="hover:shadow-2xl transition-all duration-300 border-2 hover:border-slate-400 cursor-pointer group h-full">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4 mb-4">
                         <div
