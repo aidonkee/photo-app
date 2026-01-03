@@ -26,8 +26,12 @@ export async function getPhotos(classId: string) {
       include: { school: true },
     });
 
-    if (!classroom || classroom.school. adminId !== session.userId) {
-      throw new Error('Classroom not found or access denied');
+    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может видеть всё)
+    if (!classroom) {
+      throw new Error('Classroom not found');
+    }
+    if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
+      throw new Error('Access denied');
     }
 
     const photos = await prisma.photo.findMany({
@@ -67,8 +71,12 @@ export async function uploadPhotoAction(
       include: { school:  true },
     });
 
-    if (!classroom || classroom.school.adminId !== session.userId) {
-      return { error: 'Classroom not found or access denied' };
+    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может загружать везде)
+    if (!classroom) {
+      return { error: 'Classroom not found' };
+    }
+    if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
+      return { error: 'Access denied' };
     }
 
     // Extract SINGLE file
@@ -175,8 +183,12 @@ export async function deletePhotoAction(photoId: string) {
       },
     });
 
-    if (!photo || photo.classroom. school.adminId !== session.userId) {
-      throw new Error('Photo not found or access denied');
+    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может удалять всё)
+    if (!photo) {
+      throw new Error('Photo not found');
+    }
+    if (session.role === 'ADMIN' && photo.classroom.school.adminId !== session.userId) {
+      throw new Error('Access denied');
     }
 
     if (photo._count.orderItems > 0) {
@@ -226,8 +238,12 @@ export async function getPhotoStats(classId: string) {
       include: { school: true },
     });
 
-    if (!classroom || classroom.school.adminId !== session.userId) {
-      throw new Error('Classroom not found or access denied');
+    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может видеть всё)
+    if (!classroom) {
+      throw new Error('Classroom not found');
+    }
+    if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
+      throw new Error('Access denied');
     }
 
     const [totalPhotos, totalSize] = await Promise.all([
@@ -288,8 +304,12 @@ export async function deletePhotosAction(
       include: { school:  true },
     });
 
-    if (!classroom || classroom.school.adminId !== session.userId) {
-      throw new Error('Classroom not found or access denied');
+    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может удалять везде)
+    if (!classroom) {
+      throw new Error('Classroom not found');
+    }
+    if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
+      throw new Error('Access denied');
     }
 
     // Fetch all photos with order info

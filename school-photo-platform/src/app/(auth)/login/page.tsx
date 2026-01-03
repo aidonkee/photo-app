@@ -33,11 +33,11 @@ export default function LoginPage() {
       <CardContent className="pt-0">
         <Tabs defaultValue="admin" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
-            <TabsTrigger value="admin" className="flex items-center gap-2 text-base data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="admin" className="flex items-center gap-2 text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
               <UserCog className="w-5 h-5" />
               Администратор
             </TabsTrigger>
-            <TabsTrigger value="teacher" className="flex items-center gap-2 text-base data-[state=active]: bg-indigo-600 data-[state=active]:text-white">
+            <TabsTrigger value="teacher" className="flex items-center gap-2 text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
               <GraduationCap className="w-5 h-5" />
               Учитель
             </TabsTrigger>
@@ -87,7 +87,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-base font-medium"
+                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-base font-medium"
                 disabled={adminPending}
               >
                 {adminPending ? (
@@ -146,7 +146,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-base font-medium"
+                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-base font-medium"
                 disabled={teacherPending}
               >
                 {teacherPending ? (
