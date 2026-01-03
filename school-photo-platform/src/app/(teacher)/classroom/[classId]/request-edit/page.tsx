@@ -44,8 +44,8 @@ export default function RequestEditPage({ params }: PageProps) {
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-purple-100 rounded-lg">
-            <FileEdit className="w-8 h-8 text-purple-600" />
+          <div className="p-3 bg-slate-100 rounded-lg">
+            <FileEdit className="w-8 h-8 text-slate-900" />
           </div>
           <div>
             <h1 className="text-4xl font-bold text-slate-900">
@@ -58,9 +58,9 @@ export default function RequestEditPage({ params }: PageProps) {
         </div>
       </div>
 
-      <Alert className="bg-blue-50 border-blue-200">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
+      <Alert className="bg-slate-50 border-slate-200">
+        <Info className="h-4 w-4 text-slate-900" />
+        <AlertDescription className="text-slate-700">
           Используйте эту форму, чтобы сообщить о таких проблемах, как неправильные имена учеников, отсутствующие фотографии или другие необходимые исправления. Фотограф рассмотрит ваш запрос.
         </AlertDescription>
       </Alert>
@@ -97,9 +97,9 @@ export default function RequestEditPage({ params }: PageProps) {
             )}
 
             {state?.success && (
-              <Alert className="bg-green-50 text-green-900 border-green-200">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
+              <Alert className="bg-slate-50 text-slate-900 border-slate-200">
+                <CheckCircle2 className="h-4 w-4 text-slate-900" />
+                <AlertDescription className="text-slate-700">
                   {state.message} Перенаправление...
                 </AlertDescription>
               </Alert>
@@ -119,7 +119,7 @@ export default function RequestEditPage({ params }: PageProps) {
               <Button
                 type="submit"
                 disabled={isPending}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                className="flex-1 bg-slate-900 hover:bg-slate-800"
               >
                 {isPending ? (
                   <span className="flex items-center gap-2">

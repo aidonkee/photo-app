@@ -92,7 +92,7 @@ async function SuperAdminLayout({ children }: { children: React. ReactNode }) {
           {/* Platform Admin Section */}
           <div>
             <div className="flex items-center gap-2 px-3 mb-2">
-              <Sparkles className="w-4 h-4 text-yellow-400" />
+              <Sparkles className="w-4 h-4 text-slate-400" />
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Администрирование платформы
               </h2>
@@ -104,7 +104,7 @@ async function SuperAdminLayout({ children }: { children: React. ReactNode }) {
                   href={item.href}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors group"
                 >
-                  <item.icon className="w-5 h-5 text-slate-400 group-hover:text-yellow-400" />
+                  <item.icon className="w-5 h-5 text-slate-400 group-hover:text-slate-400" />
                   <span className="font-medium">{item.name}</span>
                 </Link>
               ))}
@@ -144,7 +144,7 @@ async function SuperAdminLayout({ children }: { children: React. ReactNode }) {
             <Link href="/admin/schools/new">
               <Button
                 size="sm"
-                className="w-full bg-white text-blue-600 hover:bg-blue-50"
+                className="w-full bg-white text-slate-900 hover:bg-slate-50"
               >
                 <Building2 className="w-4 h-4 mr-2" />
                 Создать школу
@@ -181,7 +181,7 @@ async function SuperAdminLayout({ children }: { children: React. ReactNode }) {
               <DropdownMenuSeparator />
               <form action={handleLogout}>
                 <DropdownMenuItem asChild>
-                  <button type="submit" className="w-full flex items-center gap-2 text-red-600 cursor-pointer">
+                  <button type="submit" className="w-full flex items-center gap-2 text-slate-600 cursor-pointer">
                     <LogOut className="w-4 h-4" />
                     <span>Выйти</span>
                   </button>

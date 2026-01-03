@@ -31,7 +31,7 @@ export default function ApproveOrderButton({ orderId, classId }: { orderId: stri
     <Button 
       onClick={handleApprove} 
       disabled={loading}
-      className="w-full h-12 bg-green-600 hover:bg-green-700 text-lg"
+      className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-lg"
     >
       {loading ? 'Processing...' : (
         <>

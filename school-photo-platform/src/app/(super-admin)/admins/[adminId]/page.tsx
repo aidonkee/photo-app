@@ -20,8 +20,8 @@ export default async function PlatformMetrics() {
         value={formatCurrency(stats.totalRevenue)}
         icon={DollarSign}
         description="С всех завершённых заказов"
-        color="text-green-600"
-        bgColor="bg-green-50"
+        color="text-slate-900"
+        bgColor="bg-slate-50"
         iconBgColor="bg-green-100"
       />
       <AdminStatsCard
@@ -29,18 +29,18 @@ export default async function PlatformMetrics() {
         value={stats.totalAdmins}
         icon={Users}
         description="Активные аккаунты администраторов"
-        color="text-blue-600"
-        bgColor="bg-blue-50"
-        iconBgColor="bg-blue-100"
+        color="text-slate-900"
+        bgColor="bg-slate-50"
+        iconBgColor="bg-slate-100"
       />
       <AdminStatsCard
         title="Школы"
         value={stats.totalSchools}
         icon={Building2}
         description="Зарегистрированные школы"
-        color="text-purple-600"
-        bgColor="bg-purple-50"
-        iconBgColor="bg-purple-100"
+        color="text-slate-900"
+        bgColor="bg-slate-50"
+        iconBgColor="bg-slate-100"
       />
       <AdminStatsCard
         title="Всего заказов"

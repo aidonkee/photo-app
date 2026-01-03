@@ -176,9 +176,9 @@ export default function NewClassroomPage({ params }: PageProps) {
               </Alert>
 
               {state?.error && (
-                <Alert className="bg-red-50 border-red-200 mt-3">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-xs text-red-800">
+                <Alert className="bg-slate-50 border-slate-200 mt-3">
+                  <AlertCircle className="h-4 w-4 text-slate-600" />
+                  <AlertDescription className="text-xs text-slate-800">
                     {state.error}
                   </AlertDescription>
                 </Alert>

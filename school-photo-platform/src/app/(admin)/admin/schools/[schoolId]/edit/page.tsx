@@ -126,16 +126,16 @@ export default function SchoolEditPage({ params }: PageProps) {
 
             {/* Alerts */}
             {state?.error && (
-              <Alert className="bg-red-50 border-red-200">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-xs text-red-800">{state.error}</AlertDescription>
+              <Alert className="bg-slate-50 border-slate-200">
+                <AlertCircle className="h-4 w-4 text-slate-600" />
+                <AlertDescription className="text-xs text-slate-800">{state.error}</AlertDescription>
               </Alert>
             )}
 
             {state?.success && (
-              <Alert className="bg-green-50 border-green-200">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-xs text-green-800">
+              <Alert className="bg-slate-50 border-slate-200">
+                <CheckCircle2 className="h-4 w-4 text-slate-900" />
+                <AlertDescription className="text-xs text-slate-700">
                   {state.message} Перенаправление...
                 </AlertDescription>
               </Alert>

@@ -39,9 +39,9 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
       case 'PENDING': 
         return <Clock className="w-4 h-4 text-amber-600" />;
       case 'APPROVED_BY_TEACHER':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-slate-900" />;
       case 'LOCKED':
-        return <Package className="w-4 h-4 text-blue-600" />;
+        return <Package className="w-4 h-4 text-slate-900" />;
       default:
         return <ShoppingCart className="w-4 h-4 text-slate-600" />;
     }
@@ -52,11 +52,11 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
       case 'PENDING':
         return 'bg-amber-100 text-amber-700';
       case 'APPROVED_BY_TEACHER':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 text-slate-800';
       case 'LOCKED': 
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-slate-100 text-slate-800';
       case 'COMPLETED':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-slate-100 text-purple-700';
       default:
         return 'bg-slate-100 text-slate-700';
     }
@@ -74,7 +74,7 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
       {/* Header */}
       <div className="p-4 border-b border-slate-200 bg-slate-50">
         <h2 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-indigo-600" />
+          <ShoppingCart className="w-5 h-5 text-slate-900" />
           Parent Orders
         </h2>
         <div className="relative">
@@ -108,7 +108,7 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
                 key={order.id}
                 className={`cursor-pointer transition-all hover:shadow-md ${
                   selectedOrderId === order.id
-                    ? 'ring-2 ring-indigo-500 bg-indigo-50'
+                    ? 'ring-2 ring-slate-500 bg-slate-50'
                     : 'hover:border-indigo-300'
                 }`}
                 onClick={() => handleSelectOrder(order.id)}
@@ -139,7 +139,7 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
                       <span className="text-slate-600">
                         {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
                       </span>
-                      <span className="font-bold text-green-600">
+                      <span className="font-bold text-slate-900">
                         {formatCurrency(order.totalAmount)}
                       </span>
                     </div>
@@ -172,7 +172,7 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
           </div>
           <div className="p-2 bg-white rounded-lg border border-slate-200">
             <p className="text-xs text-slate-600">Approved</p>
-            <p className="text-lg font-bold text-green-600">
+            <p className="text-lg font-bold text-slate-900">
               {orders.filter((o) => o.status === 'APPROVED_BY_TEACHER').length}
             </p>
           </div>

@@ -40,7 +40,7 @@ export default async function AdminsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-3">
-            <Users className="w-9 h-9 text-blue-600" />
+            <Users className="w-9 h-9 text-slate-900" />
             Управление фотографами
           </h1>
           <p className="text-slate-600 mt-2">
@@ -52,24 +52,24 @@ export default async function AdminsPage() {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-slate-200 bg-slate-50">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-700">Всего фотографов</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">{admins.length}</p>
+                <p className="text-3xl font-bold text-slate-900 mt-1">{admins.length}</p>
               </div>
               <Users className="w-12 h-12 text-blue-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-slate-200 bg-slate-50">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-700">Активные аккаунты</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">
+                <p className="text-3xl font-bold text-slate-900 mt-1">
                   {admins.filter(a => a.isActive).length}
                 </p>
               </div>
@@ -78,12 +78,12 @@ export default async function AdminsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="border-slate-200 bg-slate-50">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-700">Всего школ</p>
-                <p className="text-3xl font-bold text-purple-600 mt-1">
+                <p className="text-3xl font-bold text-slate-900 mt-1">
                   {admins.reduce((sum, admin) => sum + admin._count.schools, 0)}
                 </p>
               </div>
@@ -132,12 +132,12 @@ export default async function AdminsPage() {
                           {admin.firstName} {admin.lastName}
                         </h3>
                         {admin.isActive ? (
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                          <Badge className="bg-green-100 text-slate-800 hover:bg-green-100">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Активен
                           </Badge>
                         ) : (
-                          <Badge variant="destructive" className="bg-red-100 text-red-700">
+                          <Badge variant="destructive" className="bg-slate-100 text-slate-700">
                             <XCircle className="w-3 h-3 mr-1" />
                             Неактивен
                           </Badge>

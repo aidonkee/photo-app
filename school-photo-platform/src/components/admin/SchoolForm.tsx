@@ -136,8 +136,8 @@ export default function SchoolForm({ open, onOpenChange }: SchoolFormProps) {
           </div>
 
           {state?.error && (
-            <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200 py-2">
-              <AlertCircle className="h-4 w-4 text-red-900" />
+            <Alert variant="destructive" className="bg-slate-50 text-slate-900 border-slate-200 py-2">
+              <AlertCircle className="h-4 w-4 text-slate-900" />
               <AlertDescription className="text-xs ml-2">{state.error}</AlertDescription>
             </Alert>
           )}

@@ -106,8 +106,8 @@ export default function ClassroomForm({ schoolId, open, onOpenChange }: Classroo
           </div>
 
           {error && (
-            <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200 py-2">
-              <AlertCircle className="h-3 w-3 text-red-900" />
+            <Alert variant="destructive" className="bg-slate-50 text-slate-900 border-slate-200 py-2">
+              <AlertCircle className="h-3 w-3 text-slate-900" />
               <AlertDescription className="text-xs ml-2">{error}</AlertDescription>
             </Alert>
           )}

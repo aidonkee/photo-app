@@ -151,7 +151,7 @@ export default function TeacherNavbar({
                     variant="ghost"
                     onClick={handleLogout}
                     disabled={isPending}
-                    className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full justify-start gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -183,7 +183,7 @@ export default function TeacherNavbar({
                 <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={isPending}
-                  className="text-red-600 cursor-pointer"
+                  className="text-slate-600 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   {isPending ? 'Logging out...' : 'Logout'}

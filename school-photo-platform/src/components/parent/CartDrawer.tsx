@@ -83,7 +83,7 @@ export default function CartDrawer({
             <div className="bg-slate-50 p-4 rounded-lg border">
               <div className="flex justify-between font-medium mb-2">
                 <span>Всего к оплате:</span>
-                <span className="text-blue-600">{formatPrice(totalPrice)}</span>
+                <span className="text-slate-900 font-semibold">{formatPrice(totalPrice)}</span>
               </div>
               <p className="text-xs text-slate-500">
                 Вы выбрали {items.reduce((acc, item) => acc + item.quantity, 0)} фото
@@ -149,7 +149,7 @@ export default function CartDrawer({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                             onClick={() => removeItem(item.photoId, item.format)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -164,10 +164,10 @@ export default function CartDrawer({
             <div className="pt-6 mt-auto bg-white border-t space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-lg font-medium">Итого:</p>
-                <p className="text-2xl font-bold text-blue-600">{formatPrice(totalPrice)}</p>
+                <p className="text-2xl font-bold text-slate-900">{formatPrice(totalPrice)}</p>
               </div>
               <Button
-                className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
+                className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800"
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
               >

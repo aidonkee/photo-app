@@ -72,9 +72,9 @@ export default function RequestEditButton() {
           )}
 
           {state?.success && (
-            <Alert className="bg-green-50 border-green-200">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="bg-slate-50 border-slate-200">
+              <CheckCircle2 className="h-4 w-4 text-slate-900" />
+              <AlertDescription className="text-slate-700">
                 {state.message}
               </AlertDescription>
             </Alert>

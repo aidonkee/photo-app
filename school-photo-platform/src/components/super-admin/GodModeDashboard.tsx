@@ -41,8 +41,8 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       value: formatCurrency(stats.totalRevenue),
       description: 'From all completed orders',
       icon: DollarSign,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-slate-900',
+      bgColor: 'bg-slate-50',
       iconBgColor: 'bg-green-100',
     },
     {
@@ -50,18 +50,18 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       value: stats.totalAdmins. toString(),
       description: 'Active admin accounts',
       icon: Users,
-      color: 'text-blue-600',
-      bgColor:  'bg-blue-50',
-      iconBgColor: 'bg-blue-100',
+      color: 'text-slate-900',
+      bgColor:  'bg-slate-50',
+      iconBgColor: 'bg-slate-100',
     },
     {
       title: 'Schools',
       value: stats.totalSchools.toString(),
       description: 'Registered schools',
       icon: Building2,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      iconBgColor: 'bg-purple-100',
+      color: 'text-slate-900',
+      bgColor: 'bg-slate-50',
+      iconBgColor: 'bg-slate-100',
     },
     {
       title: 'Total Orders',
@@ -81,7 +81,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
         <div>
           <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-3">
             Platform Overview
-            <TrendingUp className="w-8 h-8 text-green-600" />
+            <TrendingUp className="w-8 h-8 text-slate-900" />
           </h1>
           <p className="text-slate-600 mt-2">
             Monitor your entire platform performance and metrics
@@ -90,7 +90,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
         
         {/* Quick Mode Switch */}
         <Link href="/admin/dashboard">
-          <Button variant="outline" className="gap-2 border-blue-300 text-blue-600 hover:bg-blue-50">
+          <Button variant="outline" className="gap-2 border-slate-300 text-slate-900 hover:bg-slate-50">
             <Camera className="w-4 h-4" />
             Switch to Photographer Mode
             <ArrowRight className="w-4 h-4" />
@@ -126,13 +126,13 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       </div>
 
       {/* Quick Actions Section */}
-      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg">
+      <Card className="border-2 border-slate-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-blue-600" />
-            <CardTitle className="text-xl text-blue-900">Quick Actions</CardTitle>
+            <Sparkles className="w-5 h-5 text-slate-900" />
+            <CardTitle className="text-xl text-slate-900">Quick Actions</CardTitle>
           </div>
-          <p className="text-sm text-blue-700">
+          <p className="text-sm text-slate-800">
             Manage your own photography business alongside platform administration
           </p>
         </CardHeader>
@@ -142,15 +142,15 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
             <Link href="/admin/schools/new" className="block">
               <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-400 cursor-pointer group">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                    <Plus className="w-6 h-6 text-blue-600" />
+                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                    <Plus className="w-6 h-6 text-slate-900" />
                   </div>
                   <h3 className="font-semibold text-slate-900">Create New School</h3>
                 </div>
                 <p className="text-sm text-slate-600">
                   Add a new school to your photography portfolio
                 </p>
-                <div className="mt-4 flex items-center text-blue-600 font-medium text-sm group-hover:gap-2 transition-all">
+                <div className="mt-4 flex items-center text-slate-900 font-medium text-sm group-hover:gap-2 transition-all">
                   Get Started
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -161,15 +161,15 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
             <Link href="/admin/dashboard" className="block">
               <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover: border-indigo-400 cursor-pointer group">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-3 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                    <Camera className="w-6 h-6 text-indigo-600" />
+                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                    <Camera className="w-6 h-6 text-slate-900" />
                   </div>
                   <h3 className="font-semibold text-slate-900">Photographer Workspace</h3>
                 </div>
                 <p className="text-sm text-slate-600">
                   Manage your schools, photos, and orders
                 </p>
-                <div className="mt-4 flex items-center text-indigo-600 font-medium text-sm group-hover:gap-2 transition-all">
+                <div className="mt-4 flex items-center text-slate-900 font-medium text-sm group-hover:gap-2 transition-all">
                   Open Dashboard
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -180,15 +180,15 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
             <Link href="/admin/schools" className="block">
               <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-400 cursor-pointer group">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                    <Building2 className="w-6 h-6 text-purple-600" />
+                  <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                    <Building2 className="w-6 h-6 text-slate-900" />
                   </div>
                   <h3 className="font-semibold text-slate-900">My Schools</h3>
                 </div>
                 <p className="text-sm text-slate-600">
                   View and manage all your registered schools
                 </p>
-                <div className="mt-4 flex items-center text-purple-600 font-medium text-sm group-hover:gap-2 transition-all">
+                <div className="mt-4 flex items-center text-slate-900 font-medium text-sm group-hover:gap-2 transition-all">
                   View All
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -209,7 +209,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
               <p className="font-medium text-slate-900">Average Revenue per School</p>
               <p className="text-sm text-slate-600">Based on completed orders</p>
             </div>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-slate-900">
               {stats.totalSchools > 0
                 ? formatCurrency(stats.totalRevenue / stats.totalSchools)
                 : '$0.00'}
@@ -221,7 +221,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
               <p className="font-medium text-slate-900">Schools per Photographer</p>
               <p className="text-sm text-slate-600">Average distribution</p>
             </div>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-slate-900">
               {stats. totalAdmins > 0
                 ? (stats.totalSchools / stats.totalAdmins).toFixed(1)
                 : '0.0'}
@@ -233,7 +233,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
               <p className="font-medium text-slate-900">Average Order Value</p>
               <p className="text-sm text-slate-600">Per completed transaction</p>
             </div>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-slate-900">
               {stats.totalOrders > 0
                 ? formatCurrency(stats.totalRevenue / stats.totalOrders)
                 : '$0.00'}

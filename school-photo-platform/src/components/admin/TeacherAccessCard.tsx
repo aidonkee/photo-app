@@ -43,10 +43,10 @@ export default function TeacherAccessCard({
   };
 
   return (
-    <Card className="bg-blue-50/50 border-blue-200">
+    <Card className="bg-slate-50/50 border-slate-200">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold flex items-center gap-2 text-slate-800">
-          <KeyRound className="w-5 h-5 text-blue-600" />
+          <KeyRound className="w-5 h-5 text-slate-900" />
           Доступ учителя (Teacher Access)
         </CardTitle>
       </CardHeader>
@@ -70,7 +70,7 @@ export default function TeacherAccessCard({
                 variant="outline" 
                 size="icon"
                 onClick={() => handleCopy(teacherLogin, 'login')}
-                className={copiedLogin ? "text-green-600 border-green-200 bg-green-50" : ""}
+                className={copiedLogin ? "text-slate-900 border-slate-300 bg-slate-100" : ""}
               >
                 {copiedLogin ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -109,7 +109,7 @@ export default function TeacherAccessCard({
                 size="icon"
                 onClick={() => teacherPassword && handleCopy(teacherPassword, 'password')}
                 disabled={!teacherPassword}
-                className={copiedPassword ? "text-green-600 border-green-200 bg-green-50" : ""}
+                className={copiedPassword ? "text-slate-900 border-slate-300 bg-slate-100" : ""}
               >
                 {copiedPassword ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -117,7 +117,7 @@ export default function TeacherAccessCard({
             
             {/* Кнопка сброса (функционал добавим позже, пока просто UI) */}
             <button 
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1 font-medium transition-colors"
+              className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1 mt-1 font-medium transition-colors"
               onClick={() => alert('Функционал сброса пароля нужно подключить к Server Action')}
             >
               <RefreshCw className="w-3 h-3" />

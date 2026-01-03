@@ -32,7 +32,7 @@ export default function TeacherCredentials({
             Teacher Access
           </CardTitle>
           {isEditAllowed && (
-            <Badge className="bg-green-600">Editing Enabled</Badge>
+            <Badge className="bg-slate-900">Editing Enabled</Badge>
           )}
         </div>
       </CardHeader>

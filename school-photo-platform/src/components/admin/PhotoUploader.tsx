@@ -151,7 +151,7 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
           isDragActive
-            ? 'border-blue-500 bg-blue-50'
+            ? 'border-blue-500 bg-slate-50'
             : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'
         } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
       >
@@ -208,7 +208,7 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
                     e.stopPropagation();
                     removeFile(idx);
                   }}
-                  className="text-slate-400 hover:text-red-500 ml-2"
+                  className="text-slate-400 hover:text-slate-500 ml-2"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -223,7 +223,7 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
 
           <Button
             onClick={handleUpload}
-            className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+            className="w-full mt-4 bg-slate-900 hover:bg-slate-800"
             disabled={uploading}
           >
             Загрузить {files.length} фото
@@ -235,7 +235,7 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
       {uploading && stats && (
         <Card className="p-6 space-y-4">
           <div className="text-center">
-            <p className="font-semibold text-blue-600 text-lg mb-2">
+            <p className="font-semibold text-slate-900 text-lg mb-2">
               Загрузка фотографий...
             </p>
             <p className="text-sm text-slate-600">
@@ -251,18 +251,18 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
               <p className="text-xs text-slate-600">Всего</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">{stats.success}</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.success}</p>
               <p className="text-xs text-slate-600">Загружено</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
+              <p className="text-2xl font-bold text-slate-600">{stats.failed}</p>
               <p className="text-xs text-slate-600">Ошибок</p>
             </div>
           </div>
 
           {stats.current && (
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-900 text-center truncate">
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-sm text-slate-900 text-center truncate">
                 Обработка: <span className="font-medium">{stats.current}</span>
               </p>
             </div>
@@ -275,32 +275,32 @@ export default function PhotoUploader({ classId }: PhotoUploaderProps) {
         <div className="space-y-3">
           <Alert 
             variant={stats.failed > 0 ? "destructive" : "default"} 
-            className={stats.failed === 0 ? "bg-green-50 border-green-200" : ""}
+            className={stats.failed === 0 ? "bg-slate-50 border-slate-200" : ""}
           >
             {stats.failed === 0 ? (
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <CheckCircle2 className="h-4 w-4 text-slate-900" />
             ) : (
               <AlertCircle className="h-4 w-4" />
             )}
-            <AlertDescription className={stats.failed === 0 ? "text-green-800" : ""}>
+            <AlertDescription className={stats.failed === 0 ? "text-slate-700" : ""}>
               <p className="font-semibold mb-1">Загрузка завершена</p>
               <p>
                 Успешно загружено: <b>{stats.success}</b> из <b>{stats.total}</b>
                 {stats.failed > 0 && (
-                  <> • Ошибок: <b className="text-red-600">{stats.failed}</b></>
+                  <> • Ошибок: <b className="text-slate-600">{stats.failed}</b></>
                 )}
               </p>
             </AlertDescription>
           </Alert>
 
           {failedFiles.length > 0 && (
-            <Card className="p-4 bg-red-50 border-red-200">
-              <p className="text-sm font-semibold text-red-900 mb-2">
+            <Card className="p-4 bg-slate-50 border-slate-200">
+              <p className="text-sm font-semibold text-slate-900 mb-2">
                 Не удалось загрузить следующие файлы:
               </p>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {failedFiles.map((fileName, idx) => (
-                  <p key={idx} className="text-xs text-red-700 truncate">
+                  <p key={idx} className="text-xs text-slate-700 truncate">
                     • {fileName}
                   </p>
                 ))}

@@ -67,19 +67,19 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         );
       case 'APPROVED_BY_TEACHER':
         return (
-          <Badge className="bg-green-600">
+          <Badge className="bg-slate-900">
             Approved
           </Badge>
         );
       case 'LOCKED':
         return (
-          <Badge className="bg-blue-600">
+          <Badge className="bg-slate-900">
             Locked for Printing
           </Badge>
         );
       case 'COMPLETED':
         return (
-          <Badge className="bg-purple-600">
+          <Badge className="bg-slate-900">
             Completed
           </Badge>
         );
@@ -118,15 +118,15 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
 
       {/* Order Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-slate-50 border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <Package className="w-5 h-5 text-slate-900" />
               </div>
               <div>
                 <p className="text-sm text-slate-600">Total Items</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-slate-900">
                   {order.items. reduce((sum, item) => sum + item.quantity, 0)}
                 </p>
               </div>
@@ -134,15 +134,15 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-slate-50 border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="w-5 h-5 text-green-600" />
+                <DollarSign className="w-5 h-5 text-slate-900" />
               </div>
               <div>
                 <p className="text-sm text-slate-600">Order Total</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-slate-900">
                   {formatCurrency(order.totalAmount)}
                 </p>
               </div>
@@ -150,15 +150,15 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border-purple-200">
+        <Card className="bg-slate-50 border-slate-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Image className="w-5 h-5 text-purple-600" />
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <Image className="w-5 h-5 text-slate-900" />
               </div>
               <div>
                 <p className="text-sm text-slate-600">Photos</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-slate-900">
                   {order.items.length}
                 </p>
               </div>
@@ -220,9 +220,9 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Ordered Photos ({order.items.length})</CardTitle>
-            <Alert className="bg-blue-50 border-blue-200 py-2 px-3">
-              <Info className="h-3 w-3 text-blue-600" />
-              <AlertDescription className="text-xs text-blue-800 ml-2">
+            <Alert className="bg-slate-50 border-slate-200 py-2 px-3">
+              <Info className="h-3 w-3 text-slate-900" />
+              <AlertDescription className="text-xs text-slate-700 ml-2">
                 Watermarks will be removed on prints
               </AlertDescription>
             </Alert>
@@ -233,7 +233,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
             {order.items.map((item, index) => (
               <div
                 key={item.id}
-                className="border-2 border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-all"
+                className="border-2 border-slate-200 rounded-lg p-4 hover:border-slate-300 transition-all"
               >
                 <div className="flex items-start gap-4">
                   {/* Photo Preview */}
@@ -279,7 +279,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
                       </div>
                       <div className="text-sm">
                         <span className="text-slate-500">Subtotal:</span>
-                        <span className="ml-2 font-bold text-green-600">
+                        <span className="ml-2 font-bold text-slate-900">
                           {formatCurrency(item.pricePerUnit * item.quantity)}
                         </span>
                       </div>
@@ -296,7 +296,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
               <span className="text-lg font-semibold text-slate-900">
                 Order Total: 
               </span>
-              <span className="text-2xl font-bold text-green-600">
+              <span className="text-2xl font-bold text-slate-900">
                 {formatCurrency(order.totalAmount)}
               </span>
             </div>

@@ -36,7 +36,7 @@ export default function CreateAdminDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
+        <Button className="bg-slate-900 hover:bg-slate-800 gap-2">
           <UserPlus className="w-4 h-4" />
           Add Photographer
         </Button>
@@ -129,9 +129,9 @@ export default function CreateAdminDialog() {
           )}
 
           {state?.success && (
-            <Alert className="bg-green-50 text-green-900 border-green-200 animate-in fade-in slide-in-from-top-1">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="bg-slate-50 text-slate-900 border-slate-200 animate-in fade-in slide-in-from-top-1">
+              <CheckCircle2 className="h-4 w-4 text-slate-900" />
+              <AlertDescription className="text-slate-700">
                 {state.message}
               </AlertDescription>
             </Alert>
@@ -150,7 +150,7 @@ export default function CreateAdminDialog() {
             <Button
               type="submit"
               disabled={isPending}
-              className="flex-1 bg-blue-600 hover: bg-blue-700"
+              className="flex-1 bg-slate-900 hover: bg-blue-700"
             >
               {isPending ? (
                 <span className="flex items-center gap-2">

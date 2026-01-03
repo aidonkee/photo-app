@@ -72,13 +72,13 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
 
   if (success) {
     return (
-      <Card className="border-2 border-green-200 bg-green-50">
+      <Card className="border-2 border-slate-300 bg-slate-50">
         <CardContent className="py-12 text-center">
-          <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-green-900 mb-2">
+          <CheckCircle2 className="w-16 h-16 text-slate-900 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-slate-900 mb-2">
             Order Placed Successfully!
           </h3>
-          <p className="text-green-800">
+          <p className="text-slate-700">
             You will receive a confirmation email shortly. 
           </p>
         </CardContent>
@@ -107,7 +107,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
                 className="h-11"
               />
               {errors.name && (
-                <p className="text-sm text-red-600">{errors.name.message}</p>
+                <p className="text-sm text-slate-600">{errors.name.message}</p>
               )}
             </div>
 
@@ -121,7 +121,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
                 className="h-11"
               />
               {errors.surname && (
-                <p className="text-sm text-red-600">{errors.surname.message}</p>
+                <p className="text-sm text-slate-600">{errors.surname.message}</p>
               )}
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
               className="h-11"
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-slate-600">{errors.email.message}</p>
             )}
             <p className="text-xs text-slate-500">
               Order confirmation will be sent to this email
@@ -155,7 +155,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
               className="h-11"
             />
             {errors.phone && (
-              <p className="text-sm text-red-600">{errors. phone.message}</p>
+              <p className="text-sm text-slate-600">{errors. phone.message}</p>
             )}
           </div>
 
@@ -169,7 +169,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
           <Button
             type="submit"
             disabled={submitting || items.length === 0}
-            className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700"
+            className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800"
           >
             {submitting ? (
               <span className="flex items-center gap-2">

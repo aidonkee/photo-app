@@ -75,7 +75,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
             </h1>
             <p className="text-slate-600 mt-1">{formatDate(order.createdAt)}</p>
           </div>
-          <Badge className="bg-blue-600 text-base px-4 py-2">
+          <Badge className="bg-slate-900 text-base px-4 py-2">
             {order.status}
           </Badge>
         </div>
@@ -146,7 +146,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     <span className="text-slate-600">
                       Цена: {formatPrice(Number(item.price))}
                     </span>
-                    <span className="font-semibold text-green-600">
+                    <span className="font-semibold text-slate-900">
                       Итого: {formatPrice(Number(item.price) * item.quantity)}
                     </span>
                   </div>
@@ -157,7 +157,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
           <div className="mt-6 pt-4 border-t flex items-center justify-between">
             <span className="text-lg font-semibold">Общая сумма заказа: </span>
-            <span className="text-2xl font-bold text-green-600">
+            <span className="text-2xl font-bold text-slate-900">
               {formatPrice(Number(order.totalSum))}
             </span>
           </div>

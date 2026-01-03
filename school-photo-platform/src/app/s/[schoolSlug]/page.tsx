@@ -95,7 +95,7 @@ export default async function SchoolLandingPage({ params }: PageProps) {
                           />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                          <h3 className="text-2xl font-bold text-slate-900 group-hover:text-slate-900 transition-colors">
                             {classroom.name}
                           </h3>
                         </div>
@@ -109,7 +109,7 @@ export default async function SchoolLandingPage({ params }: PageProps) {
                             {classroom._count.photos !== 1 ? 'графий' : 'графия'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-blue-600 font-medium group-hover:gap-3 transition-all">
+                        <div className="flex items-center gap-2 text-slate-900 font-medium group-hover:gap-3 transition-all">
                           Просмотреть галерею
                           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </div>

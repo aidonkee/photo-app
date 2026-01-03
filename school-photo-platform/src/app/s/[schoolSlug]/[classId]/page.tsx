@@ -93,11 +93,11 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
           <Button
             onClick={() => setCartOpen(true)}
             size="lg"
-            className="h-16 px-6 bg-blue-600 hover:bg-blue-700 shadow-2xl gap-3 text-lg"
+            className="h-16 px-6 bg-slate-900 hover:bg-slate-800 shadow-2xl gap-3 text-lg"
           >
             <ShoppingCart className="w-6 h-6" />
             Корзина
-            <Badge className="bg-white text-blue-600 hover:bg-white ml-2">
+            <Badge className="bg-white text-slate-900 hover:bg-white ml-2">
               {getTotalItems}
             </Badge>
           </Button>

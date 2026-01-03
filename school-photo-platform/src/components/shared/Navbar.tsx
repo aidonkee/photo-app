@@ -31,7 +31,7 @@ export default function Navbar({ session }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="p-2 bg-blue-600 rounded-lg">
+            <div className="p-2 bg-slate-900 rounded-lg">
               <span className="text-white font-bold text-xl">SP</span>
             </div>
             <span className="hidden sm:block font-bold text-xl text-slate-900">
@@ -45,7 +45,7 @@ export default function Navbar({ session }: NavbarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-slate-700 hover:text-blue-600 font-medium transition-colors"
+                className="text-slate-700 hover:text-slate-900 font-medium transition-colors"
               >
                 {item.title}
               </Link>
@@ -70,7 +70,7 @@ export default function Navbar({ session }: NavbarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-lg font-medium text-slate-900 hover:text-blue-600"
+                    className="text-lg font-medium text-slate-900 hover:text-slate-900"
                   >
                     {item.title}
                   </Link>

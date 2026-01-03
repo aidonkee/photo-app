@@ -43,7 +43,7 @@ export default function SchoolLinkSection({ slug }: { slug: string }) {
               />
               <Button 
                 onClick={handleCopy} 
-                className={copied ? "bg-green-600 hover:bg-green-700" : ""}
+                className={copied ? "bg-slate-900 hover:bg-slate-800" : ""}
                 variant="default"
               >
                 {copied ? (

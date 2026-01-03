@@ -38,14 +38,14 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
         );
       case 'APPROVED_BY_TEACHER':
         return (
-          <Badge className="bg-green-600">
+          <Badge className="bg-slate-900">
             <CheckCircle className="w-3 h-3 mr-1" />
             Approved
           </Badge>
         );
       case 'LOCKED':
         return (
-          <Badge className="bg-blue-600">
+          <Badge className="bg-slate-900">
             <Package className="w-3 h-3 mr-1" />
             Locked
           </Badge>
@@ -92,7 +92,7 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
                   </TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>{getStatusBadge(order. status)}</TableCell>
-                  <TableCell className="text-right font-semibold text-green-600">
+                  <TableCell className="text-right font-semibold text-slate-900">
                     {formatPrice(order.totalAmount)}
                   </TableCell>
                 </TableRow>
@@ -105,7 +105,7 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
       {orders.length > 0 && (
         <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
           <span className="font-semibold text-slate-900">Total Revenue: </span>
-          <span className="text-2xl font-bold text-green-600">
+          <span className="text-2xl font-bold text-slate-900">
             {formatPrice(totalRevenue)}
           </span>
         </div>

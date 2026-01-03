@@ -32,7 +32,7 @@ export default function CopyButton({ text, className }: CopyButtonProps) {
       className={cn(
         'h-8 w-8 transition-colors',
         copied
-          ? 'text-green-600 bg-green-50 hover:bg-green-100'
+          ? 'text-slate-900 bg-slate-100 hover:bg-slate-200'
           : 'text-slate-400 hover:text-slate-600',
         className
       )}

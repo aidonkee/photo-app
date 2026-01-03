@@ -50,7 +50,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
               Заблокировано
             </Badge>
           ) : (
-            <Badge className="bg-green-600 text-base px-4 py-2">
+            <Badge className="bg-slate-900 text-base px-4 py-2">
               <Unlock className="w-4 h-4 mr-2" />
               Открыто
             </Badge>
@@ -59,9 +59,9 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
       </div>
 
       {/* Info Alert */}
-      <Alert className="bg-blue-50 border-blue-200">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
+      <Alert className="bg-slate-50 border-slate-200">
+        <Info className="h-4 w-4 text-slate-900" />
+        <AlertDescription className="text-slate-700">
           Эти фотографии видны родителям с кодами доступа. Водяные знаки будут удалены на приобретённых отпечатках.
         </AlertDescription>
       </Alert>
@@ -143,7 +143,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
 
       {/* Actions */}
       {photos.length > 0 && (
-        <Card className="border-2 border-indigo-200 bg-indigo-50">
+        <Card className="border-2 border-indigo-200 bg-slate-50">
           <CardContent className="pt-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -154,7 +154,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
                 вы можете запросить изменения у фотографа.
               </p>
               <Link href={`/classroom/${data.classroom.id}/request-edit`}>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+                <Button className="bg-slate-900 hover:bg-slate-800 gap-2">
                   <FileEdit className="w-4 h-4" />
                   Запросить изменения фотографий
                 </Button>

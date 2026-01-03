@@ -17,7 +17,7 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ schoolS
       <Card className="max-w-md w-full border-2 border-green-100 shadow-xl">
         <CardContent className="pt-12 pb-8 px-6 text-center space-y-6">
           <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 className="w-10 h-10 text-green-600" />
+            <CheckCircle2 className="w-10 h-10 text-slate-900" />
           </div>
           
           <div>
@@ -34,7 +34,7 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ schoolS
             )}
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg text-left text-sm text-blue-800 space-y-2">
+          <div className="bg-slate-50 p-4 rounded-lg text-left text-sm text-slate-700 space-y-2">
             <p className="font-semibold">Что делать дальше?</p>
             <ul className="list-disc pl-4 space-y-1">
               <li>Пожалуйста, передайте оплату классному руководителю.</li>

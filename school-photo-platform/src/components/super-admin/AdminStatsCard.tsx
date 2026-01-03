@@ -18,9 +18,9 @@ export default function AdminStatsCard({
   value,
   icon:  Icon,
   description,
-  color = 'text-blue-600',
-  bgColor = 'bg-blue-50',
-  iconBgColor = 'bg-blue-100',
+  color = 'text-slate-900',
+  bgColor = 'bg-slate-50',
+  iconBgColor = 'bg-slate-100',
 }: AdminStatsCardProps) {
   return (
     <Card className={cn('shadow-lg border-0', bgColor)}>

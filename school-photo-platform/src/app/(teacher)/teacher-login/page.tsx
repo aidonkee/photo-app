@@ -16,7 +16,7 @@ export default function TeacherLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <Card className="max-w-md w-full shadow-lg">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold text-blue-600">
+          <CardTitle className="text-2xl font-bold text-slate-900">
             Добро пожаловать
           </CardTitle>
           <CardDescription>
@@ -59,7 +59,7 @@ export default function TeacherLoginPage() {
 
             <Button 
               type="submit" 
-              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-lg"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-lg"
               disabled={isPending}
             >
               {isPending ? 'Вход...' : 'Войти как учитель'}

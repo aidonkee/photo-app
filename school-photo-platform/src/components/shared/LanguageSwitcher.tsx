@@ -30,7 +30,7 @@ export default function LanguageSwitcher({
         onClick={() => setLanguage('ru')}
         className={cn(
           'w-16 font-semibold',
-          lang === 'ru' && 'bg-blue-600 hover:bg-blue-700'
+          lang === 'ru' && 'bg-slate-900 hover:bg-slate-800'
         )}
       >
         RU
@@ -41,7 +41,7 @@ export default function LanguageSwitcher({
         onClick={() => setLanguage('kk')}
         className={cn(
           'w-16 font-semibold',
-          lang === 'kk' && 'bg-blue-600 hover:bg-blue-700'
+          lang === 'kk' && 'bg-slate-900 hover:bg-slate-800'
         )}
       >
         KZ

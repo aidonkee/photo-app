@@ -185,17 +185,17 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
           variant={result.errors.length > 0 ? 'destructive' : 'default'}
           className={
             result.errors.length === 0
-              ? 'bg-green-50 border-green-200'
+              ? 'bg-slate-50 border-slate-200'
               : ''
           }
         >
           {result.errors.length === 0 ? (
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <CheckCircle2 className="h-4 w-4 text-slate-900" />
           ) : (
             <AlertCircle className="h-4 w-4" />
           )}
           <AlertDescription
-            className={result.errors.length === 0 ? 'text-green-800' : ''}
+            className={result.errors.length === 0 ? 'text-slate-700' : ''}
           >
             <p className="font-semibold mb-1">Операция завершена</p>
             <p>
@@ -246,7 +246,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
                   <div
                     className={`w-8 h-8 rounded-md border-2 flex items-center justify-center transition-all ${
                       isSelected
-                        ? 'bg-blue-600 border-blue-600'
+                        ? 'bg-slate-900 border-blue-600'
                         : 'bg-white/90 border-slate-300'
                     }`}
                   >
@@ -273,7 +273,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
 
               {/* Selection Badge */}
               {selectionMode && isSelected && (
-                <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                <div className="absolute top-2 right-2 bg-slate-900 text-white px-2 py-1 rounded-full text-xs font-bold">
                   ✓
                 </div>
               )}
@@ -310,7 +310,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-slate-900 hover:bg-slate-800"
             >
               {isPending ? (
                 <span className="flex items-center gap-2">

@@ -88,7 +88,7 @@ export default function CheckoutPage({ params }: PageProps) {
                         <span className="text-sm text-slate-600">
                           ×{item.quantity}
                         </span>
-                        <span className="text-sm font-semibold text-green-600">
+                        <span className="text-sm font-semibold text-slate-900">
                           {formatPrice(item.pricePerUnit * item.quantity)}
                         </span>
                       </div>
@@ -97,7 +97,7 @@ export default function CheckoutPage({ params }: PageProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                       onClick={() => removeItem(item.photoId, item.format)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -119,7 +119,7 @@ export default function CheckoutPage({ params }: PageProps) {
                   <Separator />
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-900">Итого:</span>
-                    <span className="text-2xl font-bold text-green-600">
+                    <span className="text-2xl font-bold text-slate-900">
                       {formatPrice(totalPrice)}
                     </span>
                   </div>

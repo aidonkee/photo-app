@@ -110,12 +110,12 @@ export default function EditRequestList({ requests }: EditRequestListProps) {
           variant={message.type === 'error' ? 'destructive' :  'default'}
           className={
             message.type === 'success'
-              ? 'bg-green-50 text-green-900 border-green-200'
+              ? 'bg-slate-50 text-slate-900 border-slate-200'
               : ''
           }
         >
           {message.type === 'success' ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-slate-900" />
           ) : (
             <AlertCircle className="h-4 w-4" />
           )}
@@ -124,7 +124,7 @@ export default function EditRequestList({ requests }: EditRequestListProps) {
       )}
 
       {requests.map((request) => (
-        <Card key={request. id} className="border-2 hover:border-blue-200 transition-all">
+        <Card key={request. id} className="border-2 hover:border-slate-200 transition-all">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -173,7 +173,7 @@ export default function EditRequestList({ requests }: EditRequestListProps) {
               >
                 <DialogTrigger asChild>
                   <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="flex-1 bg-slate-900 hover:bg-slate-800"
                     disabled={isPending}
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
@@ -216,7 +216,7 @@ export default function EditRequestList({ requests }: EditRequestListProps) {
                       </Button>
                       <Button
                         onClick={() => handleResolve(request.id, 'APPROVED')}
-                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        className="flex-1 bg-slate-900 hover:bg-slate-800"
                         disabled={isPending}
                       >
                         {isPending ? 'Processing...' : 'Confirm Approval'}
