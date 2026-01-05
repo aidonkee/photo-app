@@ -7,46 +7,46 @@ export default async function PlatformMetrics() {
   const stats = await getPlatformStats();
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('ru-KZ', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'KZT',
     }).format(amount);
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <AdminStatsCard
-        title="Total Revenue"
+        title="Общий доход"
         value={formatCurrency(stats.totalRevenue)}
         icon={DollarSign}
-        description="From all completed orders"
+        description="С всех завершённых заказов"
         color="text-slate-900"
         bgColor="bg-white"
         iconBgColor="bg-slate-100"
       />
       <AdminStatsCard
-        title="Photographers"
+        title="Фотографы"
         value={stats.totalAdmins}
         icon={Users}
-        description="Active admin accounts"
+        description="Активные аккаунты администраторов"
         color="text-slate-900"
         bgColor="bg-white"
         iconBgColor="bg-slate-100"
       />
       <AdminStatsCard
-        title="Schools"
+        title="Школы"
         value={stats.totalSchools}
         icon={Building2}
-        description="Registered schools"
+        description="Зарегистрированные школы"
         color="text-slate-900"
         bgColor="bg-white"
         iconBgColor="bg-slate-100"
       />
       <AdminStatsCard
-        title="Total Orders"
+        title="Общее количество заказов"
         value={stats.totalOrders}
         icon={ShoppingCart}
-        description="All time orders"
+        description="Все заказы за всё время"
         color="text-slate-900"
         bgColor="bg-white"
         iconBgColor="bg-slate-100"

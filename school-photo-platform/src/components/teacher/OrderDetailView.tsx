@@ -10,7 +10,6 @@ import {
   Package,
   DollarSign,
   Calendar,
-  Mail,
   Phone,
   AlertCircle,
   Info,
@@ -28,10 +27,10 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         <div className="text-center">
           <Image className="w-24 h-24 text-slate-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-900 mb-2">
-            No Order Selected
+            Заказ не выбран
           </h3>
           <p className="text-slate-600">
-            Select a parent from the list on the left to view their order details
+            Выберите родителя из списка слева, чтобы просмотреть детали заказа
           </p>
         </div>
       </div>
@@ -39,16 +38,15 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
   }
 
   const formatCurrency = (amount: number) => {
-    // Используем 'ru-KZ' или 'ru-RU', чтобы получить символ ₸ и правильный формат (1 000)
     return new Intl.NumberFormat('ru-KZ', {
       style: 'currency',
-      currency: 'KZT', // <--- БЫЛО 'TG', СТАЛО 'KZT'
-      maximumFractionDigits: 0, // Убираем копейки (обычно не нужны)
+      currency: 'KZT',
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('ru-RU', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -59,50 +57,38 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'PENDING': 
+      case 'PENDING':
         return (
           <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-            Pending Review
+            Ожидает проверки
           </Badge>
         );
       case 'APPROVED_BY_TEACHER':
-        return (
-          <Badge className="bg-slate-900">
-            Approved
-          </Badge>
-        );
+        return <Badge className="bg-slate-900">Одобрено</Badge>;
       case 'LOCKED':
-        return (
-          <Badge className="bg-slate-900">
-            Locked for Printing
-          </Badge>
-        );
+        return <Badge className="bg-slate-900">Заблокировано для печати</Badge>;
       case 'COMPLETED':
-        return (
-          <Badge className="bg-slate-900">
-            Completed
-          </Badge>
-        );
+        return <Badge className="bg-slate-900">Завершено</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
   const getFormatLabel = (format: string) => {
-    const labels:  Record<string, string> = {
-      A4: 'A4 Print (8.3" × 11.7")',
-      A5: 'A5 Print (5.8" × 8.3")',
+    const labels: Record<string, string> = {
+      A4: 'Печать A4 (21 × 29.7 см)',
+      A5: 'Печать A5 (14.8 × 21 см)',
     };
     return labels[format] || format;
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Заголовок */}
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-3xl font-bold text-slate-900">
-            Order from {order.parentName} {order.parentSurname}
+            Заказ от {order.parentName} {order.parentSurname}
           </h2>
           <p className="text-slate-600 mt-1">
             {formatDate(order.createdAt)}
@@ -116,7 +102,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         </div>
       </div>
 
-      {/* Order Info */}
+      {/* Информация о заказе */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-slate-50 border-slate-200">
           <CardContent className="pt-6">
@@ -125,9 +111,9 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
                 <Package className="w-5 h-5 text-slate-900" />
               </div>
               <div>
-                <p className="text-sm text-slate-600">Total Items</p>
+                <p className="text-sm text-slate-600">Всего товаров</p>
                 <p className="text-2xl font-bold text-slate-900">
-                  {order.items. reduce((sum, item) => sum + item.quantity, 0)}
+                  {order.items.reduce((sum, item) => sum + item.quantity, 0)}
                 </p>
               </div>
             </div>
@@ -141,7 +127,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
                 <DollarSign className="w-5 h-5 text-slate-900" />
               </div>
               <div>
-                <p className="text-sm text-slate-600">Order Total</p>
+                <p className="text-sm text-slate-600">Сумма заказа</p>
                 <p className="text-2xl font-bold text-slate-900">
                   {formatCurrency(order.totalAmount)}
                 </p>
@@ -157,7 +143,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
                 <Image className="w-5 h-5 text-slate-900" />
               </div>
               <div>
-                <p className="text-sm text-slate-600">Photos</p>
+                <p className="text-sm text-slate-600">Фотографий</p>
                 <p className="text-2xl font-bold text-slate-900">
                   {order.items.length}
                 </p>
@@ -173,7 +159,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
                 <Calendar className="w-5 h-5 text-slate-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-600">Order Date</p>
+                <p className="text-sm text-slate-600">Дата заказа</p>
                 <p className="text-sm font-bold text-slate-900">
                   {new Date(order.createdAt).toLocaleDateString()}
                 </p>
@@ -183,19 +169,18 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         </Card>
       </div>
 
-      {/* Parent Contact Info */}
+      {/* Контактные данные родителя */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Parent Contact Information</CardTitle>
+          <CardTitle className="text-lg">Контактная информация родителя</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           
             {order.parentPhone && (
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                 <Phone className="w-5 h-5 text-slate-500" />
                 <div>
-                  <p className="text-xs text-slate-500">Phone</p>
+                  <p className="text-xs text-slate-500">Телефон</p>
                   <p className="text-sm font-medium text-slate-900">
                     {order.parentPhone}
                   </p>
@@ -206,24 +191,25 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         </CardContent>
       </Card>
 
-      {/* Alert */}
+      {/* Предупреждение */}
       <Alert className="bg-amber-50 border-amber-200">
         <AlertCircle className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800">
-          <strong>Review carefully:</strong> Check if all photos are correct before approving. 
-          If you notice any issues (wrong student, bad crop, etc.), click "Report Issue" above.
+          <strong>Проверьте внимательно:</strong> убедитесь, что все фотографии
+          правильные перед одобрением. Если есть ошибки (не тот ученик, плохая
+          обрезка и т.д.), нажмите «Сообщить о проблеме» выше.
         </AlertDescription>
       </Alert>
 
-      {/* Photos Grid */}
+      {/* Фотографии */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Ordered Photos ({order.items.length})</CardTitle>
+            <CardTitle>Заказанные фотографии ({order.items.length})</CardTitle>
             <Alert className="bg-slate-50 border-slate-200 py-2 px-3">
               <Info className="h-3 w-3 text-slate-900" />
               <AlertDescription className="text-xs text-slate-700 ml-2">
-                Watermarks will be removed on prints
+                Водяные знаки будут удалены при печати
               </AlertDescription>
             </Alert>
           </div>
@@ -236,49 +222,46 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
                 className="border-2 border-slate-200 rounded-lg p-4 hover:border-slate-300 transition-all"
               >
                 <div className="flex items-start gap-4">
-                  {/* Photo Preview */}
                   <div className="w-32 h-32 flex-shrink-0 bg-slate-100 rounded-lg border-2 border-slate-200 flex items-center justify-center overflow-hidden">
                     <Image className="w-12 h-12 text-slate-400" />
-                    {/* In production, display actual photo */}
                   </div>
 
-                  {/* Photo Details */}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h4 className="font-semibold text-slate-900 text-lg">
-                          Photo #{index + 1}
+                          Фото №{index + 1}
                         </h4>
                         <p className="text-sm text-slate-600">
-                          {item.photo.alt || 'Untitled'}
+                          {item.photo.alt || 'Без названия'}
                         </p>
                       </div>
                       <Badge variant="secondary" className="text-xs">
-                        {item.quantity}x {getFormatLabel(item.format)}
+                        {item.quantity} × {getFormatLabel(item.format)}
                       </Badge>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mt-3">
                       <div className="text-sm">
-                        <span className="text-slate-500">Format:</span>
+                        <span className="text-slate-500">Формат:</span>
                         <span className="ml-2 font-medium text-slate-900">
                           {getFormatLabel(item.format)}
                         </span>
                       </div>
                       <div className="text-sm">
-                        <span className="text-slate-500">Quantity:</span>
+                        <span className="text-slate-500">Количество:</span>
                         <span className="ml-2 font-medium text-slate-900">
                           {item.quantity}
                         </span>
                       </div>
                       <div className="text-sm">
-                        <span className="text-slate-500">Price per unit:</span>
+                        <span className="text-slate-500">Цена за штуку:</span>
                         <span className="ml-2 font-medium text-slate-900">
                           {formatCurrency(item.pricePerUnit)}
                         </span>
                       </div>
                       <div className="text-sm">
-                        <span className="text-slate-500">Subtotal:</span>
+                        <span className="text-slate-500">Подытог:</span>
                         <span className="ml-2 font-bold text-slate-900">
                           {formatCurrency(item.pricePerUnit * item.quantity)}
                         </span>
@@ -290,11 +273,10 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
             ))}
           </div>
 
-          {/* Total */}
           <div className="mt-6 pt-4 border-t-2 border-slate-200">
             <div className="flex items-center justify-between">
               <span className="text-lg font-semibold text-slate-900">
-                Order Total: 
+                Итого по заказу:
               </span>
               <span className="text-2xl font-bold text-slate-900">
                 {formatCurrency(order.totalAmount)}
