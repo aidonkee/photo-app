@@ -210,7 +210,7 @@ model OrderItem {
   // Order Details
   format    PhotoFormat
   quantity  Int         @default(1)
-  price     Decimal     @db. Decimal(10, 2)
+  price     Decimal     @db.Decimal(10, 2)
   subtotal  Decimal     @db.Decimal(10, 2)
   
   // Audit
