@@ -49,8 +49,6 @@ export async function submitOrderAction(
             // 🆕 Get pricing
             priceA4: true,
             priceA5: true,
-            priceMagnet: true,
-            priceDigital: true,
           },
         },
       },
@@ -68,8 +66,6 @@ export async function submitOrderAction(
     const schoolPricing = {
       priceA4: classroom.school.priceA4,
       priceA5: classroom.school.priceA5,
-      priceMagnet:  classroom.school.priceMagnet,
-      priceDigital: classroom.school.priceDigital,
     };
 
     // Validate prices server-side with SCHOOL PRICING
@@ -92,7 +88,7 @@ export async function submitOrderAction(
       }
 
       validatedItems.push({
-        photoId: item. photoId,
+        photo: { connect: { id: item.photoId } },
         format: item.format,
         quantity: item.quantity,
         price: expectedPrice,

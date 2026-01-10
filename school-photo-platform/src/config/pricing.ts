@@ -6,30 +6,26 @@
 export enum PhotoFormat {
   A4 = 'A4',
   A5 = 'A5',
-  MAGNET = 'MAGNET',
-  DIGITAL = 'DIGITAL',
+
 }
 
 // Default prices (fallback if school has no custom pricing)
 export const DEFAULT_PRICING = {
   [PhotoFormat.A4]: 1500,
   [PhotoFormat. A5]: 1000,
-  [PhotoFormat.MAGNET]: 2000,
-  [PhotoFormat.DIGITAL]: 500,
+
 } as const;
 
 export const FORMAT_LABELS = {
   [PhotoFormat. A4]: 'Формат A4 (21×29.7 см)',
   [PhotoFormat.A5]: 'Формат A5 (14. 8×21 см)',
-  [PhotoFormat.MAGNET]: 'Фото-магнит',
-  [PhotoFormat.DIGITAL]: 'Цифровая копия',
+  
 } as const;
 
 export const FORMAT_DESCRIPTIONS = {
   [PhotoFormat.A4]: 'Высококачественная печать на премиум фотобумаге',
   [PhotoFormat. A5]: 'Стандартный размер, идеально для рамок',
-  [PhotoFormat. MAGNET]: 'Магнит на холодильник с вашим фото',
-  [PhotoFormat. DIGITAL]: 'Цифровой файл в высоком разрешении',
+  
 } as const;
 
 /**
@@ -38,8 +34,7 @@ export const FORMAT_DESCRIPTIONS = {
 export type SchoolPricing = {
   priceA4: number;
   priceA5: number;
-  priceMagnet: number;
-  priceDigital:  number;
+  
 };
 
 /**
@@ -58,10 +53,7 @@ export function getPrice(
       return schoolPricing.priceA4;
     case PhotoFormat. A5:
       return schoolPricing.priceA5;
-    case PhotoFormat.MAGNET:
-      return schoolPricing.priceMagnet;
-    case PhotoFormat.DIGITAL:
-      return schoolPricing.priceDigital;
+    
     default:
       return DEFAULT_PRICING[format];
   }

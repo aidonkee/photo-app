@@ -25,8 +25,6 @@ export async function getSchoolAndClasses(slug: string) {
         // 🆕 Include pricing
         priceA4: true,
         priceA5: true,
-        priceMagnet: true,
-        priceDigital: true,
         classrooms: {
           where: {
             isLocked: false,
@@ -80,8 +78,8 @@ export async function getClassroomPhotos(classId: string) {
             // 🆕 Include pricing for PhotoModal
             priceA4: true,
             priceA5: true,
-            priceMagnet: true,
-            priceDigital: true,
+           
+           
           },
         },
         photos: {
@@ -155,8 +153,6 @@ export async function submitOrder(
             // 🆕 Get pricing for server-side validation
             priceA4: true,
             priceA5: true,
-            priceMagnet: true,
-            priceDigital: true,
           },
         },
       },
@@ -174,8 +170,7 @@ export async function submitOrder(
     const schoolPricing = {
       priceA4: classroom.school.priceA4,
       priceA5: classroom.school.priceA5,
-      priceMagnet: classroom.school.priceMagnet,
-      priceDigital: classroom.school. priceDigital,
+
     };
 
     // Validate prices server-side with SCHOOL PRICING
@@ -198,7 +193,7 @@ export async function submitOrder(
       }
 
       validatedItems.push({
-        photoId: item.photoId,
+        photo: { connect: { id: item.photoId } },
         format: item.format,
         quantity: item.quantity,
         price: expectedPrice,

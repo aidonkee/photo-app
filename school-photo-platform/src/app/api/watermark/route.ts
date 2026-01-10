@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status:  401 }
+        { status: 401 }
       );
     }
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse. json(
+      return NextResponse.json(
         { error: 'No file provided' },
         { status: 400 }
       );
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Get image metadata
     const metadata = await sharp(buffer).metadata();
     const width = metadata.width || 1500;
-    const height = metadata. height || 1000;
+    const height = metadata.height || 1000;
 
     // Create watermark SVG
     const watermarkSvg = `
@@ -69,14 +69,14 @@ export async function POST(request: NextRequest) {
       .jpeg({ quality: 85 })
       .toBuffer();
 
-    // Return watermarked image
-    return new NextResponse(watermarkedBuffer, {
+    // ✅ ИСПРАВЛЕНИЕ: Оборачиваем Buffer в Blob
+    return new NextResponse(new Blob([watermarkedBuffer as any]), {
       headers: {
         'Content-Type': 'image/jpeg',
         'Content-Disposition': `inline; filename="watermarked_${file.name}"`,
       },
     });
-  } catch (error:  any) {
+  } catch (error: any) {
     console.error('Watermark API error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to process image' },

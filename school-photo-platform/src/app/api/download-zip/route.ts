@@ -94,14 +94,13 @@ export async function POST(request: NextRequest) {
         // --- ВАЖНОЕ ИСПРАВЛЕНИЕ: СКАЧИВАЕМ ЧЕРЕЗ SUPABASE SDK ---
         await Promise.all(photos.map(async (photo: any, photoIndex: number) => {
           try {
-            // Очищаем путь. Если в БД лежит полная ссылка, вырезаем из неё путь
-            // Пример: https://asd.supabase.co/.../public/school-photos/originals/1.jpg -> originals/1.jpg
+            // Очищаем путь
             let storagePath = photo.originalUrl;
             if (storagePath.includes('school-photos/')) {
                 storagePath = storagePath.split('school-photos/')[1];
             }
 
-            // Скачиваем файл через Admin Client (работает даже с приватными бакетами)
+            // Скачиваем файл через Admin Client
             const { data, error } = await supabaseAdmin
                 .storage
                 .from('school-photos')
@@ -123,15 +122,15 @@ export async function POST(request: NextRequest) {
 
           } catch (err: any) {
             console.error(`🔥 Ошибка скачивания фото ID ${photo.id}:`, err);
-            // Записываем ошибку в текстовый файл внутри ZIP, чтобы админ видел
             orderFolder.file(`ERROR_photo_${photoIndex + 1}.txt`, `Путь: ${photo.originalUrl}\nОшибка: ${err.message}`);
           }
         }));
       }
     }
 
+    // ✅ ИСПРАВЛЕНИЕ: type: 'blob'
     const zipBlob = await zip.generateAsync({
-      type: 'nodebuffer',
+      type: 'blob',
       compression: 'DEFLATE',
       compressionOptions: { level: 6 },
     });
