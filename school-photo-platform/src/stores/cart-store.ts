@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { PhotoFormat, getPrice } from '@/config/pricing';
+import { PhotoFormat } from '@/config/pricing';
 
 export type CartItem = {
   photoId: string;
@@ -8,12 +8,12 @@ export type CartItem = {
   photoAlt: string | null;
   format: PhotoFormat;
   quantity: number;
-  pricePerUnit: number;
+  pricePerUnit: number; // Stored at time of adding
 };
 
 type CartStore = {
   items: CartItem[];
-  addItem: (item:  Omit<CartItem, 'pricePerUnit'>) => void;
+  addItem: (item:  Omit<CartItem, 'pricePerUnit'> & { pricePerUnit?:  number }) => void;
   removeItem: (photoId: string, format: PhotoFormat) => void;
   updateQuantity: (photoId: string, format: PhotoFormat, quantity: number) => void;
   clearCart: () => void;
@@ -35,24 +35,23 @@ export const useCartStore = create<CartStore>()(
           (i) => getItemKey(i.photoId, i.format) === key
         );
 
-        const pricePerUnit = getPrice(item.format);
+        // Price will be passed from PhotoModal (already calculated with school pricing)
+        const pricePerUnit = item.pricePerUnit || 0;
 
         if (existingItemIndex >= 0) {
-          // Update existing item quantity
           set((state) => ({
-            items: state.items. map((i, index) =>
+            items: state.items.map((i, index) =>
               index === existingItemIndex
-                ? { ...i, quantity: i.quantity + item.quantity }
+                ? { ... i, quantity: i.quantity + item.quantity }
                 : i
             ),
           }));
         } else {
-          // Add new item
           set((state) => ({
             items: [
               ...state.items,
               {
-                ... item,
+                ...item,
                 pricePerUnit,
               },
             ],
@@ -63,7 +62,7 @@ export const useCartStore = create<CartStore>()(
       removeItem: (photoId, format) => {
         const key = getItemKey(photoId, format);
         set((state) => ({
-          items: state.items.filter((i) => getItemKey(i.photoId, i.format) !== key),
+          items: state. items.filter((i) => getItemKey(i.photoId, i.format) !== key),
         }));
       },
 
@@ -85,7 +84,7 @@ export const useCartStore = create<CartStore>()(
 
       getTotalPrice: () => {
         return get().items.reduce(
-          (total, item) => total + item.pricePerUnit * item.quantity,
+          (total, item) => total + item.pricePerUnit * item. quantity,
           0
         );
       },

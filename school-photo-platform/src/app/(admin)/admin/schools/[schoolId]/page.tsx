@@ -4,7 +4,7 @@ import { getSchoolById } from '@/actions/admin/school-actions';
 import { getClassrooms } from '@/actions/admin/classroom-actions';
 import ClassroomForm from '@/components/admin/ClassroomForm';
 import SchoolLinkSection from '@/components/admin/SchoolLinkSection'; 
-import { KeyRound } from 'lucide-react';
+import { KeyRound, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,8 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
   const { schoolId } = await params;
   const school = await getSchoolById(schoolId);
   const classrooms = await getClassrooms(schoolId);
-  const totalPhotos = classrooms.reduce((acc, curr) => acc + (curr._count?.photos || 0), 0);
+  const totalPhotos = classrooms.reduce((acc, curr) => acc + (curr._count?. photos || 0), 0);
+  const totalOrders = classrooms.reduce((acc, curr) => acc + (curr._count?. orders || 0), 0);
 
   // Функция маскировки логина
   const maskLogin = (login: string) => {
@@ -40,7 +41,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 py-6">
-      {/* Header: Компактный и строгий */}
+      {/* Header:  Компактный и строгий */}
       <div className="border-b border-slate-200 pb-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
@@ -49,10 +50,10 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">
-                {school.name}
+                {school. name}
               </h1>
               <div className="flex items-center gap-2 mt-2">
-                <code className="text-xs font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                <code className="text-xs font-mono text-slate-600 bg-slate-100 px-1. 5 py-0.5 rounded border border-slate-200">
                   {school.slug}
                 </code>
                 <span className="text-slate-300">•</span>
@@ -64,6 +65,19 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* 🆕 КНОПКА ЗАКАЗОВ */}
+            <Link href={`/admin/schools/${schoolId}/orders`}>
+              <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-700 border-slate-300 hover:border-slate-900 hover:text-slate-900">
+                <ShoppingCart className="w-3. 5 h-3.5" />
+                <span className="hidden sm:inline">Заказы</span>
+                {totalOrders > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1. 5 text-[10px] bg-slate-900 text-white">
+                    {totalOrders}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
             <Link href={`/admin/schools/${schoolId}/teachers`}>
               <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-700 border-slate-300 hover:border-slate-900 hover:text-slate-900">
                 <KeyRound className="w-3.5 h-3.5" />
@@ -74,24 +88,22 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
             <Link href={`/admin/schools/${schoolId}/edit`}>
               <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-700 border-slate-300 hover:border-slate-900 hover:text-slate-900">
                 <Settings className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Настройки</span>
+                <span className="hidden sm: inline">Настройки</span>
               </Button>
             </Link>
             
-            {/* Форма создания класса (кнопка внутри компонента) */}
             <ClassroomForm schoolId={schoolId} />
           </div>
         </div>
       </div>
       
-      {/* Секция ссылки (предполагаем, что она внутри тоже стилизована) */}
       <SchoolLinkSection slug={school.slug} />
 
-      {/* Stats: Очень компактные карточки */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Stats:  Очень компактные карточки */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <StatCard 
           label="Всего классов" 
-          value={school._count.classrooms} 
+          value={school._count. classrooms} 
           icon={<Users className="w-4 h-4" />} 
         />
         <StatCard 
@@ -99,21 +111,27 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
           value={totalPhotos} 
           icon={<Image className="w-4 h-4" />} 
         />
+        {/* 🆕 СТАТИСТИКА ЗАКАЗОВ */}
+        <StatCard 
+          label="Всего заказов" 
+          value={totalOrders} 
+          icon={<ShoppingCart className="w-4 h-4" />} 
+        />
         
         <Card className="border border-slate-200 bg-white shadow-none">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0. 5">
                 Статус школы
               </p>
               <div className="flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${school.isActive ? 'bg-slate-900' : 'bg-slate-300'}`} />
+                <div className={`w-1. 5 h-1.5 rounded-full ${school. isActive ? 'bg-slate-900' : 'bg-slate-300'}`} />
                 <span className="text-lg font-semibold text-slate-900 leading-none">
                   {school.isActive ? 'Активна' : 'Неактивна'}
                 </span>
               </div>
             </div>
-            {school.isActive ? (
+            {school.isActive ?  (
               <Unlock className="w-4 h-4 text-slate-900" />
             ) : (
               <Lock className="w-4 h-4 text-slate-300" />
@@ -138,7 +156,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
                 Классы не созданы
               </h3>
               <p className="text-xs text-slate-500 mb-4 max-w-xs mx-auto">
-                Добавьте первый класс, чтобы начать загрузку фотографий и генерацию доступов.
+                Добавьте первый класс, чтобы начать загрузку фотографий и генерацию доступов. 
               </p>
               <div className="inline-block">
                 <ClassroomForm schoolId={schoolId} />
@@ -146,7 +164,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md: grid-cols-2 lg: grid-cols-3 gap-4">
             {classrooms.map((classroom) => (
               <Link 
                 key={classroom.id} 
@@ -161,7 +179,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
                       </CardTitle>
                       {classroom.isLocked && (
                         <Badge variant="outline" className="border-slate-900 text-slate-900 text-[10px] h-5 px-1.5 rounded-sm font-normal">
-                          <Lock className="w-2.5 h-2.5 mr-1" />
+                          <Lock className="w-2. 5 h-2.5 mr-1" />
                           Закрыт
                         </Badge>
                       )}
@@ -177,7 +195,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
                       </div>
                       <div className="w-px h-3 bg-slate-200" />
                       <div className="flex items-center gap-1.5 text-slate-600">
-                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <ShoppingCart className="w-3.5 h-3.5 text-slate-400" />
                         <span className="font-medium">{classroom._count.orders}</span>
                       </div>
                     </div>
@@ -189,8 +207,8 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
                           <p className="text-[9px] uppercase tracking-wider text-slate-400 mb-1">
                             Логин учителя
                           </p>
-                          <div className="flex items-center gap-1.5">
-                            {classroom.isEditAllowed ? (
+                          <div className="flex items-center gap-1. 5">
+                            {classroom.isEditAllowed ?  (
                               <Eye className="w-3 h-3 text-slate-700 flex-shrink-0" />
                             ) : (
                               <EyeOff className="w-3 h-3 text-slate-300 flex-shrink-0" />
@@ -203,7 +221,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
                         
                         {classroom.isEditAllowed && (
                           <Badge variant="secondary" className="text-[9px] h-5 px-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 self-end mb-0.5">
-                            Ред. вкл
+                            Ред.  вкл
                           </Badge>
                         )}
                       </div>
@@ -226,12 +244,12 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
   );
 }
 
-// Вспомогательный компонент для карточки статистики (Refined)
+// Вспомогательный компонент для карточки статистики
 function StatCard({ 
   label, 
   value, 
   icon 
-}: { 
+}:  { 
   label: string; 
   value: number; 
   icon: React.ReactNode;

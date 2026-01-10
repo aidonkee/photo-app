@@ -36,7 +36,7 @@ export default function ApproveOrderButton({ orderId, classId }: { orderId: stri
       {loading ? 'Processing...' : (
         <>
           <CheckCircle className="w-5 h-5 mr-2" />
-          Approve Order & Confirm Payment
+          Подтвердить заказ и оплату
         </>
       )}
     </Button>

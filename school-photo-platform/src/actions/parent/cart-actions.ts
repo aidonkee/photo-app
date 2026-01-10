@@ -5,10 +5,8 @@ import { PhotoFormat, getPrice } from '@/config/pricing';
 import { revalidatePath } from 'next/cache';
 
 /**
- * Get school and its classrooms by slug
+ * Get school and its classrooms by slug (WITH PRICING)
  */
-// Update the getSchoolAndClasses function to include isKazakhEnabled
-
 export async function getSchoolAndClasses(slug: string) {
   try {
     const school = await prisma.school.findUnique({
@@ -17,7 +15,18 @@ export async function getSchoolAndClasses(slug: string) {
         isActive: true,
         publicLinkEnabled: true,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        primaryColor:  true,
+        logoUrl: true,
+        isKazakhEnabled: true,
+        // 🆕 Include pricing
+        priceA4: true,
+        priceA5: true,
+        priceMagnet: true,
+        priceDigital: true,
         classrooms: {
           where: {
             isLocked: false,
@@ -32,7 +41,7 @@ export async function getSchoolAndClasses(slug: string) {
             },
           },
           orderBy: {
-            name:  'asc',
+            name: 'asc',
           },
         },
       },
@@ -42,15 +51,7 @@ export async function getSchoolAndClasses(slug: string) {
       return null;
     }
 
-    return {
-      id: school.id,
-      name: school.name,
-      slug: school.slug,
-      primaryColor: school.primaryColor,
-      logoUrl: school.logoUrl,
-      isKazakhEnabled: school.isKazakhEnabled, // NEW
-      classrooms: school.classrooms,
-    };
+    return school;
   } catch (error) {
     console.error('Error fetching school:', error);
     throw new Error('Failed to load school information');
@@ -58,13 +59,13 @@ export async function getSchoolAndClasses(slug: string) {
 }
 
 /**
- * Get classroom photos
+ * Get classroom photos (WITH SCHOOL PRICING)
  */
-export async function getClassroomPhotos(classId:  string) {
+export async function getClassroomPhotos(classId: string) {
   try {
     const classroom = await prisma.classroom.findUnique({
       where: {
-        id: classId,
+        id:  classId,
         isLocked: false,
       },
       include: {
@@ -76,6 +77,11 @@ export async function getClassroomPhotos(classId:  string) {
             primaryColor: true,
             isActive: true,
             publicLinkEnabled: true,
+            // 🆕 Include pricing for PhotoModal
+            priceA4: true,
+            priceA5: true,
+            priceMagnet: true,
+            priceDigital: true,
           },
         },
         photos: {
@@ -98,12 +104,7 @@ export async function getClassroomPhotos(classId:  string) {
       return null;
     }
 
-    return {
-      id: classroom.id,
-      name: classroom.name,
-      school: classroom.school,
-      photos: classroom.photos,
-    };
+    return classroom;
   } catch (error) {
     console.error('Error fetching classroom photos:', error);
     throw new Error('Failed to load photos');
@@ -111,121 +112,132 @@ export async function getClassroomPhotos(classId:  string) {
 }
 
 /**
- * Submit order
+ * Submit order (WITH DYNAMIC PRICING)
  */
-// ... (начало файла без изменений)
-
 export async function submitOrder(
-    classId: string,
-    parentDetails: {
-      name: string;
-      surname: string;
-      email: string; // Мы принимаем email для валидации, но не сохраняем в Order (согласно схеме)
-      phone: string;
-    },
-    cartItems: Array<{
-      photoId: string;
-      format: PhotoFormat;
-      quantity: number;
-    }>
-  ): Promise<{ success?: boolean; orderId?: string; error?: string }> {
-    
-    // Validation
-    if (!parentDetails.name || !parentDetails.surname) {
-      return { error: 'Name and surname are required' };
-    }
+  classId: string,
+  parentDetails: {
+    name: string;
+    surname: string;
+    email: string;
+    phone: string;
+  },
+  cartItems: Array<{
+    photoId: string;
+    format: PhotoFormat;
+    quantity:  number;
+  }>
+): Promise<{ success?:  boolean; orderId?: string; error?: string }> {
   
-    // Email используем только для проверки на клиенте или отправки чека, 
-    // но в БД Order его нет, поэтому валидацию оставляем, но сохранять не будем.
-    if (parentDetails.email && !parentDetails.email.includes('@')) {
-      return { error: 'Please enter a valid email address' };
-    }
-  
-    if (cartItems.length === 0) {
-      return { error: 'Cart is empty' };
-    }
-  
-    try {
-      // Verify classroom exists and is not locked
-      const classroom = await prisma.classroom.findUnique({
-        where: { id: classId },
-        include: {
-          school: {
-            select: {
-              isActive: true,
-              publicLinkEnabled: true,
-            },
-          },
-        },
-      });
-  
-      if (!classroom || classroom.isLocked) {
-        return { error: 'This classroom is no longer accepting orders' };
-      }
-  
-      if (!classroom.school.isActive || !classroom.school.publicLinkEnabled) {
-        return { error: 'School storefront is currently unavailable' };
-      }
-  
-      // Validate prices server-side
-      let totalAmount = 0;
-      const validatedItems = [];
-  
-      for (const item of cartItems) {
-        const expectedPrice = getPrice(item.format);
-        const itemTotal = expectedPrice * item.quantity;
-        totalAmount += itemTotal;
-  
-        // Verify photo exists
-        const photo = await prisma.photo.findUnique({
-          where: { id: item.photoId },
-        });
-  
-        if (!photo || photo.classId !== classId) {
-          return { error: 'Invalid photo in cart' };
-        }
-  
-        // Собираем данные для OrderItem согласно схеме
-        validatedItems.push({
-          photoId: item.photoId,
-          format: item.format,
-          quantity: item.quantity,
-          price: expectedPrice,      // В схеме поле называется 'price'
-          subtotal: itemTotal,       // В схеме поле называется 'subtotal'
-          photoUrl: photo.watermarkedUrl // В схеме есть поле 'photoUrl' (snapshot)
-        });
-      }
-  
-      // Create order
-      const order = await prisma.order.create({
-        data: {
-          classId,
-          parentName: parentDetails.name,
-          parentSurname: parentDetails.surname,
-          // parentEmail: parentDetails.email, // УДАЛЕНО: этого поля нет в модели Order
-          parentPhone: parentDetails.phone || null,
-          status: 'PENDING',
-          totalSum: totalAmount, // ИСПРАВЛЕНО: в схеме поле называется totalSum
-          items: {
-            create: validatedItems,
-          },
-        },
-        include: {
-          items: true,
-        },
-      });
-  
-      // Revalidate pages (опционально, если на странице класса меняется статус)
-      // revalidatePath(`/s/${classroom.school}`); 
-  
-      return {
-        success: true,
-        orderId: order.id,
-      };
-    } catch (error: any) {
-      console.error('Error submitting order:', error);
-      return {
-        error: error.message || 'Failed to submit order. Please try again.',
-      };
-    }
+  // Validation
+  if (!parentDetails.name || !parentDetails. surname) {
+    return { error: 'Name and surname are required' };
   }
+
+  if (parentDetails.email && ! parentDetails.email.includes('@')) {
+    return { error: 'Please enter a valid email address' };
+  }
+
+  if (cartItems.length === 0) {
+    return { error: 'Cart is empty' };
+  }
+
+  try {
+    // Verify classroom exists and GET SCHOOL PRICING
+    const classroom = await prisma.classroom.findUnique({
+      where: { id: classId },
+      include: {
+        school: {
+          select: {
+            id:  true,
+            isActive: true,
+            publicLinkEnabled: true,
+            // 🆕 Get pricing for server-side validation
+            priceA4: true,
+            priceA5: true,
+            priceMagnet: true,
+            priceDigital: true,
+          },
+        },
+      },
+    });
+
+    if (!classroom || classroom.isLocked) {
+      return { error: 'This classroom is no longer accepting orders' };
+    }
+
+    if (!classroom.school.isActive || !classroom.school.publicLinkEnabled) {
+      return { error: 'School storefront is currently unavailable' };
+    }
+
+    // Create schoolPricing object for getPrice function
+    const schoolPricing = {
+      priceA4: classroom.school.priceA4,
+      priceA5: classroom.school.priceA5,
+      priceMagnet: classroom.school.priceMagnet,
+      priceDigital: classroom.school. priceDigital,
+    };
+
+    // Validate prices server-side with SCHOOL PRICING
+    let totalAmount = 0;
+    const validatedItems = [];
+
+    for (const item of cartItems) {
+      // 🆕 Use school-specific pricing
+      const expectedPrice = getPrice(item.format, schoolPricing);
+      const itemTotal = expectedPrice * item.quantity;
+      totalAmount += itemTotal;
+
+      // Verify photo exists
+      const photo = await prisma.photo.findUnique({
+        where: { id: item.photoId },
+      });
+
+      if (!photo || photo.classId !== classId) {
+        return { error: 'Invalid photo in cart' };
+      }
+
+      validatedItems.push({
+        photoId: item.photoId,
+        format: item.format,
+        quantity: item.quantity,
+        price: expectedPrice,
+        subtotal: itemTotal,
+        photoUrl: photo.watermarkedUrl,
+      });
+    }
+
+    // Create order
+    const order = await prisma.order.create({
+      data: {
+        classId,
+        parentName: parentDetails.name,
+        parentSurname: parentDetails. surname,
+        parentPhone: parentDetails.phone || null,
+        status: 'PENDING',
+        totalSum: totalAmount,
+        items: {
+          create: validatedItems,
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    // TODO: Send confirmation email to parent
+    // await sendOrderConfirmationEmail(parentDetails.email, order);
+
+    revalidatePath(`/s/${classroom.school.id}`);
+
+    return {
+      success: true,
+      orderId: order. id,
+    };
+  } catch (error:  any) {
+    console.error('Error submitting order:', error);
+    return {
+      error: error.message || 'Failed to submit order. Please try again.',
+    };
+  }
+}

@@ -33,11 +33,11 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid - Minimalist */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Всего школ" 
-          value={stats.totalSchools} 
+          value={stats. totalSchools} 
           subtitle="Активные аккаунты"
           icon={<Building2 className="w-5 h-5" />}
         />
@@ -61,7 +61,7 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {/* Quick Actions - Monochrome & Strict */}
+      {/* Quick Actions */}
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-slate-900">Быстрые действия</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -74,18 +74,14 @@ export default async function AdminDashboardPage() {
             linkText="Перейти к списку"
           />
 
-          {/* Примечание: Если у тебя SchoolForm это модалка, здесь логику оставил как Link, 
-              но по-хорошему тут должен быть вызов модалки. Оставил Link чтобы не ломать логику. */}
-          <div className="relative group block h-full">
-            {/* Здесь можно использовать тот компонент SchoolForm если он поддерживает триггер */}
-             <ActionCard 
-              href="#" // Здесь должен быть триггер модалки, но пока оставим заглушку для стиля
-              icon={<Plus className="w-6 h-6" />}
-              title="Создать школу"
-              description="Добавить новое учебное заведение"
-              linkText="Добавить"
-            />
-          </div>
+          {/* 🆕 ЗАКАЗЫ В БЫСТРЫХ ДЕЙСТВИЯХ */}
+          <ActionCard 
+            href="/admin/schools"
+            icon={<ShoppingCart className="w-6 h-6" />}
+            title="Заказы"
+            description="Просмотр и управление заказами родителей"
+            linkText="Посмотреть заказы"
+          />
 
           <ActionCard 
             href="/admin/requests"
@@ -101,8 +97,7 @@ export default async function AdminDashboardPage() {
   );
 }
 
-// --- Вспомогательные компоненты для чистоты кода ---
-
+// Вспомогательные компоненты
 function StatCard({ title, value, subtitle, icon }: { title: string, value: number, subtitle: string, icon: React.ReactNode }) {
   return (
     <Card className="bg-white border border-slate-200 shadow-none rounded-lg hover:border-slate-400 transition-colors duration-300">

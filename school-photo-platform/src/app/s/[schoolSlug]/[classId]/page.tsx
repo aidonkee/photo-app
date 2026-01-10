@@ -4,7 +4,7 @@ import React, { useState, use } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/stores/cart-store';
 import { getClassroomPhotos } from '@/actions/parent/cart-actions';
-import ClassroomGrid from '@/components/parent/ClassroomGrid';
+import PhotoGallery from '@/components/parent/PhotoGallery';
 import CartDrawer from '@/components/parent/CartDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,14 +21,14 @@ type PageProps = {
 export default function ClassroomGalleryPage({ params }: PageProps) {
   const { schoolSlug, classId } = use(params);
   const [classroom, setClassroom] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React. useState(true);
   const [cartOpen, setCartOpen] = useState(false);
   const getTotalItems = useCartStore((state) => state.getTotalItems());
 
   React.useEffect(() => {
     async function loadData() {
       const data = await getClassroomPhotos(classId);
-      if (!data) {
+      if (! data) {
         notFound();
       }
       setClassroom(data);
@@ -41,8 +41,8 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">Загрузка фотографий...</p>
+          <div className="h-12 w-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-600">Загрузка фотографий... </p>
         </div>
       </div>
     );
@@ -52,15 +52,18 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
     notFound();
   }
 
+  // 🆕 Extract school pricing
+  const schoolPricing = {
+    priceA4: classroom.school.priceA4,
+    priceA5: classroom.school.priceA5,
+    priceMagnet: classroom. school.priceMagnet,
+    priceDigital: classroom.school.priceDigital,
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header
-        className="py-8 px-4 border-b border-slate-200"
-        style={{
-          background: `linear-gradient(135deg, ${classroom.school.primaryColor}15 0%, ${classroom.school.primaryColor}30 100%)`,
-        }}
-      >
+      <header className="py-8 px-4 border-b border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto">
           <Link href={`/s/${schoolSlug}`}>
             <Button variant="ghost" className="gap-2 mb-4">
@@ -70,12 +73,12 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-slate-900">
+              <h1 className="text-3xl font-bold text-slate-900">
                 {classroom.name}
               </h1>
-              <p className="text-lg text-slate-700 mt-2">
+              <p className="text-lg text-slate-600 mt-2">
                 {classroom.photos.length} фотография
-                {classroom.photos.length !== 1 ? 'и' : ''} доступно
+                {classroom.photos.length !== 1 ?  'и' : ''} доступно
               </p>
             </div>
           </div>
@@ -84,7 +87,8 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
 
       {/* Gallery */}
       <main className="max-w-7xl mx-auto px-4 py-12">
-        <ClassroomGrid photos={classroom.photos} />
+        {/* 🆕 Pass schoolPricing to PhotoGallery */}
+        <PhotoGallery photos={classroom.photos} schoolPricing={schoolPricing} />
       </main>
 
       {/* Floating Cart Button */}

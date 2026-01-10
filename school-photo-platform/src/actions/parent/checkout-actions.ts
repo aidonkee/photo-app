@@ -8,7 +8,7 @@ type ParentDetails = {
   name: string;
   surname: string;
   email: string;
-  phone?: string;
+  phone?:  string;
 };
 
 type CartItem = {
@@ -22,12 +22,13 @@ export async function submitOrderAction(
   parentDetails: ParentDetails,
   cartItems: CartItem[]
 ): Promise<{ success?: boolean; orderId?: string; error?: string }> {
+  
   // Validation
-  if (!parentDetails.name || !parentDetails.surname || !parentDetails.email) {
+  if (!parentDetails.name || ! parentDetails.surname || !parentDetails.email) {
     return { error: 'Name, surname, and email are required' };
   }
 
-  if (!parentDetails.email.includes('@')) {
+  if (! parentDetails.email.includes('@')) {
     return { error: 'Please enter a valid email address' };
   }
 
@@ -36,21 +37,26 @@ export async function submitOrderAction(
   }
 
   try {
-    // Verify classroom exists and is active
+    // Verify classroom exists and GET SCHOOL PRICING
     const classroom = await prisma.classroom.findUnique({
       where: { id: classId },
       include: {
-        school: {
+        school:  {
           select: {
             id: true,
             isActive: true,
             publicLinkEnabled: true,
+            // 🆕 Get pricing
+            priceA4: true,
+            priceA5: true,
+            priceMagnet: true,
+            priceDigital: true,
           },
         },
       },
     });
 
-    if (!classroom || classroom.isLocked) {
+    if (!classroom || classroom. isLocked) {
       return { error: 'This classroom is no longer accepting orders' };
     }
 
@@ -58,13 +64,21 @@ export async function submitOrderAction(
       return { error: 'School storefront is currently unavailable' };
     }
 
-    // Validate prices server-side
+    // Create schoolPricing object
+    const schoolPricing = {
+      priceA4: classroom.school.priceA4,
+      priceA5: classroom.school.priceA5,
+      priceMagnet:  classroom.school.priceMagnet,
+      priceDigital: classroom.school.priceDigital,
+    };
+
+    // Validate prices server-side with SCHOOL PRICING
     let totalAmount = 0;
     const validatedItems = [];
 
     for (const item of cartItems) {
-      // Get server-side price (prevent client manipulation)
-      const expectedPrice = getPrice(item.format);
+      // 🆕 Use school-specific pricing
+      const expectedPrice = getPrice(item.format, schoolPricing);
       const itemTotal = expectedPrice * item.quantity;
       totalAmount += itemTotal;
 
@@ -77,14 +91,13 @@ export async function submitOrderAction(
         return { error: 'Invalid photo in cart' };
       }
 
-      // Исправленная структура для OrderItem
       validatedItems.push({
-        photoId: item.photoId,
+        photoId: item. photoId,
         format: item.format,
         quantity: item.quantity,
-        price: expectedPrice,      // В схеме это поле называется price
-        subtotal: itemTotal,       // В схеме обязательно поле subtotal
-        photoUrl: photo.watermarkedUrl // В схеме обязательно поле photoUrl (snapshot)
+        price: expectedPrice,
+        subtotal: itemTotal,
+        photoUrl: photo.watermarkedUrl,
       });
     }
 
@@ -93,11 +106,10 @@ export async function submitOrderAction(
       data: {
         classId,
         parentName: parentDetails.name,
-        parentSurname: parentDetails.surname,
-        // parentEmail: parentDetails.email, // УДАЛЕНО: Этого поля нет в модели Order в schema.prisma
+        parentSurname:  parentDetails.surname,
         parentPhone: parentDetails.phone || null,
         status: 'PENDING',
-        totalSum: totalAmount, // ИСПРАВЛЕНО: totalAmount -> totalSum
+        totalSum: totalAmount,
         items: {
           create: validatedItems,
         },
@@ -107,10 +119,9 @@ export async function submitOrderAction(
       },
     });
 
-    // TODO: Send confirmation email to parent (using parentDetails.email)
+    // TODO: Send confirmation email
     // await sendOrderConfirmationEmail(parentDetails.email, order);
 
-    // Revalidate school page
     revalidatePath(`/s/${classroom.school.id}`);
 
     return {

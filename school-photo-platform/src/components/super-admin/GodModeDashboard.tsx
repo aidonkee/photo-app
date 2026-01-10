@@ -29,44 +29,44 @@ type GodModeDashboardProps = {
 
 export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'KZT',
     }).format(amount);
   };
 
   const statsCards = [
     {
-      title: 'Total Revenue',
+      title: 'Общий доход',
       value: formatCurrency(stats.totalRevenue),
-      description: 'From all completed orders',
+      description: 'С завершенных заказов',
       icon: DollarSign,
       color: 'text-slate-900',
       bgColor: 'bg-slate-50',
       iconBgColor: 'bg-slate-100',
     },
     {
-      title: 'Photographers',
-      value: stats.totalAdmins. toString(),
-      description: 'Active admin accounts',
+      title: 'Фотографы',
+      value: stats.totalAdmins.toString(),
+      description: 'Активные аккаунты администраторов',
       icon: Users,
       color: 'text-slate-900',
       bgColor:  'bg-slate-50',
       iconBgColor: 'bg-slate-100',
     },
     {
-      title: 'Schools',
+      title: 'Школы',
       value: stats.totalSchools.toString(),
-      description: 'Registered schools',
+      description: 'Зарегистрированные школы',
       icon: Building2,
       color: 'text-slate-900',
       bgColor: 'bg-slate-50',
       iconBgColor: 'bg-slate-100',
     },
     {
-      title: 'Total Orders',
+      title: 'Всего заказов',
       value: stats.totalOrders.toString(),
-      description: 'All time orders',
+      description: 'За все время',
       icon: ShoppingCart,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
@@ -80,11 +80,11 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-3">
-            Platform Overview
+            Обзор платформы
             <TrendingUp className="w-8 h-8 text-slate-900" />
           </h1>
           <p className="text-slate-600 mt-2">
-            Monitor your entire platform performance and metrics
+            Следите за производительностью и метриками всей платформы
           </p>
         </div>
         
@@ -92,7 +92,7 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
         <Link href="/admin/dashboard">
           <Button variant="outline" className="gap-2 border-slate-300 text-slate-900 hover:bg-slate-50">
             <Camera className="w-4 h-4" />
-            Switch to Photographer Mode
+            Переключиться в режим фотографа
             <ArrowRight className="w-4 h-4" />
           </Button>
         </Link>
@@ -130,10 +130,10 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-slate-900" />
-            <CardTitle className="text-xl text-slate-900">Quick Actions</CardTitle>
+            <CardTitle className="text-xl text-slate-900">Быстрые действия</CardTitle>
           </div>
           <p className="text-sm text-slate-800">
-            Manage your own photography business alongside platform administration
+            Управляйте своим бизнесом фотографии вместе с администрированием платформы
           </p>
         </CardHeader>
         <CardContent>
@@ -145,13 +145,13 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
                   <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition-colors">
                     <Plus className="w-6 h-6 text-slate-900" />
                   </div>
-                  <h3 className="font-semibold text-slate-900">Create New School</h3>
+                  <h3 className="font-semibold text-slate-900">Создать новую школу</h3>
                 </div>
                 <p className="text-sm text-slate-600">
-                  Add a new school to your photography portfolio
+                  Добавьте новую школу в свое портфолио
                 </p>
                 <div className="mt-4 flex items-center text-slate-900 font-medium text-sm group-hover:gap-2 transition-all">
-                  Get Started
+                  Начать
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -164,13 +164,13 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
                   <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-slate-200 transition-colors">
                     <Camera className="w-6 h-6 text-slate-900" />
                   </div>
-                  <h3 className="font-semibold text-slate-900">Photographer Workspace</h3>
+                  <h3 className="font-semibold text-slate-900">Рабочая область фотографа</h3>
                 </div>
                 <p className="text-sm text-slate-600">
-                  Manage your schools, photos, and orders
+                  Управляйте школами, фотографиями и заказами
                 </p>
                 <div className="mt-4 flex items-center text-slate-900 font-medium text-sm group-hover:gap-2 transition-all">
-                  Open Dashboard
+                  Открыть панель
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -183,13 +183,13 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
                   <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                     <Building2 className="w-6 h-6 text-slate-900" />
                   </div>
-                  <h3 className="font-semibold text-slate-900">My Schools</h3>
+                  <h3 className="font-semibold text-slate-900">Мои школы</h3>
                 </div>
                 <p className="text-sm text-slate-600">
-                  View and manage all your registered schools
+                  Просматривайте и управляйте всеми зарегистрированными школами
                 </p>
                 <div className="mt-4 flex items-center text-slate-900 font-medium text-sm group-hover:gap-2 transition-all">
-                  View All
+                  Просмотреть все
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -201,28 +201,28 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
       {/* Platform Insights */}
       <Card className="border-slate-200 shadow-md">
         <CardHeader>
-          <CardTitle className="text-xl">Platform Insights</CardTitle>
+          <CardTitle className="text-xl">Аналитика платформы</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
             <div>
-              <p className="font-medium text-slate-900">Average Revenue per School</p>
-              <p className="text-sm text-slate-600">Based on completed orders</p>
+              <p className="font-medium text-slate-900">Средний доход на школу</p>
+              <p className="text-sm text-slate-600">На основе завершенных заказов</p>
             </div>
             <div className="text-2xl font-bold text-slate-900">
               {stats.totalSchools > 0
                 ? formatCurrency(stats.totalRevenue / stats.totalSchools)
-                : '$0.00'}
+                : '₸0.00'}
             </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
             <div>
-              <p className="font-medium text-slate-900">Schools per Photographer</p>
-              <p className="text-sm text-slate-600">Average distribution</p>
+              <p className="font-medium text-slate-900">Школ на фотографа</p>
+              <p className="text-sm text-slate-600">Среднее распределение</p>
             </div>
             <div className="text-2xl font-bold text-slate-900">
-              {stats. totalAdmins > 0
+              {stats.totalAdmins > 0
                 ? (stats.totalSchools / stats.totalAdmins).toFixed(1)
                 : '0.0'}
             </div>
@@ -230,13 +230,13 @@ export default function GodModeDashboard({ stats }: GodModeDashboardProps) {
 
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
             <div>
-              <p className="font-medium text-slate-900">Average Order Value</p>
-              <p className="text-sm text-slate-600">Per completed transaction</p>
+              <p className="font-medium text-slate-900">Средняя стоимость заказа</p>
+              <p className="text-sm text-slate-600">За завершенную транзакцию</p>
             </div>
             <div className="text-2xl font-bold text-slate-900">
               {stats.totalOrders > 0
                 ? formatCurrency(stats.totalRevenue / stats.totalOrders)
-                : '$0.00'}
+                : '₸0.00'}
             </div>
           </div>
         </CardContent>

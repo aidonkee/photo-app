@@ -19,13 +19,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShoppingCart, Plus, Minus, CheckCircle2, X } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import {
   PhotoFormat,
   FORMAT_LABELS,
   FORMAT_DESCRIPTIONS,
   formatPrice,
   getPrice,
+  SchoolPricing,
 } from '@/config/pricing';
 
 type PhotoModalProps = {
@@ -36,19 +37,23 @@ type PhotoModalProps = {
     watermarkedUrl: string;
     alt: string | null;
   };
+  // 🆕 Add school pricing
+  schoolPricing?:  SchoolPricing | null;
 };
 
 export default function PhotoModal({
   open,
   onOpenChange,
   photo,
-}:  PhotoModalProps) {
+  schoolPricing,
+}: PhotoModalProps) {
   const [format, setFormat] = useState<PhotoFormat>(PhotoFormat.A4);
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
-  const price = getPrice(format);
+  // 🆕 Use school pricing
+  const price = getPrice(format, schoolPricing);
   const totalPrice = price * quantity;
 
   const handleAddToCart = () => {
@@ -58,8 +63,9 @@ export default function PhotoModal({
       photoAlt: photo.alt,
       format,
       quantity,
+      pricePerUnit: price, // 🆕 Pass calculated price
     });
-
+  
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
@@ -72,7 +78,6 @@ export default function PhotoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-        {/* Header */}
         <DialogHeader className="p-6 pb-4 border-b border-slate-200">
           <DialogTitle className="text-xl font-semibold text-slate-900">
             Выбор опций фотографии
@@ -124,7 +129,7 @@ export default function PhotoModal({
                           </p>
                         </div>
                         <span className="font-semibold text-sm text-slate-900 whitespace-nowrap">
-                          {formatPrice(getPrice(fmt))}
+                          {formatPrice(getPrice(fmt, schoolPricing))}
                         </span>
                       </div>
                     </SelectItem>

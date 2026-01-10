@@ -39,30 +39,16 @@ export async function getPlatformStats(): Promise<PlatformStats> {
 
   try {
     const [totalSchools, totalAdmins, totalOrders, revenueData] = await Promise.all([
-      // Count all schools
       prisma.school.count(),
-
-      // Count all admin users
-      prisma.user.count({
-        where: { role: 'ADMIN' },
-      }),
-
-      // Count all orders
+      prisma.user.count({ where: { role: 'ADMIN' } }),
       prisma.order.count(),
-
-      // Calculate total revenue
       prisma.order.aggregate({
-        _sum: {
-          totalSum:true,
-        },
-        where: {
-          status:'COMPLETED',
-        },
+        _sum: { totalSum: true },
+        where: { status: 'COMPLETED' },
       }),
     ]);
 
-    const totalRevenueDecimal = revenueData._sum.totalSum;
-    const totalRevenue = totalRevenueDecimal ? Number(totalRevenueDecimal) : 0;
+    const totalRevenue = revenueData._sum.totalSum ? Number(revenueData._sum.totalSum) : 0;
 
     return {
       totalSchools,
@@ -88,26 +74,18 @@ export async function getAdminsList(): Promise<AdminWithCount[]> {
 
   try {
     const admins = await prisma.user.findMany({
-      where: {
-        role: 'ADMIN',
-      },
+      where: { role: 'ADMIN' },
       select: {
         id: true,
         email: true,
         firstName: true,
-        lastName:  true,
+        lastName: true,
         phone: true,
         isActive: true,
         createdAt: true,
-        _count: {
-          select: {
-            schools: true,
-          },
-        },
+        _count: { select: { schools: true } },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     });
 
     return admins;
@@ -120,84 +98,54 @@ export async function getAdminsList(): Promise<AdminWithCount[]> {
 /**
  * Create a new photographer (admin user)
  */
-export async function createPhotographerAction(
-  prevState: any,
-  formData: FormData
-) {
+export async function createPhotographerAction(prevState: any, formData: FormData) {
   const session = await getSession();
 
   if (!session || session.role !== 'SUPER_ADMIN') {
-    return {
-      error: 'Unauthorized access',
-    };
+    return { error: 'Unauthorized access' };
   }
 
-  // Extract form data
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-  const firstName = formData. get('firstName') as string;
+  const firstName = formData.get('firstName') as string;
   const lastName = formData.get('lastName') as string;
   const phone = formData.get('phone') as string;
 
-  // Validation
   if (!email || !password || !firstName || !lastName) {
-    return {
-      error: 'Email, password, first name, and last name are required',
-    };
+    return { error: 'Все поля обязательны для заполнения' };
   }
-
-  if (! email.includes('@')) {
-    return {
-      error: 'Please enter a valid email address',
-    };
+  if (!email.includes('@')) {
+    return { error: 'Введите корректный email' };
   }
-
   if (password.length < 8) {
-    return {
-      error:  'Password must be at least 8 characters long',
-    };
+    return { error: 'Пароль должен быть не менее 8 символов' };
   }
 
   try {
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return {
-        error:  'A user with this email already exists',
-      };
+      return { error: 'Пользователь с таким email уже существует' };
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new admin user
     await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         firstName,
         lastName,
-        phone:  phone || null,
+        phone: phone || null,
         role: 'ADMIN',
         isActive: true,
       },
     });
 
-    // Revalidate the admins page
     revalidatePath('/admins');
-
-    return {
-      success: true,
-      message:  'Photographer created successfully',
-    };
+    return { success: true, message: 'Фотограф успешно создан' };
   } catch (error) {
     console.error('Error creating photographer:', error);
-    return {
-      error: 'Failed to create photographer.  Please try again.',
-    };
+    return { error: 'Ошибка при создании фотографа' };
   }
 }
 
@@ -217,9 +165,7 @@ export async function toggleAdminStatus(adminId: string) {
       select: { isActive: true },
     });
 
-    if (!admin) {
-      throw new Error('Admin not found');
-    }
+    if (!admin) throw new Error('Admin not found');
 
     await prisma.user.update({
       where: { id: adminId },
@@ -227,10 +173,112 @@ export async function toggleAdminStatus(adminId: string) {
     });
 
     revalidatePath('/admins');
-
+    revalidatePath(`/admins/${adminId}`);
     return { success: true };
   } catch (error) {
     console.error('Error toggling admin status:', error);
     throw new Error('Failed to update admin status');
+  }
+}
+
+// ==========================================
+// НОВАЯ ФУНКЦИЯ: Детальная статистика админа
+// ==========================================
+
+export async function getAdminDetails(adminId: string) {
+  const session = await getSession();
+
+  if (!session || session.role !== 'SUPER_ADMIN') {
+    redirect('/login');
+  }
+
+  try {
+    // 1. Получаем данные админа
+    const admin = await prisma.user.findUnique({
+      where: { id: adminId, role: 'ADMIN' },
+    });
+
+    if (!admin) {
+      return null;
+    }
+
+    // 2. Считаем общую статистику по всем школам этого админа
+    // Используем aggregate для максимальной производительности
+    const [schoolsCount, photosCount, ordersCount, revenueData] = await Promise.all([
+      // Кол-во школ
+      prisma.school.count({
+        where: { adminId },
+      }),
+      // Кол-во фото во всех школах админа
+      prisma.photo.count({
+        where: { classroom: { school: { adminId } } },
+      }),
+      // Кол-во заказов
+      prisma.order.count({
+        where: { classroom: { school: { adminId } } },
+      }),
+      // Выручка (только COMPLETED)
+      prisma.order.aggregate({
+        where: { 
+          classroom: { school: { adminId } },
+          status: 'COMPLETED'
+        },
+        _sum: { totalSum: true },
+      }),
+    ]);
+
+    // 3. Получаем список школ с их личной статистикой
+    const schoolsList = await prisma.school.findMany({
+      where: { adminId },
+      include: {
+        _count: {
+          select: { classrooms: true },
+        },
+        // Чтобы посчитать выручку конкретной школы, нам придется подтянуть заказы
+        // В продакшене лучше делать отдельным raw query, но для MVP так пойдет
+        classrooms: {
+          select: {
+            orders: {
+              where: { status: 'COMPLETED' },
+              select: { totalSum: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Преобразуем список школ, считая выручку на лету
+    const formattedSchools = schoolsList.map(school => {
+      let schoolRevenue = 0;
+      school.classrooms.forEach(classroom => {
+        classroom.orders.forEach(order => {
+          schoolRevenue += Number(order.totalSum);
+        });
+      });
+
+      return {
+        id: school.id,
+        name: school.name,
+        slug: school.slug,
+        classroomsCount: school._count.classrooms,
+        revenue: schoolRevenue,
+      };
+    });
+
+    return {
+      admin,
+      stats: {
+        schools: schoolsCount,
+        photos: photosCount,
+        orders: ordersCount,
+        revenue: Number(revenueData._sum.totalSum || 0),
+      },
+      schools: formattedSchools,
+    };
+
+  } catch (error) {
+    console.error('Error fetching admin details:', error);
+    throw new Error('Failed to fetch admin details');
   }
 }

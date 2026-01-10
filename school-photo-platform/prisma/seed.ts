@@ -19,7 +19,7 @@ async function main() {
   // 2. Хешируем пароль (пароль для всех будет "123456")
   const hashedPassword = await bcrypt.hash('123456', 10)
 
-  const teacherPasswordHash = await bcrypt.hash('123', 10)
+  const teacherPassword = '123456';
 
   // 3. Создаем СУПЕР АДМИНА
   const superAdmin = await prisma.user.create({
@@ -64,7 +64,7 @@ async function main() {
       name: '11 Б',
       schoolId: school.id,
       teacherLogin: 'teacher_11b',
-      teacherPassword: teacherPasswordHash, // Простой пароль для учителя
+      teacherPassword: teacherPassword, // Простой пароль для учителя
     },
   })
   const classroom2 = await prisma.classroom.create({

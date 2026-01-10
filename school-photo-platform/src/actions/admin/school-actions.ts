@@ -5,8 +5,23 @@ import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+// ✅ ОБНОВЛЕНО:  Только A4 и A5
+function validatePricing(formData: FormData): {
+  priceA4: number;
+  priceA5: number;
+} | { error: string } {
+  const priceA4 = parseInt(formData.get('priceA4') as string) || 1500;
+  const priceA5 = parseInt(formData.get('priceA5') as string) || 1000;
+
+  if (priceA4 < 0 || priceA5 < 0) {
+    return { error: 'Цены не могут быть отрицательными' };
+  }
+
+  return { priceA4, priceA5 };
+}
+
 /**
- * Get all schools for the logged-in admin (or super admin)
+ * Получить все школы для админа
  */
 export async function getSchools() {
   const session = await getSession();
@@ -16,8 +31,7 @@ export async function getSchools() {
   }
 
   try {
-    const whereCondition: any = {};
-    // Если это обычный админ, показываем только его школы
+    const whereCondition:  any = {};
     if (session.role === 'ADMIN') {
       whereCondition.adminId = session.userId;
     }
@@ -38,23 +52,22 @@ export async function getSchools() {
 
     return schools;
   } catch (error) {
-    console.error('Error fetching schools:', error);
-    throw new Error('Failed to fetch schools');
+    console.error('Ошибка загрузки школ:', error);
+    throw new Error('Не удалось загрузить школы');
   }
 }
 
 /**
- * Get a single school by ID with Security Check
+ * Получить школу по ID
  */
 export async function getSchoolById(schoolId: string) {
   const session = await getSession();
-  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+  if (!session || (session.role !== 'ADMIN' && session. role !== 'SUPER_ADMIN')) {
     redirect('/login');
   }
 
-  const whereCondition: any = { id: schoolId };
+  const whereCondition: any = { id:  schoolId };
 
-  // ЗАЩИТА: Если обычный админ, ищем школу ТОЛЬКО с его adminId
   if (session.role === 'ADMIN') {
     whereCondition.adminId = session.userId;
   }
@@ -69,7 +82,6 @@ export async function getSchoolById(schoolId: string) {
   });
 
   if (!school) {
-    // Если школа не найдена или принадлежит другому админу
     redirect('/admin/dashboard');
   }
 
@@ -77,13 +89,13 @@ export async function getSchoolById(schoolId: string) {
 }
 
 /**
- * Create a new school
+ * Создать новую школу
  */
 export async function createSchoolAction(prevState: any, formData: FormData) {
   const session = await getSession();
 
-  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
-    return { error: 'Unauthorized access' };
+  if (!session || (session. role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    return { error: 'Нет доступа' };
   }
 
   const name = formData.get('name') as string;
@@ -91,22 +103,28 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
   const primaryColor = (formData.get('primaryColor') as string) || '#f97316';
   const isKazakhEnabled = formData.get('isKazakhEnabled') === 'on';
 
-  if (!name || !slug) {
-    return { error: 'School name and slug are required' };
+  // Валидация цен
+  const pricing = validatePricing(formData);
+  if ('error' in pricing) {
+    return pricing;
+  }
+
+  if (! name || !slug) {
+    return { error: 'Название и slug обязательны' };
   }
 
   const slugRegex = /^[a-z0-9-]+$/;
   if (!slugRegex.test(slug)) {
-    return { error: 'Slug must contain only lowercase letters, numbers, and hyphens' };
+    return { error: 'Slug может содержать только латинские буквы, цифры и дефис' };
   }
 
   try {
-    const existingSchool = await prisma.school.findUnique({
+    const existingSchool = await prisma. school.findUnique({
       where: { slug },
     });
 
     if (existingSchool) {
-      return { error: 'A school with this slug already exists' };
+      return { error:  'Школа с таким slug уже существует' };
     }
 
     const school = await prisma.school.create({
@@ -115,8 +133,10 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
         slug,
         primaryColor,
         isKazakhEnabled,
-        adminId: session.userId, // Привязываем к текущему админу
+        adminId: session.userId,
         isActive: true,
+        priceA4: pricing.priceA4,
+        priceA5: pricing.priceA5,
       },
     });
 
@@ -125,70 +145,77 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
     return {
       success: true,
       schoolId: school.id,
-      message: 'School created successfully',
+      message: 'Школа успешно создана',
     };
   } catch (error) {
-    console.error('Error creating school:', error);
-    return { error: 'Failed to create school. Please try again.' };
+    console.error('Ошибка создания школы:', error);
+    return { error: 'Не удалось создать школу.  Попробуйте снова.' };
   }
 }
 
 /**
- * Update an existing school
+ * Обновить школу
  */
 export async function updateSchoolAction(
   schoolId: string,
   prevState: any,
-  formData: FormData
+  formData:  FormData
 ) {
   const session = await getSession();
 
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
-    return { error: 'Unauthorized access' };
+    return { error: 'Нет доступа' };
   }
 
   const name = formData.get('name') as string;
   const primaryColor = formData.get('primaryColor') as string;
+  
+  // Валидация цен
+  const pricing = validatePricing(formData);
+  if ('error' in pricing) {
+    return pricing;
+  }
 
-  if (!name) return { error: 'School name is required' };
+  if (!name) return { error: 'Название школы обязательно' };
 
   try {
-    const existingSchool = await prisma.school.findUnique({
+    const existingSchool = await prisma. school.findUnique({
       where: { id: schoolId },
     });
 
-    // ЗАЩИТА: Проверка владельца
-    if (!existingSchool) return { error: 'School not found' };
-    if (session.role === 'ADMIN' && existingSchool.adminId !== session.userId) {
-      return { error: 'Access denied' };
+    if (!existingSchool) return { error: 'Школа не найдена' };
+    if (session.role === 'ADMIN' && existingSchool.adminId !== session. userId) {
+      return { error: 'Доступ запрещен' };
     }
 
     await prisma.school.update({
       where: { id: schoolId },
       data: {
         name,
-        primaryColor: primaryColor || existingSchool.primaryColor,
+        primaryColor:  primaryColor || existingSchool. primaryColor,
+        priceA4: pricing.priceA4,
+        priceA5: pricing.priceA5,
       },
     });
 
     revalidatePath('/admin/schools');
     revalidatePath(`/admin/schools/${schoolId}`);
 
-    return { success: true, message: 'School updated successfully' };
+    return { success: true, message: 'Школа успешно обновлена' };
   } catch (error) {
-    console.error('Error updating school:', error);
-    return { error: 'Failed to update school. Please try again.' };
+    console.error('Ошибка обновления школы:', error);
+    return { error:  'Не удалось обновить школу. Попробуйте снова.' };
   }
 }
 
 /**
- * Delete a school
+ * Удалить школу
  */
 export async function deleteSchoolAction(schoolId: string) {
   const session = await getSession();
 
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
-    throw new Error('Unauthorized access');
+    throw new Error('Нет доступа');
   }
 
   try {
@@ -201,14 +228,13 @@ export async function deleteSchoolAction(schoolId: string) {
       },
     });
 
-    // ЗАЩИТА: Проверка владельца
-    if (!school) throw new Error('School not found');
+    if (!school) throw new Error('Школа не найдена');
     if (session.role === 'ADMIN' && school.adminId !== session.userId) {
-      throw new Error('Access denied');
+      throw new Error('Доступ запрещен');
     }
 
     if (school._count.classrooms > 0) {
-      throw new Error('Cannot delete school with existing classrooms. Please delete classrooms first.');
+      throw new Error('Нельзя удалить школу с существующими классами.  Сначала удалите классы.');
     }
 
     await prisma.school.delete({
@@ -217,20 +243,20 @@ export async function deleteSchoolAction(schoolId: string) {
 
     revalidatePath('/admin/schools');
     return { success: true };
-  } catch (error: any) {
-    console.error('Error deleting school:', error);
-    throw new Error(error.message || 'Failed to delete school');
+  } catch (error:  any) {
+    console.error('Ошибка удаления школы:', error);
+    throw new Error(error.message || 'Не удалось удалить школу');
   }
 }
 
 /**
- * Toggle school active status
+ * Переключить статус школы
  */
 export async function toggleSchoolStatus(schoolId: string) {
   const session = await getSession();
 
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
-    throw new Error('Unauthorized access');
+    throw new Error('Нет доступа');
   }
 
   try {
@@ -238,10 +264,9 @@ export async function toggleSchoolStatus(schoolId: string) {
       where: { id: schoolId },
     });
 
-    // ЗАЩИТА: Проверка владельца
-    if (!school) throw new Error('School not found');
+    if (!school) throw new Error('Школа не найдена');
     if (session.role === 'ADMIN' && school.adminId !== session.userId) {
-      throw new Error('Access denied');
+      throw new Error('Доступ запрещен');
     }
 
     await prisma.school.update({
@@ -254,13 +279,13 @@ export async function toggleSchoolStatus(schoolId: string) {
 
     return { success: true };
   } catch (error) {
-    console.error('Error toggling school status:', error);
-    throw new Error('Failed to update school status');
+    console.error('Ошибка переключения статуса:', error);
+    throw new Error('Не удалось обновить статус школы');
   }
 }
 
 /**
- * Get school statistics for the admin dashboard
+ * Получить статистику школ
  */
 export async function getSchoolStats() {
   const session = await getSession();
@@ -269,8 +294,7 @@ export async function getSchoolStats() {
     redirect('/login');
   }
 
-  // ЗАЩИТА: Статистика только по своим школам
-  const whereFilter = session.role === 'ADMIN' ? { adminId: session.userId } : {};
+  const whereFilter = session.role === 'ADMIN' ? { adminId: session.userId } :  {};
 
   try {
     const [totalSchools, totalClassrooms, totalPhotos, totalOrders] =
@@ -282,7 +306,7 @@ export async function getSchoolStats() {
         prisma.photo.count({
           where: { classroom: { school: whereFilter } },
         }),
-        prisma.order.count({
+        prisma.order. count({
           where: { classroom: { school: whereFilter } },
         }),
       ]);
@@ -294,7 +318,7 @@ export async function getSchoolStats() {
       totalOrders,
     };
   } catch (error) {
-    console.error('Error fetching school stats:', error);
-    throw new Error('Failed to fetch statistics');
+    console.error('Ошибка загрузки статистики:', error);
+    throw new Error('Не удалось загрузить статистику');
   }
 }

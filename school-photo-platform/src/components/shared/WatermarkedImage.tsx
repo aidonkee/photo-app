@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 type WatermarkedImageProps = {
   src?:  string | null;
-  alt?: string | null;
+  alt?:  string | null;
   className?: string;
   fallbackClassName?: string;
   width?: number;
@@ -26,8 +26,7 @@ export default function WatermarkedImage({
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Show placeholder if no src or error occurred
-  if (!src || error) {
+  if (! src || error) {
     return (
       <div
         className={cn(
@@ -42,18 +41,18 @@ export default function WatermarkedImage({
   }
 
   return (
-    <div className={cn('relative overflow-hidden', className)} onClick={onClick}>
+    <div className={cn('relative', className)} onClick={onClick}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-          <div className="h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <div className="h-6 w-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       <img
         src={src}
-        alt={alt || 'Photo'}
+        alt={alt || 'Фото'}
         width={width}
         height={height}
-        className={cn('w-full h-full object-cover', loading && 'opacity-0')}
+        className={cn(className, loading && 'opacity-0')}
         onLoad={() => setLoading(false)}
         onError={() => {
           setError(true);

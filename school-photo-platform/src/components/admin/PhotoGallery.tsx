@@ -29,6 +29,8 @@ type Photo = {
   id: string;
   watermarkedUrl: string;
   alt: string | null;
+  width?:  number;
+  height?: number;
 };
 
 type PhotoGalleryProps = {
@@ -43,17 +45,15 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{
     deleted: number;
-    skipped:  number;
-    errors: string[];
+    skipped: number;
+    errors:  string[];
   } | null>(null);
 
-  // Toggle selection mode
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode);
-    setSelectedIds(new Set()); // Clear selection when toggling
+    setSelectedIds(new Set());
   };
 
-  // Toggle individual photo selection
   const togglePhoto = (photoId: string) => {
     setSelectedIds((prev) => {
       const newSet = new Set(prev);
@@ -66,17 +66,14 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
     });
   };
 
-  // Select all photos
   const selectAll = () => {
-    setSelectedIds(new Set(photos.map((p) => p.id)));
+    setSelectedIds(new Set(photos. map((p) => p.id)));
   };
 
-  // Deselect all
   const deselectAll = () => {
     setSelectedIds(new Set());
   };
 
-  // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
     setShowDeleteDialog(true);
@@ -93,7 +90,6 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
         setSelectionMode(false);
         setShowDeleteDialog(false);
 
-        // Auto-clear success message after 5 seconds
         setTimeout(() => setResult(null), 5000);
       } catch (error:  any) {
         alert(error.message || 'Ошибка при удалении фотографий');
@@ -104,11 +100,13 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
   if (photos.length === 0) {
     return (
       <div className="text-center py-12">
-        <img
-          src="/placeholder-image.svg"
-          alt="No photos"
-          className="w-16 h-16 text-slate-300 mx-auto mb-4"
-        />
+        <div className="inline-flex p-4 bg-slate-100 rounded-lg border border-slate-200 mb-4">
+          <img
+            src="/placeholder-image.svg"
+            alt="No photos"
+            className="w-12 h-12 text-slate-300"
+          />
+        </div>
         <h3 className="text-lg font-semibold text-slate-900 mb-2">
           Фотографии ещё не загружены
         </h3>
@@ -164,7 +162,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
             </span>
             <Button
               onClick={handleBulkDelete}
-              disabled={selectedIds. size === 0 || isPending}
+              disabled={selectedIds.size === 0 || isPending}
               variant="destructive"
               className="gap-2"
             >
@@ -215,25 +213,25 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
         </Alert>
       )}
 
-      {/* Photo Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {photos.map((photo) => {
+      {/* ✅ GRID с фиксированной высотой */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {photos. map((photo) => {
           const isSelected = selectedIds.has(photo.id);
 
           return (
             <div
               key={photo.id}
-              className={`group relative aspect-square bg-slate-100 rounded-lg border-2 transition-all overflow-hidden ${
+              className={`group relative bg-slate-100 rounded-md border-2 transition-all overflow-hidden h-64 ${
                 isSelected
-                  ? 'border-blue-500 ring-2 ring-blue-200'
+                  ? 'border-slate-900 ring-2 ring-slate-400'
                   : 'border-slate-200 hover:border-slate-400'
               }`}
             >
-              {/* Photo Image */}
+              {/* ✅ object-contain — показывает всю фотку */}
               <img
                 src={photo.watermarkedUrl}
                 alt={photo.alt || 'Фотография'}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 loading="lazy"
               />
 
@@ -246,7 +244,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
                   <div
                     className={`w-8 h-8 rounded-md border-2 flex items-center justify-center transition-all ${
                       isSelected
-                        ? 'bg-slate-900 border-blue-600'
+                        ? 'bg-slate-900 border-slate-900'
                         : 'bg-white/90 border-slate-300'
                     }`}
                   >
@@ -315,7 +313,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
               {isPending ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Удаление... 
+                  Удаление...
                 </span>
               ) : (
                 'Удалить'

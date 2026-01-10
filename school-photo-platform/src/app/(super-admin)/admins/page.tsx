@@ -4,13 +4,15 @@ import CreateAdminDialog from '@/components/super-admin/CreateAdminDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 import { 
   Users, 
   Mail, 
   Building2, 
   Calendar,
   CheckCircle,
-  XCircle
+  XCircle,
+  ChevronRight
 } from 'lucide-react';
 
 export const metadata = {
@@ -28,9 +30,9 @@ export default async function AdminsPage() {
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
-      year:  'numeric',
-      month:  'short',
-      day:  'numeric',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     }).format(new Date(date));
   };
 
@@ -59,7 +61,7 @@ export default async function AdminsPage() {
                 <p className="text-sm font-medium text-slate-700">Всего фотографов</p>
                 <p className="text-3xl font-bold text-slate-900 mt-1">{admins.length}</p>
               </div>
-              <Users className="w-12 h-12 text-blue-400" />
+              <Users className="w-12 h-12 text-slate-900 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -73,7 +75,7 @@ export default async function AdminsPage() {
                   {admins.filter(a => a.isActive).length}
                 </p>
               </div>
-              <CheckCircle className="w-12 h-12 text-green-400" />
+              <CheckCircle className="w-12 h-12 text-slate-900 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -87,7 +89,7 @@ export default async function AdminsPage() {
                   {admins.reduce((sum, admin) => sum + admin._count.schools, 0)}
                 </p>
               </div>
-              <Building2 className="w-12 h-12 text-purple-400" />
+              <Building2 className="w-12 h-12 text-slate-900 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -113,54 +115,60 @@ export default async function AdminsPage() {
           ) : (
             <div className="space-y-4">
               {admins.map((admin) => (
-                <div
-                  key={admin.id}
-                  className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                <Link 
+                  key={admin.id} 
+                  href={`/admins/${admin.id}`}
+                  className="block group"
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    {/* Avatar */}
-                    <Avatar className="w-12 h-12">
-                      <AvatarFallback className="bg-gradient-to-br from-slate-500 to-indigo-600 text-white font-bold">
-                        {getInitials(admin.firstName, admin.lastName)}
-                      </AvatarFallback>
-                    </Avatar>
+                  <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-slate-900 hover:bg-slate-50 transition-all cursor-pointer">
+                    <div className="flex items-center gap-4 flex-1">
+                      {/* Avatar */}
+                      <Avatar className="w-12 h-12 border border-slate-200">
+                        <AvatarFallback className="bg-slate-900 text-white font-bold group-hover:bg-slate-800 transition-colors">
+                          {getInitials(admin.firstName, admin.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
 
-                    {/* Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-slate-900">
-                          {admin.firstName} {admin.lastName}
-                        </h3>
-                        {admin.isActive ? (
-                          <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Активен
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive" className="bg-slate-100 text-slate-700">
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Неактивен
-                          </Badge>
-                        )}
-                      </div>
+                      {/* Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-slate-900 group-hover:underline decoration-slate-900/50 underline-offset-4">
+                            {admin.firstName} {admin.lastName}
+                          </h3>
+                          {admin.isActive ? (
+                            <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-200 border-0">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Активен
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="bg-slate-100 text-slate-600 border-0">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Неактивен
+                            </Badge>
+                          )}
+                        </div>
 
-                      <div className="flex items-center gap-4 mt-2 text-sm text-slate-600">
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-4 h-4" />
-                          {admin.email}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Building2 className="w-4 h-4" />
-                          {admin._count.schools} {admin._count.schools === 1 ? 'школа' : 'школы'}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Присоединился {formatDate(admin.createdAt)}
+                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                          <div className="flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5" />
+                            {admin.email}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Building2 className="w-3.5 h-3.5" />
+                            {admin._count.schools} {admin._count.schools === 1 ? 'школа' : 'школы'}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {formatDate(admin.createdAt)}
+                          </div>
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Arrow Icon */}
+                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-900 transition-colors" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

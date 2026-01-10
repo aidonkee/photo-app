@@ -23,41 +23,41 @@ export default function CreateAdminDialog() {
   );
   const [open, setOpen] = useState(false);
 
-  // Close dialog on success
+  // Закрыть диалог при успешном создании
   useEffect(() => {
-    if (state?. success) {
+    if (state?.success) {
       const timer = setTimeout(() => {
         setOpen(false);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [state?. success]);
+  }, [state?.success]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-slate-900 hover:bg-slate-800 gap-2">
           <UserPlus className="w-4 h-4" />
-          Add Photographer
+          Добавить фотографа
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Create New Photographer</DialogTitle>
+          <DialogTitle className="text-2xl">Создать нового фотографа</DialogTitle>
           <DialogDescription>
-            Add a new photographer admin to manage schools and photos
+            Добавьте нового администратора-фотографа для управления школами и фотографиями
           </DialogDescription>
         </DialogHeader>
 
         <form action={formAction} className="space-y-5 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">Имя *</Label>
               <Input
                 id="firstName"
                 name="firstName"
                 type="text"
-                placeholder="John"
+                placeholder="Иван"
                 required
                 disabled={isPending}
                 className="h-11"
@@ -65,12 +65,12 @@ export default function CreateAdminDialog() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">Фамилия *</Label>
               <Input
                 id="lastName"
                 name="lastName"
                 type="text"
-                placeholder="Doe"
+                placeholder="Иванов"
                 required
                 disabled={isPending}
                 className="h-11"
@@ -79,7 +79,7 @@ export default function CreateAdminDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address *</Label>
+            <Label htmlFor="email">Электронная почта *</Label>
             <Input
               id="email"
               name="email"
@@ -93,31 +93,31 @@ export default function CreateAdminDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">Номер телефона</Label>
             <Input
               id="phone"
               name="phone"
               type="tel"
-              placeholder="+1 (555) 000-0000"
+              placeholder="+7 (777) 000-0000"
               disabled={isPending}
               className="h-11"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password *</Label>
+            <Label htmlFor="password">Пароль *</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Min.  8 characters"
+              placeholder="Мин. 8 символов"
               required
               disabled={isPending}
               autoComplete="new-password"
               className="h-11"
             />
             <p className="text-xs text-slate-500">
-              Must be at least 8 characters long
+              Должен содержать минимум 8 символов
             </p>
           </div>
 
@@ -145,20 +145,20 @@ export default function CreateAdminDialog() {
               disabled={isPending}
               className="flex-1"
             >
-              Cancel
+              Отмена
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="flex-1 bg-slate-900 hover: bg-blue-700"
+              className="flex-1 bg-slate-900 hover:bg-blue-700"
             >
               {isPending ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Creating... 
+                  Создается...
                 </span>
               ) : (
-                'Create Photographer'
+                'Создать фотографа'
               )}
             </Button>
           </div>

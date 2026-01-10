@@ -33,21 +33,21 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
         return (
           <Badge variant="secondary" className="bg-amber-100 text-amber-700">
             <Clock className="w-3 h-3 mr-1" />
-            Pending
+            В ожидании
           </Badge>
         );
       case 'APPROVED_BY_TEACHER':
         return (
           <Badge className="bg-slate-900">
             <CheckCircle className="w-3 h-3 mr-1" />
-            Approved
+            Одобрено
           </Badge>
         );
       case 'LOCKED':
         return (
           <Badge className="bg-slate-900">
             <Package className="w-3 h-3 mr-1" />
-            Locked
+            Заблокировано
           </Badge>
         );
       default:
@@ -56,14 +56,14 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('ru-RU', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     }).format(new Date(date));
   };
 
-  const totalRevenue = orders. reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
 
   return (
     <div className="space-y-4">
@@ -71,27 +71,27 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Parent Name</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Имя родителя</TableHead>
+              <TableHead>Дата</TableHead>
+              <TableHead>Статус</TableHead>
+              <TableHead className="text-right">Сумма</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                  No orders yet
+                  Заказов пока нет
                 </TableCell>
               </TableRow>
             ) : (
               orders.map((order) => (
-                <TableRow key={order. id}>
+                <TableRow key={order.id}>
                   <TableCell className="font-medium">
                     {order.parentName} {order.parentSurname}
                   </TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
-                  <TableCell>{getStatusBadge(order. status)}</TableCell>
+                  <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell className="text-right font-semibold text-slate-900">
                     {formatPrice(order.totalAmount)}
                   </TableCell>
@@ -104,7 +104,7 @@ export default function MasterSummaryTable({ orders }: MasterSummaryTableProps) 
 
       {orders.length > 0 && (
         <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-          <span className="font-semibold text-slate-900">Total Revenue: </span>
+          <span className="font-semibold text-slate-900">Общий доход: </span>
           <span className="text-2xl font-bold text-slate-900">
             {formatPrice(totalRevenue)}
           </span>

@@ -30,11 +30,10 @@ enum EditRequestStatus {
   REJECTED
 }
 
+// ✅ ОБНОВЛЕНО: Убрали MAGNET и DIGITAL
 enum PhotoFormat {
   A4
   A5
-  MAGNET
-  DIGITAL
 }
 
 // ============================================
@@ -44,12 +43,12 @@ enum PhotoFormat {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String   // Hashed (bcrypt)
+  password  String
   role      Role     @default(ADMIN)
   
   // Profile
-  firstName String?
-  lastName  String? 
+  firstName String? 
+  lastName  String?  
   phone     String?
   
   // Relations
@@ -65,16 +64,16 @@ model User {
 
 model School {
   id             String      @id @default(uuid())
-  name           String      // "Nazarbayev Intellectual School"
-  slug           String      @unique // "nis-almaty-2025"
+  name           String
+  slug           String      @unique
   
   // Branding
-  primaryColor   String      @default("#f97316") // Tailwind orange-500
-  logoUrl        String?     // Optional school logo
+  primaryColor   String      @default("#f97316")
+  logoUrl        String?
   
   // Ownership
   adminId        String
-  admin          User        @relation(fields: [adminId], references:  [id], onDelete: Cascade)
+  admin          User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
   
   // Relations
   classrooms     Classroom[]
@@ -82,7 +81,12 @@ model School {
   // Settings
   isActive       Boolean     @default(true)
   publicLinkEnabled Boolean  @default(true)
-  isKazakhEnabled   Boolean     @default(false) 
+  isKazakhEnabled   Boolean  @default(false)
+  
+  // ✅ ОБНОВЛЕНО:  Только A4 и A5
+  priceA4        Int         @default(1500)  // A4 формат
+  priceA5        Int         @default(1000)  // A5 формат
+  
   // Audit
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
@@ -93,18 +97,18 @@ model School {
 
 model Classroom {
   id             String   @id @default(uuid())
-  name           String   // "11 B"
+  name           String
   
   // School relation
   schoolId       String
   school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
-  // Teacher Credentials (System-Generated)
-  teacherLogin    String   @unique // e.g.  "teacher_11b_nis2025"
-  teacherPassword String   // Plain text for Admin view (hash in production!)
+  // Teacher Credentials
+  teacherLogin    String   @unique
+  teacherPassword String
   
   // Teacher Permissions
-  isEditAllowed   Boolean  @default(false) // Admin can toggle
+  isEditAllowed   Boolean  @default(false)
   editRequests    EditRequest[]
   
   // Relations
@@ -112,8 +116,8 @@ model Classroom {
   orders          Order[]
   
   // Class Order Submission
-  isLocked        Boolean  @default(false) // Teacher submitted to Admin
-  lockedAt        DateTime? 
+  isLocked        Boolean  @default(false)
+  lockedAt        DateTime?  
   
   // Audit
   createdAt       DateTime @default(now())
@@ -131,19 +135,19 @@ model Photo {
   classroom      Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
   
   // Image URLs
-  originalUrl    String   // Clean high-res (S3/Supabase Storage)
-  watermarkedUrl String   // With watermark overlay
-  thumbnailUrl   String?   // Optional optimized thumbnail
+  originalUrl    String
+  watermarkedUrl String
+  thumbnailUrl   String? 
   
   // Metadata
   width          Int
   height         Int
-  fileSize       Int      // bytes
+  fileSize       Int
   mimeType       String   @default("image/jpeg")
   
   // SEO/Search
   alt            String?
-  tags           String[] // e.g. ["portrait", "group"]
+  tags           String[]
   
   // Order tracking
   orderItems     OrderItem[]
@@ -160,12 +164,12 @@ model Order {
   
   // Classroom relation
   classId        String
-  classroom      Classroom   @relation(fields: [classId], references: [id], onDelete:  Cascade)
+  classroom      Classroom   @relation(fields: [classId], references: [id], onDelete: Cascade)
   
-  // Parent Info (No Authentication)
+  // Parent Info
   parentName     String
   parentSurname  String
-  parentPhone    String?     // Optional contact
+  parentPhone    String?
   
   // Order Details
   status         OrderStatus @default(PENDING)
@@ -176,13 +180,13 @@ model Order {
   currency       String      @default("KZT")
   
   // Notes
-  notes          String?     // Teacher/Admin notes
+  notes          String?
   
   // Audit
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  submittedAt    DateTime?   // When teacher approved
-  completedAt    DateTime?   // When admin fulfilled
+  submittedAt    DateTime?
+  completedAt    DateTime?
   
   @@index([classId])
   @@index([status])
@@ -198,16 +202,16 @@ model OrderItem {
   
   // Photo relation
   photoId   String
-  photo     Photo       @relation(fields: [photoId], references: [id])
+  photo     Photo       @relation(fields: [photoId], references:  [id])
   
-  // Snapshot (in case photo is deleted)
-  photoUrl  String      // Watermarked URL at order time
+  // Snapshot
+  photoUrl  String
   
   // Order Details
   format    PhotoFormat
   quantity  Int         @default(1)
-  price     Decimal     @db.Decimal(10, 2) // Price per unit
-  subtotal  Decimal     @db.Decimal(10, 2) // quantity * price
+  price     Decimal     @db. Decimal(10, 2)
+  subtotal  Decimal     @db.Decimal(10, 2)
   
   // Audit
   createdAt DateTime    @default(now())
@@ -221,14 +225,14 @@ model EditRequest {
   
   // Classroom relation
   classId     String
-  classroom   Classroom         @relation(fields: [classId], references: [id], onDelete:  Cascade)
+  classroom   Classroom         @relation(fields: [classId], references: [id], onDelete: Cascade)
   
   // Request details
-  reason      String            // Why teacher needs edit access
+  reason      String
   status      EditRequestStatus @default(PENDING)
   
   // Admin response
-  respondedAt DateTime? 
+  respondedAt DateTime?  
   adminNote   String?
   
   // Audit
@@ -238,10 +242,6 @@ model EditRequest {
   @@index([classId])
   @@index([status])
 }
-
-// ============================================
-// PLATFORM ANALYTICS (For Super Admin)
-// ============================================
 
 model PlatformMetric {
   id              String   @id @default(uuid())

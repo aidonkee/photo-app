@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import {
   Plus,
   Lock,
   ChevronRight,
+  ShoppingCart,
 } from 'lucide-react';
 
 type School = {
@@ -36,23 +37,32 @@ type School = {
 };
 
 type SidebarProps = {
-  role:  'SUPER_ADMIN' | 'ADMIN';
+  role:   'SUPER_ADMIN' | 'ADMIN';
   schools: School[];
   onLogout: () => void;
 };
 
-export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
+export default function Sidebar({ role, schools, onLogout }:  SidebarProps) {
   const pathname = usePathname();
   const [createSchoolOpen, setCreateSchoolOpen] = useState(false);
   const [createClassroomOpen, setCreateClassroomOpen] = useState(false);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  
+  // ✅ FIX: Используем useState для defaultValue чтобы избежать hydration mismatch
+  const [accordionValue, setAccordionValue] = useState<string | undefined>(undefined);
 
   const getCurrentSchoolId = (): string | undefined => {
     const match = pathname?. match(/\/admin\/schools\/([^\/]+)/);
     return match ? match[1] : undefined;
   };
 
-  const currentSchoolId = getCurrentSchoolId();
+  // ✅ FIX:  Устанавливаем значение только на клиенте
+  useEffect(() => {
+    const currentSchoolId = getCurrentSchoolId();
+    if (currentSchoolId) {
+      setAccordionValue(currentSchoolId);
+    }
+  }, [pathname]);
 
   const isClassroomActive = (classId: string) => {
     return pathname?.includes(`/classrooms/${classId}`);
@@ -62,10 +72,15 @@ export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
     return pathname === `/admin/schools/${schoolId}`;
   };
 
+  const isOrdersPageActive = (schoolId: string) => {
+    return pathname?. includes(`/admin/schools/${schoolId}/orders`);
+  };
+
   const isSchoolActive = (school: School) => {
     return (
       school.classrooms.some((classroom) => isClassroomActive(classroom.id)) ||
-      isSchoolPageActive(school.id)
+      isSchoolPageActive(school.id) ||
+      isOrdersPageActive(school.id)
     );
   };
 
@@ -107,7 +122,7 @@ export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
       {/* Header */}
       <div className="p-4 border-b border-slate-700">
         <h2 className="text-lg font-semibold text-white">
-          {role === 'SUPER_ADMIN' ? 'Super Admin' :  'Photographer'}
+          {role === 'SUPER_ADMIN' ? 'Super Admin' : 'Photographer'}
         </h2>
       </div>
 
@@ -161,10 +176,12 @@ export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
               </span>
             </div>
 
+            {/* ✅ FIX:  Используем state вместо defaultValue */}
             <Accordion
               type="single"
               collapsible
-              defaultValue={currentSchoolId}
+              value={accordionValue}
+              onValueChange={setAccordionValue}
               className="space-y-1"
             >
               {schools.map((school) => {
@@ -197,7 +214,7 @@ export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
                     </AccordionTrigger>
 
                     <AccordionContent className="pb-1 pt-1">
-                      <ul className="space-y-0. 5 ml-6">
+                      <ul className="space-y-0.5 ml-6">
                         {/* School Overview Link */}
                         <li>
                           <Link
@@ -206,7 +223,7 @@ export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
                               'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
                               isSchoolPageActive(school.id)
                                 ? 'bg-white text-slate-900 font-medium'
-                                : 'text-slate-300 hover: bg-slate-800 hover: text-white'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                             )}
                           >
                             <ChevronRight className="w-3 h-3" />
@@ -214,8 +231,24 @@ export default function Sidebar({ role, schools, onLogout }: SidebarProps) {
                           </Link>
                         </li>
 
+                        {/* Orders Link */}
+                        <li>
+                          <Link
+                            href={`/admin/schools/${school.id}/orders`}
+                            className={cn(
+                              'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors',
+                              isOrdersPageActive(school.id)
+                                ?  'bg-white text-slate-900 font-medium'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                            )}
+                          >
+                            <ShoppingCart className="w-3 h-3 flex-shrink-0" />
+                            Заказы
+                          </Link>
+                        </li>
+
                         {/* Classrooms */}
-                        {school.classrooms. map((classroom) => (
+                        {school.classrooms.map((classroom) => (
                           <li key={classroom.id}>
                             <Link
                               href={`/admin/schools/${school.id}/classrooms/${classroom.id}`}

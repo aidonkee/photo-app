@@ -81,8 +81,8 @@ async function SuperAdminLayout({ children }: { children: React. ReactNode }) {
               <Crown className="w-6 h-6 text-slate-900" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Супер Админ</h1>
-              <p className="text-xs text-slate-400">Режим Бога</p>
+              <h1 className="text-xl font-bold text-white" >Супер Админ</h1>
+             
             </div>
           </div>
         </div>
