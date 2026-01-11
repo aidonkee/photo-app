@@ -2,21 +2,20 @@
 
 import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  User,
   Search,
-  ShoppingCart,
   Clock,
   CheckCircle,
   Package,
+  ChevronRight,
+  User
 } from 'lucide-react';
 import type { TeacherOrder } from '@/actions/teacher/order-actions';
 
 type ParentOrdersListProps = {
-  orders:  TeacherOrder[];
+  orders: TeacherOrder[];
 };
 
 export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
@@ -27,156 +26,105 @@ export default function ParentOrdersList({ orders }: ParentOrdersListProps) {
 
   const filteredOrders = orders.filter((order) => {
     const fullName = `${order.parentName} ${order.parentSurname}`.toLowerCase();
-    return fullName.includes(searchTerm. toLowerCase());
+    return fullName.includes(searchTerm.toLowerCase());
   });
 
   const handleSelectOrder = (orderId: string) => {
-    router.push(`/teacher-dashboard? orderId=${orderId}`);
+    router.push(`/teacher-dashboard?orderId=${orderId}`);
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusInfo = (status: string) => {
     switch (status) {
       case 'PENDING': 
-        return <Clock className="w-4 h-4 text-amber-600" />;
+        return { icon: <Clock className="w-4 h-4 text-amber-600" />, text: 'Ожидает', color: 'bg-amber-50 text-amber-700 border-amber-100' };
       case 'APPROVED_BY_TEACHER':
-        return <CheckCircle className="w-4 h-4 text-slate-900" />;
+        return { icon: <CheckCircle className="w-4 h-4 text-green-600" />, text: 'Одобрено', color: 'bg-green-50 text-green-700 border-green-100' };
       case 'LOCKED':
-        return <Package className="w-4 h-4 text-slate-900" />;
+        return { icon: <Package className="w-4 h-4 text-slate-500" />, text: 'В печати', color: 'bg-slate-50 text-slate-600 border-slate-200' };
       default:
-        return <ShoppingCart className="w-4 h-4 text-slate-600" />;
+        return { icon: <Clock className="w-4 h-4" />, text: status, color: 'bg-slate-50' };
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-amber-100 text-amber-700';
-      case 'APPROVED_BY_TEACHER':
-        return 'bg-slate-100 text-slate-800';
-      case 'LOCKED': 
-        return 'bg-slate-100 text-slate-800';
-      case 'COMPLETED':
-        return 'bg-slate-100 text-slate-700';
-      default:
-        return 'bg-slate-100 text-slate-700';
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   return (
-    <div className="h-full flex flex-col bg-white border-r border-slate-200">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-200 bg-slate-50">
-        <h2 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-slate-900" />
-          Parent Orders
-        </h2>
+    <div className="h-full flex flex-col bg-white">
+      {/* Поиск */}
+      <div className="p-4 border-b border-slate-100 sticky top-0 bg-white z-10">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search by parent name..."
+            placeholder="Поиск по фамилии..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-10"
+            className="pl-10 h-11 text-base bg-slate-50 border-slate-200 focus:bg-white transition-all"
           />
-        </div>
-        <div className="mt-3 text-sm text-slate-600">
-          {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      {/* Orders List */}
-      <div className="flex-1 overflow-y-auto p-2">
+      {/* Список */}
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3">
         {filteredOrders.length === 0 ? (
-          <div className="text-center py-12 px-4">
-            <User className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm text-slate-600">
-              {searchTerm ? 'No orders found' : 'No orders yet'}
+          <div className="text-center py-12 px-4 flex flex-col items-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+              <User className="w-8 h-8 text-slate-300" />
+            </div>
+            <p className="text-slate-900 font-medium">Список пуст</p>
+            <p className="text-sm text-slate-500 mt-1">
+              {searchTerm ? 'Ничего не найдено по запросу' : 'Родители еще не сделали заказов'}
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filteredOrders.map((order) => (
+          filteredOrders.map((order) => {
+            const status = getStatusInfo(order.status);
+            const isSelected = selectedOrderId === order.id;
+
+            return (
               <Card
                 key={order.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedOrderId === order.id
-                    ? 'ring-2 ring-slate-500 bg-slate-50'
-                    : 'hover:border-slate-300'
-                }`}
                 onClick={() => handleSelectOrder(order.id)}
+                className={`
+                  relative overflow-hidden cursor-pointer transition-all duration-200 border
+                  ${isSelected 
+                    ? 'border-slate-900 shadow-md bg-slate-50' 
+                    : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50 shadow-sm'
+                  }
+                `}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-900 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {order.parentName. charAt(0)}
-                          {order.parentSurname.charAt(0)}
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Аватар с инициалами */}
+                    <div className={`
+                      w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-sm
+                      ${isSelected ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-700'}
+                    `}>
+                      {order.parentSurname.charAt(0)}
+                    </div>
+
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-slate-900 text-base leading-tight">
+                        {order.parentSurname} {order.parentName}
+                      </span>
+                      <div className="flex items-center gap-2 mt-1">
+                         {/* Статус бейдж */}
+                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${status.color}`}>
+                          {status.icon}
+                          {status.text}
+                        </div>
+                        <span className="text-xs text-slate-400">
+                           • {new Date(order.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                         </span>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-900 text-sm">
-                          {order.parentName} {order.parentSurname. charAt(0)}. 
-                        </h3>
-                        <p className="text-xs text-slate-500 whitespace-nowrap">
-                          {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                        </p>
-                      </div>
                     </div>
-                    {getStatusIcon(order.status)}
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">
-                        {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
-                      </span>
-                      <span className="font-bold text-slate-900">
-                        {formatCurrency(order.totalAmount)}
-                      </span>
-                    </div>
-
-                    <Badge
-                      variant="secondary"
-                      className={`text-xs ${getStatusColor(order.status)} w-full justify-center`}
-                    >
-                      {order.status === 'PENDING' && 'Pending'}
-                      {order.status === 'APPROVED_BY_TEACHER' && 'Approved'}
-                      {order.status === 'LOCKED' && 'Locked'}
-                      {order.status === 'COMPLETED' && 'Completed'}
-                    </Badge>
-                  </div>
-                </CardContent>
+                  
+                  {/* Стрелочка для мобильных, чтобы показать кликабельность */}
+                  <ChevronRight className={`w-5 h-5 text-slate-300 ${isSelected ? 'text-slate-900' : ''}`} />
+                </div>
               </Card>
-            ))}
-          </div>
+            );
+          })
         )}
-      </div>
-
-      {/* Footer Stats */}
-      <div className="p-4 border-t border-slate-200 bg-slate-50">
-        <div className="grid grid-cols-2 gap-3 text-center">
-          <div className="p-2 bg-white rounded-lg border border-slate-200">
-            <p className="text-xs text-slate-600">Pending</p>
-            <p className="text-lg font-bold text-amber-600">
-              {orders.filter((o) => o.status === 'PENDING').length}
-            </p>
-          </div>
-          <div className="p-2 bg-white rounded-lg border border-slate-200">
-            <p className="text-xs text-slate-600">Approved</p>
-            <p className="text-lg font-bold text-slate-900">
-              {orders.filter((o) => o.status === 'APPROVED_BY_TEACHER').length}
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

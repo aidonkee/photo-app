@@ -15,12 +15,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
-  LayoutDashboard,
+  LayoutList, // Иконка списка лучше подходит для проверки
   Image,
-  ShoppingCart,
   LogOut,
-  GraduationCap,
   Menu,
+  CheckSquare
 } from 'lucide-react';
 import { 
   Sheet, 
@@ -46,20 +45,16 @@ export default function TeacherNavbar({
 
   const navItems = [
     {
-      name: 'Dashboard',
+      name: 'Проверка заказов',
       href: '/teacher-dashboard',
-      icon: LayoutDashboard,
+      icon: CheckSquare,
     },
     {
-      name: 'Photos',
+      name: 'Фотографии класса',
       href: '/classroom',
       icon: Image,
     },
-    {
-      name: 'Orders',
-      href: '/classroom/orders',
-      icon: ShoppingCart,
-    },
+    // Убрал лишнюю ссылку "Orders", так как "Dashboard" и есть заказы
   ];
 
   const handleLogout = () => {
@@ -76,37 +71,29 @@ export default function TeacherNavbar({
   };
 
   return (
-    <nav className={`bg-white border-b border-slate-200 ${className}`}>
+    <nav className={`bg-white border-b border-slate-200 sticky top-0 z-50 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & School Info */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-slate-600 to-slate-900 rounded-lg">
-                <GraduationCap className="w-6 h-6 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold text-slate-900">
-                  {classroomName || 'Teacher Portal'}
-                </h1>
-                {schoolName && (
-                  <p className="text-xs text-slate-600">{schoolName}</p>
-                )}
-              </div>
+          {/* Лого и инфо о классе */}
+          <div className="flex items-center gap-3">
+             {/* Скрываем лого на очень маленьких экранах, оставляем текст */}
+            <div className="flex flex-col">
+              <h1 className="text-base font-bold text-slate-900 leading-tight">
+                {classroomName || 'Кабинет учителя'}
+              </h1>
+              {schoolName && (
+                <p className="text-xs text-slate-500 truncate max-w-[200px]">{schoolName}</p>
+              )}
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Десктоп Меню */}
+          <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant={isActive(item.href) ? 'default' : 'ghost'}
-                  className={`gap-2 ${
-                    isActive(item.href)
-                      ? 'bg-gradient-to-r from-indigo-600 to-slate-900'
-                      : ''
-                  }`}
+                  variant={isActive(item.href) ? 'secondary' : 'ghost'}
+                  className={`gap-2 text-sm ${isActive(item.href) ? 'bg-slate-100 font-medium' : 'text-slate-600'}`}
                 >
                   <item.icon className="w-4 h-4" />
                   {item.name}
@@ -115,81 +102,72 @@ export default function TeacherNavbar({
             ))}
           </div>
 
-          {/* User Menu */}
-          <div className="flex items-center gap-3">
-            {/* Mobile Menu */}
-            <Sheet>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="w-5 h-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-64">
-                {/* --- Fix: Added SheetHeader & SheetTitle --- */}
-                <SheetHeader>
-                  <SheetTitle className="text-left">Navigation Menu</SheetTitle>
-                </SheetHeader>
-                {/* ------------------------------------------- */}
-                
-                <div className="flex flex-col gap-4 mt-6">
-                  {navItems.map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <Button
-                        variant={isActive(item.href) ? 'default' : 'ghost'}
-                        className={`w-full justify-start gap-3 ${
-                          isActive(item.href)
-                            ? 'bg-gradient-to-r from-indigo-600 to-slate-900'
-                            : ''
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                      </Button>
-                    </Link>
-                  ))}
-                  <Button
-                    variant="ghost"
-                    onClick={handleLogout}
-                    disabled={isPending}
-                    className="w-full justify-start gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            {/* Desktop User Dropdown */}
+          {/* Профиль и Мобильное меню */}
+          <div className="flex items-center gap-2">
+            
+            {/* Десктоп Дропдаун */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="hidden md:flex">
-                <Button variant="ghost" className="gap-2">
+                <Button variant="ghost" className="gap-2 px-2">
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-900 text-white font-bold">
-                      T
+                    <AvatarFallback className="bg-slate-900 text-white text-xs">
+                      УЧ
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium">Teacher</span>
+                  <span className="text-sm font-medium hidden lg:block">Учитель</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                {classroomName && (
-                  <div className="px-2 py-1.5 text-sm text-slate-600">
-                    {classroomName}
-                  </div>
-                )}
+                <DropdownMenuLabel>Мой аккаунт</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={isPending}
-                  className="text-slate-600 cursor-pointer"
+                  className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  {isPending ? 'Logging out...' : 'Logout'}
+                  Выйти
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Мобильное Меню (Бургер) */}
+            <Sheet>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-6 h-6 text-slate-700" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Меню</SheetTitle>
+                </SheetHeader>
+                
+                <div className="flex flex-col gap-2 mt-6">
+                  {navItems.map((item) => (
+                    <Link key={item.href} href={item.href}>
+                      <Button
+                        variant={isActive(item.href) ? 'secondary' : 'ghost'}
+                        className="w-full justify-start gap-3 h-12 text-base"
+                      >
+                        <item.icon className="w-5 h-5" />
+                        {item.name}
+                      </Button>
+                    </Link>
+                  ))}
+                  <div className="h-px bg-slate-100 my-2" />
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
+                    disabled={isPending}
+                    className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 h-12"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    Выйти из системы
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

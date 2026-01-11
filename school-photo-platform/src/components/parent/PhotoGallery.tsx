@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import WatermarkedImage from '@/components/shared/WatermarkedImage';
 import PhotoModal from './PhotoModal';
 import { Image as ImageIcon, Maximize2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { SchoolPricing } from '@/config/pricing';
 
 type Photo = {
@@ -17,7 +17,7 @@ type Photo = {
 
 type PhotoGalleryProps = {
   photos: Photo[];
-  schoolPricing?:  SchoolPricing | null;
+  schoolPricing?: SchoolPricing | null;
 };
 
 export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProps) {
@@ -25,15 +25,13 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
 
   if (photos.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="inline-flex p-4 bg-slate-100 rounded-lg border border-slate-200 mb-4">
-          <ImageIcon className="w-10 h-10 text-slate-400" />
-        </div>
+      <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+        <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-900 mb-2">
           Фотографии отсутствуют
         </h3>
         <p className="text-sm text-slate-500">
-          Фотографии будут загружены в ближайшее время. 
+          Фотограф скоро загрузит снимки класса.
         </p>
       </div>
     );
@@ -41,56 +39,55 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
 
   return (
     <>
-      {/* ✅ GRID с фиксированной высотой контейнера, но сохранением пропорций */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {/* === MASONRY LAYOUT === */}
+      {/* Используем columns-X вместо grid-cols-X для "тетрис" раскладки без дыр */}
+      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-12">
         {photos.map((photo, index) => {
           return (
             <div
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
-              className="group relative cursor-pointer bg-slate-100 border border-slate-200 hover:border-slate-900 transition-all duration-200 rounded-md overflow-hidden h-64"
+              className="break-inside-avoid relative group cursor-zoom-in rounded-lg overflow-hidden border border-slate-200 bg-slate-100 hover:shadow-lg transition-all duration-300"
             >
-              {/* ✅ object-contain вместо object-cover — показывает ВСЮ фотку без обрезки */}
-              <WatermarkedImage
+              {/* Фото полностью, без обрезки */}
+              <img
                 src={photo.thumbnailUrl || photo.watermarkedUrl}
-                alt={photo.alt}
-                width={photo.width}
-                height={photo.height}
-                className="w-full h-full object-contain"
+                alt={photo.alt || `Фото ${index + 1}`}
+                className="w-full h-auto object-contain block transform group-hover:scale-105 transition-transform duration-700"
+                loading="lazy"
               />
 
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-all duration-300 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:scale-100 scale-95">
-                  <div className="bg-white rounded-md p-2 shadow-sm">
-                    <Maximize2 className="w-5 h-5 text-slate-900" />
-                  </div>
-                </div>
+              {/* Затемнение при наведении */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+
+              {/* Бейдж "Просмотр" по центру */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                 <Badge className="bg-white/90 text-slate-900 hover:bg-white gap-2 px-3 py-1.5 shadow-lg backdrop-blur-sm pointer-events-none">
+                    <Maximize2 className="w-4 h-4" />
+                    Смотреть
+                 </Badge>
               </div>
 
-              {/* Photo Number Badge */}
-              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-slate-900 px-2 py-0.5 rounded text-[10px] font-mono font-medium border border-slate-200">
-                {String(index + 1).padStart(2, '0')}
+              {/* Номер фото (всегда виден) */}
+              <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[10px] font-mono font-bold shadow-sm z-10">
+                #{String(index + 1).padStart(2, '0')}
               </div>
 
-              {/* Info on Hover */}
-              <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <p className="text-[11px] text-slate-700 font-medium truncate">
-                  {photo. alt || `Фото ${index + 1}`}
-                </p>
-                <p className="text-[10px] text-slate-500 font-mono">
-                  {photo.width} × {photo.height}
-                </p>
+              {/* Инфо внизу при наведении */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                 <p className="text-xs text-white font-medium truncate">
+                    {photo.alt || 'Школьное фото'}
+                 </p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Photo Modal */}
+      {/* Photo Modal (Lightbox) */}
       {selectedPhoto && (
         <PhotoModal
-          open={!! selectedPhoto}
+          open={!!selectedPhoto}
           onOpenChange={(open) => !open && setSelectedPhoto(null)}
           photo={selectedPhoto}
           schoolPricing={schoolPricing}
