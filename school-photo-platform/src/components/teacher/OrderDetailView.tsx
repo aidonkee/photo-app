@@ -104,14 +104,7 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
           </div>
         </div>
 
-        <Alert className="bg-amber-50 border-amber-200 p-3">
-          <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <AlertDescription className="text-amber-800 text-sm leading-relaxed">
-              Проверьте, тот ли это ученик и нет ли проблем с кадрированием.
-            </AlertDescription>
-          </div>
-        </Alert>
+    
       </div>
 
       {/* 2. Список фотографий */}
