@@ -8,7 +8,8 @@ import { redirect } from 'next/navigation';
 import { uploadFile, getPublicUrl } from '@/lib/storage';
 import { addWatermark, createThumbnail } from '@/lib/watermark';
 import { createClient } from '@supabase/supabase-js';
-
+import sharp from 'sharp';
+sharp.concurrency(1);
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL! ;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -270,6 +271,40 @@ export async function getPhotoStats(classId: string) {
 // Добавьте ТОЛЬКО ЭТУ функцию в конец файла (после getPhotoStats)
 
 /**
+ * Загрузка фото в конкретный класс (автоматически находит или создает класс по имени)
+ */
+export async function uploadSchoolPhotoAction(
+  schoolId: string,
+  className: string,
+  formData: FormData
+) {
+  const session = await getSession();
+  if (!session) return { error: 'Unauthorized' };
+
+  try {
+    // 1. Находим или создаем класс
+    let classroom = await prisma.classroom.findFirst({
+      where: { schoolId, name: className }
+    });
+
+    if (!classroom) {
+      classroom = await prisma.classroom.create({
+        data: {
+          name: className,
+          schoolId: schoolId,
+          teacherLogin: `sch${schoolId.substring(0,4)}-${className.toLowerCase().replace(/\s+/g, '')}`,
+          teacherPassword: uuidv4().substring(0, 8),
+        }
+      });
+    }
+
+    // 2. Вызываем существующую логику загрузки (переиспользуем твой код)
+    return await uploadPhotoAction(classroom.id, formData);
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+/**
  * Bulk delete photos
  * Skips photos that are part of orders
  */
@@ -389,4 +424,5 @@ export async function deletePhotosAction(
     console.error('Bulk delete error:', error);
     throw new Error(error.message || 'Failed to delete photos');
   }
+  
 }

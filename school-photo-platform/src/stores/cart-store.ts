@@ -8,7 +8,8 @@ export type CartItem = {
   photoAlt: string | null;
   format: PhotoFormat;
   quantity: number;
-  pricePerUnit: number; // Stored at time of adding
+  pricePerUnit: number; 
+  photoThumbnail?: string;
 };
 
 type CartStore = {

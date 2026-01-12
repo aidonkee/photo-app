@@ -8,6 +8,7 @@ import { KeyRound, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import SchoolFolderUploader from '@/components/admin/SchoolFolderUploader';
 import {
   Building2,
   Users,
@@ -65,6 +66,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
           </div>
           
           <div className="flex items-center gap-2">
+            <SchoolFolderUploader schoolId={schoolId} />
             {/* 🆕 КНОПКА ЗАКАЗОВ */}
             <Link href={`/admin/schools/${schoolId}/orders`}>
               <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-700 border-slate-300 hover:border-slate-900 hover:text-slate-900">
