@@ -1,223 +1,345 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCartStore } from '@/stores/cart-store';
 import {
-Dialog,
-DialogContent,
-DialogDescription,
-DialogHeader,
-DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
-Select,
-SelectContent,
-SelectItem,
-SelectTrigger,
-SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShoppingCart, Plus, Minus, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
-PhotoFormat,
-FORMAT_LABELS,
-FORMAT_DESCRIPTIONS,
-formatPrice,
-getPrice,
-SchoolPricing,
+  PhotoFormat,
+  FORMAT_LABELS,
+  formatPrice,
+  getPrice,
+  SchoolPricing,
 } from '@/config/pricing';
 
-type PhotoModalProps = {
-open: boolean;
-onOpenChange: (open: boolean) => void;
-photo: {
-id: string;
-watermarkedUrl: string;
-alt: string | null;
+type Photo = {
+  id: string;
+  watermarkedUrl:  string;
+  alt: string | null;
 };
-// 🆕 Add school pricing
-schoolPricing?: SchoolPricing | null;
+
+type PhotoModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  photo: Photo;
+  allPhotos?:  Photo[]; // 🆕 Все фотографии для навигации
+  schoolPricing?: SchoolPricing | null;
+  onPhotoChange?:  (photo: Photo) => void; // 🆕 Колбэк для смены фото
 };
 
 export default function PhotoModal({
-open,
-onOpenChange,
-photo,
-schoolPricing,
+  open,
+  onOpenChange,
+  photo,
+  allPhotos = [],
+  schoolPricing,
+  onPhotoChange,
 }: PhotoModalProps) {
-const [format, setFormat] = useState<PhotoFormat>(PhotoFormat.A4);
-const [quantity, setQuantity] = useState(1);
-const [showSuccess, setShowSuccess] = useState(false);
-const addItem = useCartStore((state) => state.addItem);
+  const [format, setFormat] = useState<PhotoFormat>(PhotoFormat.A4);
+  const [quantity, setQuantity] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const addItem = useCartStore((state) => state.addItem);
 
-// 🆕 Use school pricing
-const price = getPrice(format, schoolPricing);
-const totalPrice = price * quantity;
+  // 🆕 Touch handling для свайпов
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-const handleAddToCart = () => {
-addItem({
-photoId: photo.id,
-photoUrl: photo.watermarkedUrl,
-photoAlt: photo.alt,
-format,
-quantity,
-pricePerUnit: price, // 🆕 Pass calculated price
-});
-setShowSuccess(true);
-setTimeout(() => {
-setShowSuccess(false);
-onOpenChange(false);
-setFormat(PhotoFormat.A4);
-setQuantity(1);
-}, 1500);
-};
+  const price = getPrice(format, schoolPricing);
+  const totalPrice = price * quantity;
 
-return (
-<Dialog open={open} onOpenChange={onOpenChange}>
-<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-<DialogHeader className="p-6 pb-4 border-b border-slate-200">
-<DialogTitle className="text-xl font-semibold text-slate-900">
-Выбор фотографии
-</DialogTitle>
-<DialogDescription className="text-sm text-slate-600">
-Выберите формат и количество
-</DialogDescription>
-</DialogHeader>
+  // 🆕 Текущий индекс фото
+  const currentIndex = allPhotos.findIndex((p) => p.id === photo.id);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < allPhotos.length - 1;
+  useEffect(() => {
+    setFormat(PhotoFormat.A4);
+    setQuantity(1);
+    setShowSuccess(false);
+  }, [photo.id]); // Срабатывает при смене фото
 
-<div className="grid grid-cols-1 md: grid-cols-2 gap-6 p-6">
-{/* Photo Preview */}
-<div className="space-y-3">
-  <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200">
-    <img
-      src={photo.watermarkedUrl}
-      alt={photo.alt || 'Фотография'}
-      className="w-full h-auto"
-      style={{ display: 'block', maxWidth: '100%' }}
-    />
-  </div>
-</div>
+  // 🆕 Навигация
+  const goToPrev = useCallback(() => {
+    if (hasPrev && onPhotoChange) {
+      onPhotoChange(allPhotos[currentIndex - 1]);
+      setShowSuccess(false);
+    }
+  }, [hasPrev, currentIndex, allPhotos, onPhotoChange]);
 
-{/* Options */}
-<div className="space-y-4">
-{/* Format Selection */}
-<div className="space-y-2">
-<Label htmlFor="format" className="text-sm font-medium text-slate-900">
-Формат
-</Label>
-<Select
-value={format}
-onValueChange={(value) => setFormat(value as PhotoFormat)}
->
-<SelectTrigger id="format" className="h-11 border-slate-300">
-<SelectValue />
-</SelectTrigger>
-<SelectContent>
-{Object.values(PhotoFormat).map((fmt) => (
-<SelectItem key={fmt} value={fmt} className="cursor-pointer py-3">
-<div className="flex items-start justify-between w-full gap-4">
-<div className="flex-1">
-<p className="font-medium text-sm text-slate-900">
-{FORMAT_LABELS[fmt]}
-</p>
+  const goToNext = useCallback(() => {
+    if (hasNext && onPhotoChange) {
+      onPhotoChange(allPhotos[currentIndex + 1]);
+      setShowSuccess(false);
+    }
+  }, [hasNext, currentIndex, allPhotos, onPhotoChange]);
 
-</div>
-<span className="font-semibold text-sm text-slate-900 whitespace-nowrap">
-{formatPrice(getPrice(fmt, schoolPricing))}
-</span>
-</div>
-</SelectItem>
-))}
-</SelectContent>
-</Select>
-</div>
+  // 🆕 Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (! open) return;
+      if (e.key === 'ArrowLeft') goToPrev();
+      if (e.key === 'ArrowRight') goToNext();
+    };
 
-{/* Quantity Selection */}
-<div className="space-y-2">
-<Label className="text-sm font-medium text-slate-900">Количество</Label>
-<div className="flex items-center gap-3">
-<Button
-type="button"
-variant="outline"
-size="icon"
-className="h-11 w-11 border-slate-300"
-onClick={() => setQuantity(Math.max(1, quantity - 1))}
-disabled={quantity <= 1}
->
-<Minus className="w-4 h-4" />
-</Button>
-<div className="flex-1">
-<input
-type="number"
-min="1"
-max="99"
-value={quantity}
-onChange={(e) =>
-setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-}
-className="w-full text-center text-xl font-semibold border border-slate-300 rounded-md py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-/>
-</div>
-<Button
-type="button"
-variant="outline"
-size="icon"
-className="h-11 w-11 border-slate-300"
-onClick={() => setQuantity(Math.min(99, quantity + 1))}
-disabled={quantity >= 99}
->
-<Plus className="w-4 h-4" />
-</Button>
-</div>
-</div>
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, goToPrev, goToNext]);
 
-{/* Price Summary */}
-<div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
-<div className="flex items-center justify-between text-sm">
-<span className="text-slate-600">Цена за единицу:</span>
-<span className="font-medium text-slate-900 tabular-nums">
-{formatPrice(price)}
-</span>
-</div>
-<div className="flex items-center justify-between text-sm">
-<span className="text-slate-600">Количество:</span>
-<span className="font-medium text-slate-900 tabular-nums">
-×{quantity}
-</span>
-</div>
-<div className="pt-2 border-t border-slate-200">
-<div className="flex items-center justify-between">
-<span className="font-semibold text-slate-900">Итого:</span>
-<span className="text-2xl font-semibold text-slate-900 tabular-nums">
-{formatPrice(totalPrice)}
-</span>
-</div>
-</div>
-</div>
+  // 🆕 Touch swipe handling
+  const minSwipeDistance = 50;
 
-{/* Success Message */}
-{showSuccess && (
-<Alert className="bg-slate-900 border-slate-900 text-white">
-<CheckCircle2 className="h-4 w-4 text-white" />
-<AlertDescription className="text-white">
-Успешно добавлено в корзину!
-</AlertDescription>
-</Alert>
-)}
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
 
-{/* Add to Cart Button */}
-<Button
-onClick={handleAddToCart}
-disabled={showSuccess}
-className="w-full h-11 text-base bg-slate-900 hover:bg-slate-800"
->
-<ShoppingCart className="w-4 h-4 mr-2" />
-Добавить в корзину
-</Button>
-</div>
-</div>
-</DialogContent>
-</Dialog>
-);
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (! touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      goToNext();
+    } else if (isRightSwipe) {
+      goToPrev();
+    }
+  };
+
+  const handleAddToCart = () => {
+    addItem({
+      photoId: photo.id,
+      photoUrl: photo.watermarkedUrl,
+      photoAlt: photo.alt,
+      format,
+      quantity,
+      pricePerUnit: price,
+    });
+
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-200">
+          <DialogTitle className="text-lg sm:text-xl font-semibold text-slate-900">
+            Выбор фотографии
+          </DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm text-slate-600">
+            {allPhotos.length > 0 && (
+              <span>
+                {currentIndex + 1} из {allPhotos.length} • Используйте стрелки или свайп для навигации
+              </span>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md: grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 relative">
+          {/* 🆕 Prev Button (Desktop) */}
+          {hasPrev && (
+            <button
+              onClick={goToPrev}
+              className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-slate-900/80 hover:bg-slate-900 text-white rounded-full shadow-lg transition-all"
+              aria-label="Предыдущее фото"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* 🆕 Next Button (Desktop) */}
+          {hasNext && (
+            <button
+              onClick={goToNext}
+              className="hidden md: flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-slate-900/80 hover:bg-slate-900 text-white rounded-full shadow-lg transition-all"
+              aria-label="Следующее фото"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Photo Preview */}
+          <div 
+            className="space-y-3 relative"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative">
+              <img
+                src={photo.watermarkedUrl}
+                alt={photo.alt || 'Фотография'}
+                className="w-full h-auto block"
+                style={{ maxWidth: '100%' }}
+              />
+
+              {/* 🆕 Mobile Navigation Arrows (Inside Image) */}
+              <div className="md:hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
+                {hasPrev && (
+                  <button
+                    onClick={goToPrev}
+                    className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
+                    aria-label="Предыдущее фото"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
+                {! hasPrev && <div />}
+
+                {hasNext && (
+                  <button
+                    onClick={goToNext}
+                    className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active: scale-95 transition-all"
+                    aria-label="Следующее фото"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className="space-y-4">
+            {/* Format Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="format" className="text-sm font-medium text-slate-900">
+                Формат
+              </Label>
+              <Select
+                value={format}
+                onValueChange={(value) => setFormat(value as PhotoFormat)}
+              >
+                <SelectTrigger id="format" className="h-11 border-slate-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(PhotoFormat).map((fmt) => (
+                    <SelectItem key={fmt} value={fmt} className="cursor-pointer py-3">
+                      <div className="flex items-start justify-between w-full gap-4">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-slate-900">
+                            {FORMAT_LABELS[fmt]}
+                          </p>
+                        </div>
+                        <span className="font-semibold text-sm text-slate-900 whitespace-nowrap">
+                          {formatPrice(getPrice(fmt, schoolPricing))}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Quantity Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-slate-900">Количество</Label>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 border-slate-300"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={quantity}
+                    onChange={(e) =>
+                      setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                    }
+                    className="w-full text-center text-xl font-semibold border border-slate-300 rounded-md py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 border-slate-300"
+                  onClick={() => setQuantity(Math.min(99, quantity + 1))}
+                  disabled={quantity >= 99}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Price Summary */}
+            <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">Цена за единицу: </span>
+                <span className="font-medium text-slate-900 tabular-nums">
+                  {formatPrice(price)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">Количество:</span>
+                <span className="font-medium text-slate-900 tabular-nums">
+                  ×{quantity}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-900">Итого:</span>
+                  <span className="text-2xl font-semibold text-slate-900 tabular-nums">
+                    {formatPrice(totalPrice)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Success Message */}
+            {showSuccess && (
+              <Alert className="bg-slate-900 border-slate-900 text-white">
+                <CheckCircle2 className="h-4 w-4 text-white" />
+                <AlertDescription className="text-white">
+                  Успешно добавлено! 
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Add to Cart Button */}
+            <Button
+              onClick={handleAddToCart}
+              disabled={showSuccess}
+              className="w-full h-11 text-base bg-slate-900 hover:bg-slate-800"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Добавить в корзину
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

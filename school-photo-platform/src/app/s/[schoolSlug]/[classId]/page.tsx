@@ -114,6 +114,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
         onOpenChange={setCartOpen}
         classId={classId}
         schoolSlug={schoolSlug}
+        schoolPricing={schoolPricing}
       />
     </div>
   );

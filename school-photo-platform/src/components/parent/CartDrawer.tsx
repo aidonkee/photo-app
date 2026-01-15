@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Trash2,
@@ -19,7 +18,7 @@ import {
   Minus,
   ArrowLeft,
 } from 'lucide-react';
-import { formatPrice, FORMAT_LABELS, getPrice } from '@/config/pricing';
+import { formatPrice, FORMAT_LABELS, SchoolPricing } from '@/config/pricing';
 import CheckoutForm from '@/components/parent/CheckoutForm';
 
 type CartDrawerProps = {
@@ -27,6 +26,7 @@ type CartDrawerProps = {
   onOpenChange: (open: boolean) => void;
   classId: string;
   schoolSlug: string;
+  schoolPricing?:  SchoolPricing | null;
 };
 
 export default function CartDrawer({
@@ -34,20 +34,20 @@ export default function CartDrawer({
   onOpenChange,
   classId,
   schoolSlug,
+  schoolPricing,
 }: CartDrawerProps) {
   const items = useCartStore((state) => state.items);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
 
-  // false — корзина, true — оформление заказа
   const [showCheckout, setShowCheckout] = useState(false);
 
   const totalPrice = getTotalPrice();
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
-    if (!isOpen) {
+    if (! isOpen) {
       setTimeout(() => setShowCheckout(false), 300);
     }
   };
@@ -67,16 +67,16 @@ export default function CartDrawer({
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            {showCheckout ? 'Оформление заказа' : 'Корзина'}
+            {showCheckout ?  'Оформление заказа' : 'Корзина'}
           </SheetTitle>
           <SheetDescription>
             {showCheckout
               ? 'Заполните контактные данные для завершения заказа.'
-              : 'Просмотрите выбранные фотографии.'}
+              : 'Просмотрите выбранные фотографии. '}
           </SheetDescription>
         </SheetHeader>
 
-        {showCheckout ? (
+        {showCheckout ?  (
           /* ОФОРМЛЕНИЕ ЗАКАЗА */
           <div className="space-y-6">
             <div className="bg-slate-50 p-4 rounded-lg border">
@@ -91,93 +91,96 @@ export default function CartDrawer({
               </p>
             </div>
 
-            <CheckoutForm
-              classId={classId}
-              schoolSlug={schoolSlug}
-            />
+            <CheckoutForm classId={classId} schoolSlug={schoolSlug} />
           </div>
         ) : (
-          /* КОРЗИНА */
+          /* КОРЗИНА С ПРЕВЬЮ */
           <div className="flex flex-col h-[calc(100vh-10rem)]">
             <ScrollArea className="flex-1 -mx-6 px-6">
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {items.length === 0 ? (
                   <Alert>
-                    <AlertDescription>
-                      Ваша корзина пуста.
-                    </AlertDescription>
+                    <AlertDescription>Ваша корзина пуста. </AlertDescription>
                   </Alert>
                 ) : (
                   items.map((item) => (
                     <div
                       key={`${item.photoId}-${item.format}`}
-                      className="flex flex-col gap-3 pb-4 border-b last:border-0"
+                      className="flex gap-3 pb-4 border-b border-slate-200 last:border-0"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-sm line-clamp-1">
-                            {item.photoAlt || 'Фотография'}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {FORMAT_LABELS[item.format]}
-                          </p>
-                        </div>
-                        <p className="font-medium text-sm">
-                          {formatPrice(getPrice(item.format) * item.quantity)}
-                        </p>
+                      {/* ✅ ПРЕВЬЮ ФОТОГРАФИИ */}
+                      <div className="relative flex-shrink-0 w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                        <img
+                          src={item.photoUrl}
+                          alt={item.photoAlt || 'Фото'}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
-                      <div className="flex items-center justify-between bg-slate-50 p-1 rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 bg-white shadow-sm"
-                            onClick={() =>
-                              updateQuantity(
-                                item.photoId,
-                                item.format,
-                                Math.max(1, item.quantity - 1)
-                              )
-                            }
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-
-                          <span className="w-8 text-center text-sm font-medium">
-                            {item.quantity}
-                          </span>
-
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 bg-white shadow-sm"
-                            onClick={() =>
-                              updateQuantity(
-                                item.photoId,
-                                item.format,
-                                item.quantity + 1
-                              )
-                            }
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
+                      {/* ИНФОРМАЦИЯ О ТОВАРЕ */}
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                        {/* Верхняя часть:  формат + цена */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">
+                              {FORMAT_LABELS[item.format]}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">
+                              {item.photoAlt || 'Фотография'}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">
+                            {formatPrice(item.pricePerUnit * item.quantity)}
+                          </p>
                         </div>
 
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                          onClick={() =>
-                            removeItem(item.photoId, item.format)
-                          }
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {/* Нижняя часть: кнопки управления */}
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-1 bg-slate-50 rounded-md p-0.5">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 bg-white shadow-sm hover:bg-slate-100"
+                              onClick={() =>
+                                updateQuantity(
+                                  item.photoId,
+                                  item. format,
+                                  Math.max(1, item.quantity - 1)
+                                )
+                              }
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+
+                            <span className="w-8 text-center text-sm font-medium text-slate-900">
+                              {item.quantity}
+                            </span>
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 bg-white shadow-sm hover:bg-slate-100"
+                              onClick={() =>
+                                updateQuantity(item.photoId, item.format, item.quantity + 1)
+                              }
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => removeItem(item.photoId, item.format)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -185,16 +188,17 @@ export default function CartDrawer({
               </div>
             </ScrollArea>
 
-            <div className="pt-6 mt-auto bg-white border-t space-y-4">
+            {/* ИТОГО */}
+            <div className="pt-6 mt-auto bg-white border-t border-slate-200 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-lg font-medium">Итого:</p>
+                <p className="text-lg font-medium text-slate-700">Итого: </p>
                 <p className="text-2xl font-bold text-slate-900">
                   {formatPrice(totalPrice)}
                 </p>
               </div>
 
               <Button
-                className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800"
+                className="w-full h-12 text-base bg-slate-900 hover:bg-slate-800 text-white"
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
               >
