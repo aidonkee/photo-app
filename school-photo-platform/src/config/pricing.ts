@@ -17,8 +17,8 @@ export const DEFAULT_PRICING = {
 } as const;
 
 export const FORMAT_LABELS = {
-  [PhotoFormat. A4]: 'Формат A4 (21×29.7 см)',
-  [PhotoFormat.A5]: 'Формат A5 (14. 8×21 см)',
+  [PhotoFormat. A4]: 'Формат A4',
+  [PhotoFormat.A5]: 'Формат A5',
   
 } as const;
 
