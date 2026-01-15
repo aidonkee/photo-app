@@ -42,16 +42,16 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
           <button
             key={photo.id}
             onClick={() => setSelectedPhoto(photo)}
-            className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 hover:shadow-xl transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
+            className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100  transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
           >
             
               <img
               src={photo.watermarkedUrl}
               alt={photo.alt || 'Фотография'}
-              className="w-full h-auto object-contain block bg-slate-100"
+              className="w-full h-auto object-contain block "
               loading="lazy"
-            
             />
+            
             
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
             
