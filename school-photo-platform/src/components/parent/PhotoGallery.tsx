@@ -53,10 +53,7 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
             
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover: opacity-100 transition-opacity duration-300">
-              <Badge className="bg-white/95 text-slate-900 gap-2 px-4 py-2 shadow-xl backdrop-blur-md">
-                <Maximize2 className="w-4 h-4" />
-                Смотреть
-              </Badge>
+              
             </div>
 
             <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
@@ -76,7 +73,7 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
           photo={selectedPhoto}
           allPhotos={photos} // 🆕 Передаём все фото
           schoolPricing={schoolPricing}
-          onPhotoChange={setSelectedPhoto} // 🆕 Колбэк для смены фото
+          onPhotoChange={(photo) => setSelectedPhoto(photo)} // 🆕 Колбэк для смены фото
         />
       )}
     </>

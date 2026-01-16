@@ -30,8 +30,11 @@ import {
 
 type Photo = {
   id: string;
-  watermarkedUrl:  string;
+  watermarkedUrl: string;
+  thumbnailUrl: string | null;
   alt: string | null;
+  width: number;
+  height: number;
 };
 
 type PhotoModalProps = {
