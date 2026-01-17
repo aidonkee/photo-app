@@ -55,7 +55,7 @@ export default function UploadPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      <PhotoUploader classId={classId} />
+      <PhotoUploader classId={classId} schoolId= {schoolId} />
     </div>
   );
 }

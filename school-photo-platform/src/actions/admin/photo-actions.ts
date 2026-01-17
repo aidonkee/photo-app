@@ -92,8 +92,8 @@ export async function uploadPhotoAction(
       return { error: `Invalid file type: ${file.type}` };
     }
 
-    // Validate file size (max 10MB)
-    const MAX_FILE_SIZE = 100 * 1024 * 1024;
+    // Validate file size (max 50MB)
+    const MAX_FILE_SIZE = 500 * 1024 * 1024;
     if (file. size > MAX_FILE_SIZE) {
       return { error: `File too large:  ${(file.size / 1024 / 1024).toFixed(2)}MB` };
     }

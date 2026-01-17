@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
 
 import { savePhotoRecord, revalidateClassroomPhotos } from '@/actions/photo-db-actions';
-import { getSupabaseClient, getPublicUrl } from '@/lib/superbase/client';
+import { getSupabaseClient, getPublicUrl } from '@/lib/supabase/client';
 
 // Configuration
 const BUCKET_NAME = 'school-photos';

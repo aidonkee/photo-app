@@ -12,4 +12,7 @@ const prisma = globalThis.prismaGlobal ??  prismaClientSingleton();
 
 export default prisma;
 
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma;
+// Вместо process.env.NODE_ENV используй проверку на наличие самого процесса
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  globalThis.prismaGlobal = prisma;
+}

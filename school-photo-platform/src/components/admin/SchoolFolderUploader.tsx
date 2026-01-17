@@ -2,86 +2,232 @@
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { FolderUp, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { uploadSchoolPhotoAction } from '@/actions/admin/photo-actions';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  FolderUp,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  FolderOpen,
+  X,
+} from 'lucide-react';
+import { findOrCreateClassroom } from '@/actions/admin/classroom-actions';
+import { useUpload } from '@/hooks/use-upload';
 
-export default function SchoolFolderUploader({ schoolId }: { schoolId: string }) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<{ current: number; total: number; fileName: string } | null>(null);
-  const [errorLog, setErrorLog] = useState<string[]>([]);
+type SchoolFolderUploaderProps = {
+  schoolId: string;
+};
+
+type ClassGroup = {
+  className: string;
+  files: File[];
+  classId?:  string;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  uploaded: number;
+  failed: number;
+  error?: string;
+};
+
+type UploadPhase = 'idle' | 'parsing' | 'uploading' | 'complete';
+
+export default function SchoolFolderUploader({ schoolId }: SchoolFolderUploaderProps) {
+  const [phase, setPhase] = useState<UploadPhase>('idle');
+  const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
+  const [overallProgress, setOverallProgress] = useState(0);
+  const [totalStats, setTotalStats] = useState({ success: 0, failed: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Функция для повторных попыток (Retry Mechanism)
-  const uploadWithRetry = async (className: string, file: File, retries = 3): Promise<any> => {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const result = await uploadSchoolPhotoAction(schoolId, className, formData);
-        
-        if (result?.error) throw new Error(result.error);
-        
-        return result; // Успешно загружено
-      } catch (err: any) {
-        if (attempt === retries) throw err; // Если это была последняя попытка, пробрасываем ошибку
-        console.warn(`Попытка ${attempt} не удалась для ${file.name}. Пробуем снова...`);
-        // Пауза перед следующей попыткой (1 секунда)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+  const { uploadFiles } = useUpload();
+
+  /**
+   * Parse folder structure and group files by class name
+   */
+  const parseFolderStructure = (files: File[]): ClassGroup[] => {
+    const groups: Map<string, File[]> = new Map();
+
+    for (const file of files) {
+      // Skip hidden files and non-images
+      if (file.name. startsWith('.') || !file.type.startsWith('image/')) {
+        continue;
       }
+
+      // Parse path:  SchoolFolder/ClassName/photo.jpg
+      const pathParts = file.webkitRelativePath.split('/');
+
+      // Determine class name from folder structure
+      let className = 'Общие';
+      if (pathParts.length >= 3) {
+        // SchoolFolder/ClassName/photo. jpg → ClassName
+        className = pathParts[pathParts.length - 2];
+      } else if (pathParts.length === 2) {
+        // ClassName/photo.jpg → ClassName
+        className = pathParts[0];
+      }
+
+      // Normalize class name
+      className = className. trim();
+      if (!className || className === '.' || className === '..') {
+        className = 'Общие';
+      }
+
+      if (!groups.has(className)) {
+        groups.set(className, []);
+      }
+      groups.get(className)!.push(file);
     }
+
+    // Convert to array and sort by class name
+    return Array.from(groups.entries())
+      .map(([className, files]) => ({
+        className,
+        files,
+        status: 'pending' as const,
+        uploaded: 0,
+        failed: 0,
+      }))
+      .sort((a, b) => a.className.localeCompare(b.className, 'ru'));
   };
 
-  const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Handle folder selection
+   */
+  const handleFolderSelect = async (e:  React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // 1. Фильтрация: берем только изображения и игнорируем системные файлы (типа .DS_Store)
-    const validFiles = files.filter(f => 
-      f.type.startsWith('image/') && !f.name.startsWith('.')
-    );
+    setPhase('parsing');
 
-    if (validFiles.length === 0) {
-      alert('В выбранной папке не найдено подходящих изображений.');
+    // Parse folder structure
+    const groups = parseFolderStructure(files);
+
+    if (groups.length === 0) {
+      alert('В выбранной папке не найдено изображений.');
+      setPhase('idle');
       return;
     }
 
-    setUploading(true);
-    setProgress(0);
-    setErrorLog([]);
+    setClassGroups(groups);
+    setTotalStats({
+      success: 0,
+      failed: 0,
+      total: groups.reduce((sum, g) => sum + g.files.length, 0),
+    });
 
-    for (let i = 0; i < validFiles.length; i++) {
-      const file = validFiles[i];
-      
-      // Определяем класс по имени папки
-      const pathParts = file.webkitRelativePath.split('/');
-      // Путь обычно: НазваниеПапкиШколы/НазваниеКласса/фото.jpg
-      const className = pathParts.length > 2 ? pathParts[pathParts.length - 2] : 'Общие';
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current. value = '';
+    }
 
-      setStatus({ current: i + 1, total: validFiles.length, fileName: file.name });
+    // Start upload process
+    await startUpload(groups);
+  };
+
+  /**
+   * Start uploading all groups
+   */
+  const startUpload = async (groups: ClassGroup[]) => {
+    setPhase('uploading');
+    let totalSuccess = 0;
+    let totalFailed = 0;
+    const totalFiles = groups.reduce((sum, g) => sum + g.files.length, 0);
+    let processedFiles = 0;
+
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i];
+      setCurrentGroupIndex(i);
+
+      // Update group status to uploading
+      setClassGroups((prev) =>
+        prev.map((g, idx) => (idx === i ? { ...g, status: 'uploading' } : g))
+      );
 
       try {
-        // Загружаем с механизмом повтора
-        await uploadWithRetry(className, file);
-      } catch (err: any) {
-        console.error(`Критическая ошибка загрузки ${file.name}:`, err);
-        setErrorLog(prev => [...prev, `${file.name}: ${err.message || 'Ошибка сервера'}`]);
+        // Find or create classroom
+        const classroom = await findOrCreateClassroom(schoolId, group.className);
+
+        // Update group with classId
+        setClassGroups((prev) =>
+          prev.map((g, idx) => (idx === i ? { ...g, classId: classroom.id } : g))
+        );
+
+        // Upload files for this class
+        const result = await uploadFiles(group.files, classroom.id, schoolId);
+
+        // Update group status
+        setClassGroups((prev) =>
+          prev.map((g, idx) =>
+            idx === i
+              ?  {
+                  ...g,
+                  status: result.failedCount > 0 ? 'error' : 'success',
+                  uploaded: result.uploadedCount,
+                  failed:  result.failedCount,
+                }
+              : g
+          )
+        );
+
+        totalSuccess += result.uploadedCount;
+        totalFailed += result.failedCount;
+        processedFiles += group.files.length;
+      } catch (error:  any) {
+        console.error(`Failed to process class ${group.className}:`, error);
+
+        setClassGroups((prev) =>
+          prev.map((g, idx) =>
+            idx === i
+              ?  {
+                  ...g,
+                  status: 'error',
+                  failed: g.files.length,
+                  error: error.message,
+                }
+              : g
+          )
+        );
+
+        totalFailed += group.files.length;
+        processedFiles += group.files. length;
       }
 
-      // Обновляем прогресс-бар
-      const currentProgress = Math.round(((i + 1) / validFiles.length) * 100);
-      setProgress(currentProgress);
+      // Update overall progress
+      setOverallProgress(Math.round((processedFiles / totalFiles) * 100));
+      setTotalStats({
+        total: totalFiles,
+        success:  totalSuccess,
+        failed: totalFailed,
+      });
     }
 
-    setUploading(false);
+    setPhase('complete');
 
-    if (errorLog.length > 0) {
-      alert(`Загрузка завершена с ошибками (${errorLog.length} файлов не загружено). Проверьте консоль.`);
-    } else {
-      window.location.reload(); // Перезагружаем, чтобы увидеть результат
+    // Reload page after delay if successful
+    if (totalSuccess > 0) {
+      setTimeout(() => {
+        window.location.reload();
+      }, 4000);
     }
+  };
+
+  /**
+   * Reset and start over
+   */
+  const handleReset = () => {
+    setPhase('idle');
+    setClassGroups([]);
+    setCurrentGroupIndex(0);
+    setOverallProgress(0);
+    setTotalStats({ success: 0, failed: 0, total: 0 });
   };
 
   return (
@@ -90,68 +236,165 @@ export default function SchoolFolderUploader({ schoolId }: { schoolId: string })
         type="file"
         ref={fileInputRef}
         className="hidden"
-        /* @ts-ignore - атрибуты для выбора папок в Chrome/Safari/Edge */
+        /* @ts-ignore - Folder selection attributes */
         webkitdirectory=""
         directory=""
         multiple
         onChange={handleFolderSelect}
       />
-      
-      <Button 
-        onClick={() => {
-          if (confirm('Убедитесь, что внутри папки школы находятся папки с названиями классов (например: "1А", "2Б"). Начать загрузку?')) {
-            fileInputRef.current?.click();
-          }
-        }} 
-        disabled={uploading}
-        className="bg-slate-900 hover:bg-slate-800 text-white gap-2 h-9"
-      >
-        {uploading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
+
+      {phase === 'idle' && (
+        <Button
+          onClick={() => {
+            if (
+              confirm(
+                'Выберите папку школы.\n\nВнутри должны быть папки с названиями классов (например:  "1А", "2Б", "11В").\n\nФайлы загружаются напрямую в облако — это быстрее и надёжнее.'
+              )
+            ) {
+              fileInputRef.current?.click();
+            }
+          }}
+          className="bg-slate-900 hover:bg-slate-800 text-white gap-2 h-9"
+        >
           <FolderUp className="w-4 h-4" />
-        )}
-        {uploading ? `Загрузка... ${status?.current}/${status?.total}` : 'Загрузить папку школы'}
-      </Button>
-
-      {uploading && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white border shadow-2xl rounded-2xl p-6 space-y-5">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-slate-900 leading-none">Загрузка архива</h3>
-                <span className="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  {progress}%
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 truncate">
-                Файл: {status?.fileName}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <Progress value={progress} className="h-2 bg-slate-100" />
-              <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                <span>Обработано: {status?.current}</span>
-                <span>Всего: {status?.total}</span>
-              </div>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-              <p className="text-[11px] text-amber-700 leading-relaxed">
-                <strong>Важно:</strong> Не закрывайте вкладку и не выключайте компьютер до завершения процесса. Каждое фото проходит обработку и наложение ватермарки.
-              </p>
-            </div>
-            
-            {errorLog.length > 0 && (
-              <div className="text-[10px] text-red-500 bg-red-50 p-2 rounded max-h-20 overflow-y-auto">
-                Ошибок: {errorLog.length}. Некоторые файлы будут пропущены.
-              </div>
-            )}
-          </div>
-        </div>
+          Загрузить папку школы
+        </Button>
       )}
+
+      {/* Upload Dialog - ✅ ИСПРАВЛЕНО:  Используем Dialog вместо div */}
+      <Dialog open={phase !== 'idle'} onOpenChange={(open) => !open && phase === 'complete' && handleReset()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {phase === 'complete' ? (
+                <CheckCircle2 className="w-5 h-5 text-slate-900" />
+              ) : (
+                <Loader2 className="w-5 h-5 text-slate-900 animate-spin" />
+              )}
+              <span>
+                {phase === 'parsing' && 'Анализ папок...'}
+                {phase === 'uploading' && 'Загрузка фотографий'}
+                {phase === 'complete' && 'Загрузка завершена'}
+              </span>
+            </DialogTitle>
+            <DialogDescription>
+              {phase === 'parsing' && 'Анализируем структуру папок...'}
+              {phase === 'uploading' && classGroups.length > 0 && (
+                <>Класс {currentGroupIndex + 1} из {classGroups.length}</>
+              )}
+              {phase === 'complete' && (
+                <>Загружено {totalStats.success} из {totalStats.total} файлов</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Progress */}
+          {phase !== 'parsing' && (
+            <div className="space-y-4">
+              <Progress value={overallProgress} className="h-2" />
+
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{totalStats.total}</p>
+                  <p className="text-xs text-slate-500">Всего</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{totalStats.success}</p>
+                  <p className="text-xs text-slate-500">Загружено</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-400">{totalStats.failed}</p>
+                  <p className="text-xs text-slate-500">Ошибок</p>
+                </div>
+              </div>
+
+              {/* Class Groups List */}
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {classGroups.map((group) => (
+                  <div
+                    key={group.className}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                      group.status === 'uploading'
+                        ? 'border-slate-900 bg-slate-50'
+                        : group.status === 'success'
+                        ? 'border-slate-200 bg-slate-50'
+                        : group.status === 'error'
+                        ? 'border-red-200 bg-red-50'
+                        : 'border-slate-100 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FolderOpen
+                        className={`w-4 h-4 ${
+                          group.status === 'success'
+                            ? 'text-slate-900'
+                            : group.status === 'error'
+                            ? 'text-red-500'
+                            : 'text-slate-400'
+                        }`}
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          {group.className}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {group.files.length} файлов
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      {group.status === 'pending' && (
+                        <span className="text-xs text-slate-400">Ожидание</span>
+                      )}
+                      {group.status === 'uploading' && (
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-900" />
+                      )}
+                      {group.status === 'success' && (
+                        <span className="text-xs text-slate-900 font-medium">
+                          ✓ {group.uploaded}
+                        </span>
+                      )}
+                      {group. status === 'error' && (
+                        <span className="text-xs text-red-600">
+                          {group.uploaded > 0
+                            ? `${group.uploaded} / ${group.failed} ошибок`
+                            : 'Ошибка'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Warning */}
+              {phase === 'uploading' && (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  <AlertDescription className="text-amber-700 text-xs">
+                    Не закрывайте страницу до завершения загрузки. 
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Complete message */}
+              {phase === 'complete' && totalStats.success > 0 && (
+                <p className="text-center text-sm text-slate-500">
+                  Страница обновится через несколько секунд... 
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Parsing state */}
+          {phase === 'parsing' && (
+            <div className="py-8 text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-slate-900 mx-auto mb-3" />
+              <p className="text-sm text-slate-500">Анализируем структуру папок...</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
