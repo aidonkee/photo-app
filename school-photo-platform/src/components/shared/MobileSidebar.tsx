@@ -7,6 +7,7 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle
 } from '@/components/ui/sheet';
 import Sidebar from './Sidebar';
 
@@ -47,7 +48,9 @@ export default function MobileSidebar({ role, schools, onLogout }: MobileSidebar
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 w-64">
+      <SheetTitle className="sr-only">
         <Sidebar role={role} schools={schools} onLogout={handleLogout} />
+        </SheetTitle>
       </SheetContent>
     </Sheet>
   );

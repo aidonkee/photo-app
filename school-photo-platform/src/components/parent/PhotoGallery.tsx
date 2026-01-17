@@ -6,7 +6,7 @@ import { Image as ImageIcon } from 'lucide-react';
 import { SchoolPricing } from '@/config/pricing';
 
 type Photo = {
-  id:  string;
+  id: string;
   watermarkedUrl: string;
   thumbnailUrl: string | null;
   alt: string | null;
@@ -15,22 +15,21 @@ type Photo = {
 };
 
 type PhotoGalleryProps = {
-  photos:  Photo[];
+  photos: Photo[];
   schoolPricing?:  SchoolPricing | null;
 };
 
-// ✅ Вспомогательная функция для генерации watermark URL
-function getWatermarkUrl(originalUrl:  string, photoId: string): string {
-  // Если URL уже содержит watermark, возвращаем как есть
-  if (originalUrl. includes('/watermarked/')) {
+// ✅ Функция для генерации watermark URL
+function getWatermarkUrl(originalUrl: string): string {
+  // Если URL уже содержит /watermarked/, значит watermark уже есть
+  if (originalUrl.includes('/watermarked/')) {
     return originalUrl;
   }
-  
   // Генерируем прокси-URL через API
-  return `/api/watermark/proxy?url=${encodeURIComponent(originalUrl)}&id=${photoId}`;
+  return `/api/watermark/view?url=${encodeURIComponent(originalUrl)}`;
 }
 
-export default function PhotoGallery({ photos, schoolPricing }:  PhotoGalleryProps) {
+export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   if (photos.length === 0) {
@@ -38,7 +37,7 @@ export default function PhotoGallery({ photos, schoolPricing }:  PhotoGalleryPro
       <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
         <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-900 mb-2">Фотографии отсутствуют</h3>
-        <p className="text-sm text-slate-500">Фотограф еще не загрузил снимки.</p>
+        <p className="text-sm text-slate-500">Фотограф еще не загрузил снимки. </p>
       </div>
     );
   }
@@ -48,14 +47,14 @@ export default function PhotoGallery({ photos, schoolPricing }:  PhotoGalleryPro
       {/* Masonry Layout */}
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-12">
         {photos.map((photo, index) => {
-          // ✅ Генерируем watermark URL
-          const displayUrl = getWatermarkUrl(photo.watermarkedUrl, photo.id);
-          
+          // ✅ Генерируем watermark URL для отображения
+          const displayUrl = getWatermarkUrl(photo.watermarkedUrl);
+
           return (
             <button
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
-              className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus: ring-2 focus:ring-slate-900 focus:outline-none"
+              className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
             >
               <img
                 src={displayUrl}
@@ -84,7 +83,7 @@ export default function PhotoGallery({ photos, schoolPricing }:  PhotoGalleryPro
           photo={selectedPhoto}
           allPhotos={photos}
           schoolPricing={schoolPricing}
-          onPhotoChange={(photo) => setSelectedPhoto(photo)}
+          onPhotoChange={(photo:  Photo) => setSelectedPhoto(photo)}
         />
       )}
     </>

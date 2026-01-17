@@ -1,29 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getSession } from '@/lib/auth';
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const imageUrl = searchParams.get('url');
-    const photoId = searchParams.get('id');
-
-    if (!imageUrl) {
-      return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
+    // Check authentication
+    const session = await getSession();
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
-    // Fetch original image from Supabase
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      return NextResponse.json(
+        { error: 'No file provided' },
+        { status: 400 }
+      );
     }
 
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
     // Get image metadata
     const metadata = await sharp(buffer).metadata();
     const width = metadata.width || 1500;
-    const height = metadata. height || 1000;
+    const height = metadata.height || 1000;
 
     // Create watermark SVG
     const watermarkSvg = `
@@ -62,17 +69,18 @@ export async function GET(request: NextRequest) {
       .jpeg({ quality: 85 })
       .toBuffer();
 
-    return new NextResponse(watermarkedBuffer, {
+    // ✅ ИСПРАВЛЕНИЕ: Оборачиваем Buffer в Blob
+    return new NextResponse(new Blob([watermarkedBuffer as any]), {
       headers: {
         'Content-Type': 'image/jpeg',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Disposition': `inline; filename="watermarked_${file.name}"`,
       },
     });
   } catch (error: any) {
-    console.error('Watermark proxy error:', error);
+    console.error('Watermark API error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to process image' },
-      { status:  500 }
+      { status: 500 }
     );
   }
 }

@@ -47,13 +47,11 @@ type PhotoModalProps = {
 };
 
 // ✅ Функция для генерации watermark URL
-function getWatermarkUrl(originalUrl: string, photoId: string): string {
-  // Если URL уже содержит watermark, возвращаем как есть
+function getWatermarkUrl(originalUrl: string): string {
   if (originalUrl.includes('/watermarked/')) {
     return originalUrl;
   }
-  // Генерируем прокси-URL через API
-  return `/api/watermark/proxy? url=${encodeURIComponent(originalUrl)}&id=${photoId}`;
+  return `/api/watermark/view?url=${encodeURIComponent(originalUrl)}`;
 }
 
 export default function PhotoModal({
@@ -80,7 +78,7 @@ export default function PhotoModal({
   const hasNext = currentIndex < allPhotos.length - 1;
 
   // ✅ Генерируем watermark URL
-  const displayUrl = getWatermarkUrl(photo.watermarkedUrl, photo.id);
+  const displayUrl = getWatermarkUrl(photo.watermarkedUrl);
 
   useEffect(() => {
     setFormat(PhotoFormat.A4);
@@ -123,7 +121,7 @@ export default function PhotoModal({
   };
 
   const onTouchEnd = () => {
-    if (! touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) return;
 
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
@@ -139,7 +137,7 @@ export default function PhotoModal({
   const handleAddToCart = () => {
     addItem({
       photoId: photo.id,
-      photoUrl: displayUrl, // ✅ Используем watermark URL
+      photoUrl: displayUrl,
       photoAlt: photo.alt,
       format,
       quantity,
@@ -155,7 +153,7 @@ export default function PhotoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 overflow-x-visible">
-        {/* ✅ Desktop Navigation Arrows - По краям модалки */}
+        {/* Desktop Navigation Arrows */}
         {allPhotos.length > 1 && (
           <>
             {hasPrev && (
@@ -171,7 +169,7 @@ export default function PhotoModal({
             {hasNext && (
               <button
                 onClick={goToNext}
-                className="hidden md: flex absolute -right-16 top-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white hover:bg-slate-100 text-slate-900 rounded-full shadow-lg border border-slate-200 transition-all hover:scale-110"
+                className="hidden md:flex absolute -right-16 top-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white hover:bg-slate-100 text-slate-900 rounded-full shadow-lg border border-slate-200 transition-all hover:scale-110"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="w-6 h-6" />
@@ -185,7 +183,7 @@ export default function PhotoModal({
             Выбор фотографии
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-slate-600">
-            {allPhotos.length > 1 ?  (
+            {allPhotos.length > 1 ? (
               <span>
                 {currentIndex + 1} из {allPhotos.length} • Используйте ← → или свайп
               </span>
@@ -195,7 +193,7 @@ export default function PhotoModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm: gap-6 p-4 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6">
           {/* Photo Preview */}
           <div
             className="space-y-3 relative"
@@ -204,7 +202,6 @@ export default function PhotoModal({
             onTouchEnd={onTouchEnd}
           >
             <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative">
-              {/* ✅ Используем watermark URL */}
               <img
                 src={displayUrl}
                 alt={photo.alt || 'Фотография'}
@@ -212,14 +209,14 @@ export default function PhotoModal({
                 style={{ maxWidth: '100%' }}
               />
 
-              {/* Mobile Navigation Arrows - внутри фото */}
+              {/* Mobile Navigation Arrows */}
               {allPhotos.length > 1 && (
-                <div className="md: hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
-                  {hasPrev ? (
+                <div className="md:hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
+                  {hasPrev ?  (
                     <button
                       onClick={goToPrev}
-                      className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover: bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
-                      aria-label="Предыду��ее фото"
+                      className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
+                      aria-label="Предыдущее фото"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -242,7 +239,6 @@ export default function PhotoModal({
               )}
             </div>
 
-            {/* Swipe Hint (Mobile) */}
             {allPhotos.length > 1 && (
               <p className="md:hidden text-center text-xs text-slate-400">
                 👆 Свайп влево/вправо для навигации
@@ -252,7 +248,6 @@ export default function PhotoModal({
 
           {/* Options */}
           <div className="space-y-4">
-            {/* Format Selection */}
             <div className="space-y-2">
               <Label htmlFor="format" className="text-sm font-medium text-slate-900">
                 Формат
@@ -283,7 +278,6 @@ export default function PhotoModal({
               </Select>
             </div>
 
-            {/* Quantity Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-slate-900">Количество</Label>
               <div className="flex items-center gap-3">
@@ -322,7 +316,6 @@ export default function PhotoModal({
               </div>
             </div>
 
-            {/* Price Summary */}
             <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600">Цена за единицу: </span>
@@ -344,17 +337,15 @@ export default function PhotoModal({
               </div>
             </div>
 
-            {/* Success Message */}
             {showSuccess && (
               <Alert className="bg-slate-900 border-slate-900 text-white">
                 <CheckCircle2 className="h-4 w-4 text-white" />
                 <AlertDescription className="text-white">
-                  Успешно добавлено в корзину! 
+                  Успешно добавлено в корзину!
                 </AlertDescription>
               </Alert>
             )}
 
-            {/* Add to Cart Button */}
             <Button
               onClick={handleAddToCart}
               disabled={showSuccess}
