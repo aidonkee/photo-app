@@ -28,6 +28,7 @@ import {
   SchoolPricing,
 } from '@/config/pricing';
 
+// ✅ Полный тип Photo (совпадает с PhotoGallery)
 type Photo = {
   id: string;
   watermarkedUrl: string;
@@ -41,9 +42,9 @@ type PhotoModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   photo: Photo;
-  allPhotos?:  Photo[]; // 🆕 Все фотографии для навигации
+  allPhotos?:  Photo[];
   schoolPricing?: SchoolPricing | null;
-  onPhotoChange?:  (photo: Photo) => void; // 🆕 Колбэк для смены фото
+  onPhotoChange?:  (photo: Photo) => void;
 };
 
 export default function PhotoModal({
@@ -59,39 +60,39 @@ export default function PhotoModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
-  // 🆕 Touch handling для свайпов
+  // Touch handling для свайпов
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const price = getPrice(format, schoolPricing);
   const totalPrice = price * quantity;
 
-  // 🆕 Текущий индекс фото
+  // Текущий индекс фото
   const currentIndex = allPhotos.findIndex((p) => p.id === photo.id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < allPhotos.length - 1;
+
+  // Сброс формы при смене фото
   useEffect(() => {
     setFormat(PhotoFormat.A4);
     setQuantity(1);
     setShowSuccess(false);
-  }, [photo.id]); // Срабатывает при смене фото
+  }, [photo.id]);
 
-  // 🆕 Навигация
+  // Навигация
   const goToPrev = useCallback(() => {
     if (hasPrev && onPhotoChange) {
       onPhotoChange(allPhotos[currentIndex - 1]);
-      setShowSuccess(false);
     }
   }, [hasPrev, currentIndex, allPhotos, onPhotoChange]);
 
   const goToNext = useCallback(() => {
     if (hasNext && onPhotoChange) {
       onPhotoChange(allPhotos[currentIndex + 1]);
-      setShowSuccess(false);
     }
   }, [hasNext, currentIndex, allPhotos, onPhotoChange]);
 
-  // 🆕 Keyboard navigation
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (! open) return;
@@ -103,7 +104,7 @@ export default function PhotoModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, goToPrev, goToNext]);
 
-  // 🆕 Touch swipe handling
+  // Touch swipe handling
   const minSwipeDistance = 50;
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -117,7 +118,7 @@ export default function PhotoModal({
 
   const onTouchEnd = () => {
     if (! touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -153,193 +154,212 @@ export default function PhotoModal({
             Выбор фотографии
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-slate-600">
-            {allPhotos.length > 0 && (
+            {allPhotos.length > 1 ? (
               <span>
-                {currentIndex + 1} из {allPhotos.length} • Используйте стрелки или свайп для навигации
+                {currentIndex + 1} из {allPhotos.length} • Используйте стрелки или свайп
               </span>
+            ) : (
+              <span>Выберите формат и количество</span>
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md: grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 relative">
-          {/* 🆕 Prev Button (Desktop) */}
-          {hasPrev && (
-            <button
-              onClick={goToPrev}
-              className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-slate-900/80 hover:bg-slate-900 text-white rounded-full shadow-lg transition-all"
-              aria-label="Предыдущее фото"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+        {/* Wrapper для позиционирования стрелок */}
+        <div className="relative p-4 sm:p-6">
+          {/* Desktop Navigation Arrows - позиционируются относительно всего контента */}
+          {allPhotos.length > 1 && (
+            <>
+              {hasPrev && (
+                <button
+                  onClick={goToPrev}
+                  className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 w-10 h-10 items-center justify-center bg-slate-900/80 hover:bg-slate-900 text-white rounded-full shadow-lg transition-all"
+                  aria-label="Предыдущее фото"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+
+              {hasNext && (
+                <button
+                  onClick={goToNext}
+                  className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-20 w-10 h-10 items-center justify-center bg-slate-900/80 hover:bg-slate-900 text-white rounded-full shadow-lg transition-all"
+                  aria-label="Следующее фото"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
+            </>
           )}
 
-          {/* 🆕 Next Button (Desktop) */}
-          {hasNext && (
-            <button
-              onClick={goToNext}
-              className="hidden md: flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-slate-900/80 hover:bg-slate-900 text-white rounded-full shadow-lg transition-all"
-              aria-label="Следующее фото"
+          {/* Grid content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {/* Photo Preview */}
+            <div
+              className="space-y-3 relative"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
             >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          )}
+              <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative">
+                <img
+                  src={photo. watermarkedUrl}
+                  alt={photo.alt || 'Фотография'}
+                  className="w-full h-auto block"
+                  style={{ maxWidth: '100%' }}
+                />
 
-          {/* Photo Preview */}
-          <div 
-            className="space-y-3 relative"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative">
-              <img
-                src={photo.watermarkedUrl}
-                alt={photo.alt || 'Фотография'}
-                className="w-full h-auto block"
-                style={{ maxWidth: '100%' }}
-              />
+                {/* Mobile Navigation Arrows */}
+                {allPhotos.length > 1 && (
+                  <div className="md:hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
+                    {hasPrev ?  (
+                      <button
+                        onClick={goToPrev}
+                        className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
+                        aria-label="Предыдущее фото"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    ) : (
+                      <div className="w-10" />
+                    )}
 
-              {/* 🆕 Mobile Navigation Arrows (Inside Image) */}
-              <div className="md:hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
-                {hasPrev && (
-                  <button
-                    onClick={goToPrev}
-                    className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
-                    aria-label="Предыдущее фото"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                )}
-                {! hasPrev && <div />}
-
-                {hasNext && (
-                  <button
-                    onClick={goToNext}
-                    className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active: scale-95 transition-all"
-                    aria-label="Следующее фото"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                    {hasNext ? (
+                      <button
+                        onClick={goToNext}
+                        className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
+                        aria-label="Следующее фото"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    ) : (
+                      <div className="w-10" />
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* Options */}
-          <div className="space-y-4">
-            {/* Format Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="format" className="text-sm font-medium text-slate-900">
-                Формат
-              </Label>
-              <Select
-                value={format}
-                onValueChange={(value) => setFormat(value as PhotoFormat)}
-              >
-                <SelectTrigger id="format" className="h-11 border-slate-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(PhotoFormat).map((fmt) => (
-                    <SelectItem key={fmt} value={fmt} className="cursor-pointer py-3">
-                      <div className="flex items-start justify-between w-full gap-4">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm text-slate-900">
-                            {FORMAT_LABELS[fmt]}
-                          </p>
+              {/* Swipe Hint (Mobile) */}
+              {allPhotos.length > 1 && (
+                <p className="md:hidden text-center text-xs text-slate-400">
+                  👆 Свайп влево/вправо для навигации
+                </p>
+              )}
+            </div>
+
+            {/* Options */}
+            <div className="space-y-4">
+              {/* Format Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="format" className="text-sm font-medium text-slate-900">
+                  Формат
+                </Label>
+                <Select
+                  value={format}
+                  onValueChange={(value) => setFormat(value as PhotoFormat)}
+                >
+                  <SelectTrigger id="format" className="h-11 border-slate-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(PhotoFormat).map((fmt) => (
+                      <SelectItem key={fmt} value={fmt} className="cursor-pointer py-3">
+                        <div className="flex items-start justify-between w-full gap-4">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-slate-900">
+                              {FORMAT_LABELS[fmt]}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-sm text-slate-900 whitespace-nowrap">
+                            {formatPrice(getPrice(fmt, schoolPricing))}
+                          </span>
                         </div>
-                        <span className="font-semibold text-sm text-slate-900 whitespace-nowrap">
-                          {formatPrice(getPrice(fmt, schoolPricing))}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Quantity Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-slate-900">Количество</Label>
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-11 w-11 border-slate-300"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={quantity}
-                    onChange={(e) =>
-                      setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                    }
-                    className="w-full text-center text-xl font-semibold border border-slate-300 rounded-md py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-                  />
+              {/* Quantity Selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-slate-900">Количество</Label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 border-slate-300"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={quantity}
+                      onChange={(e) =>
+                        setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                      }
+                      className="w-full text-center text-xl font-semibold border border-slate-300 rounded-md py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 border-slate-300"
+                    onClick={() => setQuantity(Math.min(99, quantity + 1))}
+                    disabled={quantity >= 99}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-11 w-11 border-slate-300"
-                  onClick={() => setQuantity(Math.min(99, quantity + 1))}
-                  disabled={quantity >= 99}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
               </div>
-            </div>
 
-            {/* Price Summary */}
-            <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Цена за единицу: </span>
-                <span className="font-medium text-slate-900 tabular-nums">
-                  {formatPrice(price)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Количество:</span>
-                <span className="font-medium text-slate-900 tabular-nums">
-                  ×{quantity}
-                </span>
-              </div>
-              <div className="pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-900">Итого:</span>
-                  <span className="text-2xl font-semibold text-slate-900 tabular-nums">
-                    {formatPrice(totalPrice)}
+              {/* Price Summary */}
+              <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Цена за единицу: </span>
+                  <span className="font-medium text-slate-900 tabular-nums">
+                    {formatPrice(price)}
                   </span>
                 </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Количество:</span>
+                  <span className="font-medium text-slate-900 tabular-nums">×{quantity}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-900">Итого: </span>
+                    <span className="text-2xl font-semibold text-slate-900 tabular-nums">
+                      {formatPrice(totalPrice)}
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* Success Message */}
+              {showSuccess && (
+                <Alert className="bg-slate-900 border-slate-900 text-white">
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <AlertDescription className="text-white">
+                    Успешно добавлено в корзину!
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Add to Cart Button */}
+              <Button
+                onClick={handleAddToCart}
+                disabled={showSuccess}
+                className="w-full h-11 text-base bg-slate-900 hover:bg-slate-800"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Добавить в корзину
+              </Button>
             </div>
-
-            {/* Success Message */}
-            {showSuccess && (
-              <Alert className="bg-slate-900 border-slate-900 text-white">
-                <CheckCircle2 className="h-4 w-4 text-white" />
-                <AlertDescription className="text-white">
-                  Успешно добавлено! 
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Add to Cart Button */}
-            <Button
-              onClick={handleAddToCart}
-              disabled={showSuccess}
-              className="w-full h-11 text-base bg-slate-900 hover:bg-slate-800"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Добавить в корзину
-            </Button>
           </div>
         </div>
       </DialogContent>
