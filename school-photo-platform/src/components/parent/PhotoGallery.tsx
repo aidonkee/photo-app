@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import PhotoModal from './PhotoModal';
-import { Image as ImageIcon, Maximize2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Image as ImageIcon } from 'lucide-react';
 import { SchoolPricing } from '@/config/pricing';
 
 type Photo = {
@@ -17,10 +16,21 @@ type Photo = {
 
 type PhotoGalleryProps = {
   photos:  Photo[];
-  schoolPricing?: SchoolPricing | null;
+  schoolPricing?:  SchoolPricing | null;
 };
 
-export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProps) {
+// ✅ Вспомогательная функция для генерации watermark URL
+function getWatermarkUrl(originalUrl:  string, photoId: string): string {
+  // Если URL уже содержит watermark, возвращаем как есть
+  if (originalUrl. includes('/watermarked/')) {
+    return originalUrl;
+  }
+  
+  // Генерируем прокси-URL через API
+  return `/api/watermark/proxy?url=${encodeURIComponent(originalUrl)}&id=${photoId}`;
+}
+
+export default function PhotoGallery({ photos, schoolPricing }:  PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   if (photos.length === 0) {
@@ -37,33 +47,34 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
     <>
       {/* Masonry Layout */}
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-12">
-        {photos.map((photo, index) => (
-          <button
-            key={photo. id}
-            onClick={() => setSelectedPhoto(photo)}
-            className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
-          >
-            <img
-              src={photo.watermarkedUrl}
-              alt={photo.alt || 'Фотография'}
-              className="w-full h-auto object-contain block"
-              loading="lazy"
-            />
-            
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-            
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover: opacity-100 transition-opacity duration-300">
-              
-            </div>
+        {photos.map((photo, index) => {
+          // ✅ Генерируем watermark URL
+          const displayUrl = getWatermarkUrl(photo.watermarkedUrl, photo.id);
+          
+          return (
+            <button
+              key={photo.id}
+              onClick={() => setSelectedPhoto(photo)}
+              className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus: ring-2 focus:ring-slate-900 focus:outline-none"
+            >
+              <img
+                src={displayUrl}
+                alt={photo. alt || 'Фотография'}
+                className="w-full h-auto object-contain block"
+                loading="lazy"
+              />
 
-            <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
-              #{String(index + 1).padStart(2, '0')}
-            </div>
-          </button>
-        ))}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+
+              <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
+                #{String(index + 1).padStart(2, '0')}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* 🆕 PhotoModal с навигацией */}
+      {/* PhotoModal */}
       {selectedPhoto && (
         <PhotoModal
           open={!!selectedPhoto}
@@ -71,9 +82,9 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
             if (!open) setSelectedPhoto(null);
           }}
           photo={selectedPhoto}
-          allPhotos={photos} // 🆕 Передаём все фото
+          allPhotos={photos}
           schoolPricing={schoolPricing}
-          onPhotoChange={(photo) => setSelectedPhoto(photo)} // 🆕 Колбэк для смены фото
+          onPhotoChange={(photo) => setSelectedPhoto(photo)}
         />
       )}
     </>
