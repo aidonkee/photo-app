@@ -16,18 +16,8 @@ type Photo = {
 
 type PhotoGalleryProps = {
   photos: Photo[];
-  schoolPricing?:  SchoolPricing | null;
+  schoolPricing?: SchoolPricing | null;
 };
-
-// ✅ Функция для генерации watermark URL
-function getWatermarkUrl(originalUrl: string): string {
-  // Если URL уже содержит /watermarked/, значит watermark уже есть
-  if (originalUrl.includes('/watermarked/')) {
-    return originalUrl;
-  }
-  // Генерируем прокси-URL через API
-  return `/api/watermark/view?url=${encodeURIComponent(originalUrl)}`;
-}
 
 export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
@@ -37,18 +27,20 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
       <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
         <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-900 mb-2">Фотографии отсутствуют</h3>
-        <p className="text-sm text-slate-500">Фотограф еще не загрузил снимки. </p>
+        <p className="text-sm text-slate-500 max-w-xs mx-auto">
+          В данном альбоме пока нет доступных фотографий.
+        </p>
       </div>
     );
   }
 
   return (
-    <>
-      {/* Masonry Layout */}
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-12">
+    <div className="space-y-8">
+      {/* Сетка фотографий (Masonry-like layout) */}
+      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
         {photos.map((photo, index) => {
-          // ✅ Генерируем watermark URL для отображения
-          const displayUrl = getWatermarkUrl(photo.watermarkedUrl);
+          // МЫ УДАЛИЛИ ФУНКЦИЮ getWatermarkUrl, так как вотермарка уже вшита в файл при загрузке
+          const displayUrl = photo.watermarkedUrl;
 
           return (
             <button
@@ -58,9 +50,13 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
             >
               <img
                 src={displayUrl}
-                alt={photo. alt || 'Фотография'}
+                alt={photo.alt || 'Фотография'}
                 className="w-full h-auto object-contain block"
                 loading="lazy"
+                onError={(e) => {
+                  // Если картинка не грузится, выводим ошибку в консоль для дебага
+                  console.error(`Ошибка загрузки фото: ${displayUrl}`);
+                }}
               />
 
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -83,9 +79,9 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
           photo={selectedPhoto}
           allPhotos={photos}
           schoolPricing={schoolPricing}
-          onPhotoChange={(photo:  Photo) => setSelectedPhoto(photo)}
+          onPhotoChange={(photo: Photo) => setSelectedPhoto(photo)}
         />
       )}
-    </>
+    </div>
   );
 }
