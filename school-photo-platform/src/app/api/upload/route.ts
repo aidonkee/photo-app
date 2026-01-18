@@ -38,26 +38,14 @@ export async function POST(request: NextRequest) {
     const watermarkedPath = `watermarked/${classId}/${fileId}.jpg`;
     const thumbnailPath = `thumbnails/${classId}/${fileId}.jpg`;
 
-    // Загружаем оригинал
+    // 1) Загружаем оригинал
     await uploadFileDirect(originalPath, originalBuffer, file.type || 'image/jpeg');
 
-    // Готовим вотермарк (без падения всего запроса)
-    let wmBuffer = originalBuffer;
-    let width = 0;
-    let height = 0;
-    let size = originalBuffer.length;
-    try {
-      const wm = await addWatermark(originalBuffer);
-      wmBuffer = wm.buffer;
-      width = wm.width;
-      height = wm.height;
-      size = wm.size;
-    } catch (err) {
-      console.error('Watermark step failed, fallback to original for WM:', err);
-    }
-    await uploadFileDirect(watermarkedPath, wmBuffer, 'image/jpeg');
+    // 2) Строго создаём вотермарк (если упадёт — весь запрос падает)
+    const wm = await addWatermark(originalBuffer);
+    await uploadFileDirect(watermarkedPath, wm.buffer, 'image/jpeg');
 
-    // Миниатюра (если упадёт — не валим запрос)
+    // 3) Миниатюра (не критично для безопасности — логируем, но не падаем)
     try {
       const thumbnailBuffer = await createThumbnail(originalBuffer);
       await uploadFileDirect(thumbnailPath, thumbnailBuffer, 'image/jpeg');
@@ -75,9 +63,9 @@ export async function POST(request: NextRequest) {
         originalUrl,
         watermarkedUrl,
         thumbnailUrl,
-        width,
-        height,
-        fileSize: size,
+        width: wm.width,
+        height: wm.height,
+        fileSize: wm.size,
         mimeType: 'image/jpeg',
         alt: file.name.replace(/\.[^/.]+$/, ''),
         tags: [],
@@ -94,7 +82,7 @@ export async function POST(request: NextRequest) {
           path: watermarkedPath,
           thumbnailUrl,
           originalUrl,
-          size,
+          size: wm.size,
         },
       },
       { status: 200 }
