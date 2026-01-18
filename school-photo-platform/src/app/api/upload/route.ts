@@ -32,11 +32,10 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const originalBuffer = Buffer.from(bytes);
     
-    console.log('📸 Upload started:', {
-      fileName: file.name,
-      fileSize: originalBuffer.length,
-      classId,
-    });
+    console.log('📸 ===== UPLOAD STARTED =====');
+    console.log('File:', file.name);
+    console.log('Size:', originalBuffer.length, 'bytes');
+    console.log('ClassId:', classId);
 
     const fileId = uuidv4();
     const fileExtension = getFileExtension(file.name, file.type);
@@ -46,17 +45,53 @@ export async function POST(request: NextRequest) {
     const thumbnailPath = `thumbnails/${classId}/${fileId}.jpg`;
 
     // === ЭТАП 1: ОРИГИНАЛ ===
-    await uploadFileDirect(originalPath, originalBuffer, file.type || 'image/jpeg');
+    console.log('\n📤 STEP 1: Uploading original...');
+    try {
+      await uploadFileDirect(originalPath, originalBuffer, file.type || 'image/jpeg');
+      console.log('✅ Original uploaded successfully');
+    } catch (err) {
+      console.error('❌ FAILED to upload original:', err);
+      throw err;
+    }
 
-    // === ЭТАП 2: WATERMARK (БЕЗ FALLBACK) ===
-    const wm = await addWatermark(originalBuffer);
-    await uploadFileDirect(watermarkedPath, wm.buffer, 'image/jpeg');
+    // === ЭТАП 2: WATERMARK ===
+    console.log('\n🎨 STEP 2: Creating watermark...');
+    let wm;
+    try {
+      wm = await addWatermark(originalBuffer);
+      console.log('✅ Watermark created successfully');
+      console.log('Dimensions:', wm.width, 'x', wm.height);
+      console.log('Size:', wm.size, 'bytes');
+    } catch (err) {
+      console.error('❌ FAILED to create watermark:', err);
+      throw new Error(`Watermark creation failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+
+    console.log('\n📤 STEP 2b: Uploading watermarked...');
+    try {
+      await uploadFileDirect(watermarkedPath, wm.buffer, 'image/jpeg');
+      console.log('✅ Watermarked uploaded successfully');
+    } catch (err) {
+      console.error('❌ FAILED to upload watermarked:', err);
+      throw err;
+    }
 
     // === ЭТАП 3: THUMBNAIL ===
-    const thumbnailBuffer = await createThumbnail(originalBuffer);
-    await uploadFileDirect(thumbnailPath, thumbnailBuffer, 'image/jpeg');
+    console.log('\n🖼️ STEP 3: Creating thumbnail...');
+    try {
+      const thumbnailBuffer = await createThumbnail(originalBuffer);
+      console.log('✅ Thumbnail created successfully');
+      console.log('Size:', thumbnailBuffer.length, 'bytes');
+      
+      await uploadFileDirect(thumbnailPath, thumbnailBuffer, 'image/jpeg');
+      console.log('✅ Thumbnail uploaded successfully');
+    } catch (err) {
+      console.error('❌ FAILED with thumbnail:', err);
+      // Не падаем, если thumbnail упал
+    }
 
     // === ЭТАП 4: DATABASE ===
+    console.log('\n💾 STEP 4: Saving to database...');
     const originalUrl = getPublicUrl(originalPath);
     const watermarkedUrl = getPublicUrl(watermarkedPath);
     const thumbnailUrl = getPublicUrl(thumbnailPath);
@@ -76,7 +111,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('✅ Upload complete. Photo ID:', photo.id);
+    console.log('✅ Photo saved to DB, ID:', photo.id);
+    console.log('===== UPLOAD COMPLETE =====\n');
 
     return NextResponse.json(
       {
@@ -94,8 +130,13 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('🔥 Upload API error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to upload file' }, { status: 500 });
+    console.error('\n🔥 ===== UPLOAD FAILED =====');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
+    return NextResponse.json(
+      { error: error.message || 'Failed to upload file' },
+      { status: 500 }
+    );
   }
 }
 

@@ -22,14 +22,6 @@ type PhotoGalleryProps = {
 export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
-  // ✅ Функция для генерации безопасного URL с watermark
-  const getWatermarkedUrl = (photo: Photo): string => {
-    // Используем originalUrl через watermark API
-    // Предполагаем, что у Photo есть originalUrl или берём из watermarkedUrl
-    const originalUrl = photo.watermarkedUrl.replace('/watermarked/', '/originals/').replace('.jpg', '.png');
-    return `/api/watermark/view?url=${encodeURIComponent(originalUrl)}`;
-  };
-
   if (photos.length === 0) {
     return (
       <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
@@ -49,8 +41,9 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
             onClick={() => setSelectedPhoto(photo)}
             className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
           >
+            {/* ✅ ВРЕМЕННО используем watermarkedUrl напрямую */}
             <img
-              src={getWatermarkedUrl(photo)}
+              src={photo.watermarkedUrl}
               alt={photo.alt || 'Фотография'}
               className="w-full h-auto object-contain block"
               loading="lazy"
