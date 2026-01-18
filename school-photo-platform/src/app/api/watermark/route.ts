@@ -3,54 +3,49 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 
-// Путь к вотермарке в папке public
 const WATERMARK_PATH = path.join(process.cwd(), 'public', 'watermark.png');
 
 export async function GET(request: NextRequest) {
   try {
     const url = request.nextUrl.searchParams.get('url');
-    if (!url) {
-      return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
-    }
+    if (!url) return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
 
-    // 1. Fetch оригинала
     const response = await fetch(url);
-    if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
-    }
+    if (!response.ok) return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
 
-    // 2. РАБОТА С ТИПАМИ (Фикс для билда Vercel)
     const arrayBuffer = await response.arrayBuffer();
-    // Явно приводим к Buffer, чтобы избежать конфликта ArrayBufferLike
-    const buffer = Buffer.from(arrayBuffer) as Buffer; 
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Создаем экземпляр sharp из оригинала
+    let sharpInstance = sharp(buffer as any);
+    
+    // Получаем метаданные, чтобы знать размер
+    const metadata = await sharpInstance.metadata();
+    
+    // Оптимизация: сжимаем до 1200px (родителям больше не надо для просмотра)
+    // Это сильно ускорит работу и уменьшит потребление памяти
+    if (metadata.width && metadata.width > 1200) {
+      sharpInstance = sharpInstance.resize(1200);
+    }
 
     let resultBuffer: Buffer;
 
-    // 3. ОБРАБОТКА ЧЕРЕЗ SHARP
     if (fs.existsSync(WATERMARK_PATH)) {
-      // Используем (buffer as any), чтобы TypeScript проигнорировал несовпадение типов Buffer
-      resultBuffer = await sharp(buffer as any)
+      resultBuffer = await sharpInstance
         .composite([{
           input: WATERMARK_PATH,
-          tile: true,      // Размножаем вотермарку сеткой
+          tile: true,
           blend: 'over',
         }])
-        .jpeg({ quality: 85 })
+        .jpeg({ quality: 80 })
         .toBuffer();
     } else {
-      console.warn('⚠️ Watermark file not found at:', WATERMARK_PATH);
-      // Если файла вотермарки нет, просто возвращаем оптимизированный JPEG
-      resultBuffer = await sharp(buffer as any)
-        .jpeg({ quality: 85 })
-        .toBuffer();
+      resultBuffer = await sharpInstance.jpeg({ quality: 80 }).toBuffer();
     }
 
-    // 4. ОТВЕТ
-    // Используем Uint8Array для максимальной совместимости в Edge-функциях
     return new NextResponse(new Uint8Array(resultBuffer), {
       headers: {
         'Content-Type': 'image/jpeg',
-        // Кэшируем на год, так как оригиналы не меняются
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
