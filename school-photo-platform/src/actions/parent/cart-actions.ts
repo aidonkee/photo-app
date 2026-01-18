@@ -85,6 +85,7 @@ export async function getClassroomPhotos(classId: string) {
         photos: {
           select: {
             id: true,
+            originalUrl: true,
             watermarkedUrl: true,
             thumbnailUrl: true,
             alt: true,

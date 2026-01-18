@@ -1,3 +1,4 @@
+// src/components/parent/PhotoGallery.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -7,6 +8,7 @@ import { SchoolPricing } from '@/config/pricing';
 
 type Photo = {
   id: string;
+  originalUrl: string;      // ✅ Добавляем
   watermarkedUrl: string;
   thumbnailUrl: string | null;
   alt: string | null;
@@ -21,6 +23,11 @@ type PhotoGalleryProps = {
 
 export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+
+  // ✅ Генерируем безопасный URL через API
+  const getDisplayUrl = (photo: Photo) => {
+    return `/api/watermark?url=${encodeURIComponent(photo.originalUrl)}`;
+  };
 
   if (photos.length === 0) {
     return (
@@ -41,9 +48,8 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
             onClick={() => setSelectedPhoto(photo)}
             className="block w-full break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
           >
-            {/* ✅ ВРЕМЕННО используем watermarkedUrl напрямую */}
             <img
-              src={photo.watermarkedUrl}
+              src={getDisplayUrl(photo)}
               alt={photo.alt || 'Фотография'}
               className="w-full h-auto object-contain block"
               loading="lazy"

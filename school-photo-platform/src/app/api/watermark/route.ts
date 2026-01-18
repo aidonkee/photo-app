@@ -1,86 +1,54 @@
+// src/app/api/watermark/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
-import { getSession } from '@/lib/auth';
+import path from 'path';
+import fs from 'fs';
 
-export async function POST(request: NextRequest) {
+const WATERMARK_PATH = path.join(process.cwd(), 'public', 'watermark.png');
+
+export async function GET(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getSession();
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const url = request.nextUrl.searchParams.get('url');
+    if (!url) {
+      return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-
-    if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      );
+    // Fetch оригинал
+    const response = await fetch(url);
+    if (!response.ok) {
+      return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
     }
 
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // Get image metadata
-    const metadata = await sharp(buffer).metadata();
-    const width = metadata.width || 1500;
-    const height = metadata.height || 1000;
-
-    // Create watermark SVG
-    const watermarkSvg = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="shadow">
-            <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.5"/>
-          </filter>
-        </defs>
-        <text
-          x="50%"
-          y="50%"
-          font-family="Arial, sans-serif"
-          font-size="${Math.min(width, height) * 0.1}"
-          font-weight="bold"
-          fill="white"
-          fill-opacity="0.3"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          transform="rotate(-30 ${width / 2} ${height / 2})"
-          filter="url(#shadow)"
-        >
-          PREVIEW
-        </text>
-      </svg>
-    `;
-
-    // Apply watermark
-    const watermarkedBuffer = await sharp(buffer)
-      .composite([
-        {
-          input: Buffer.from(watermarkSvg),
+    // Применяем watermark (если есть файл)
+    let resultBuffer = buffer;
+    
+    if (fs.existsSync(WATERMARK_PATH)) {
+      resultBuffer = await sharp(buffer)
+        .composite([{
+          input: WATERMARK_PATH,
+          tile: true,
           blend: 'over',
-        },
-      ])
-      .jpeg({ quality: 85 })
-      .toBuffer();
+        }])
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    } else {
+      // Если нет watermark файла, просто конвертим в JPEG
+      resultBuffer = await sharp(buffer)
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    }
 
-    // ✅ ИСПРАВЛЕНИЕ: Оборачиваем Buffer в Blob
-    return new NextResponse(new Blob([watermarkedBuffer as any]), {
+    return new NextResponse(resultBuffer, {
       headers: {
         'Content-Type': 'image/jpeg',
-        'Content-Disposition': `inline; filename="watermarked_${file.name}"`,
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (error: any) {
-    console.error('Watermark API error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to process image' },
-      { status: 500 }
-    );
+    console.error('Watermark error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

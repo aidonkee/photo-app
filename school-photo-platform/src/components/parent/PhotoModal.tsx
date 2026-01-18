@@ -30,6 +30,7 @@ import {
 
 type Photo = {
   id: string;
+  originalUrl: string;
   watermarkedUrl: string;
   thumbnailUrl: string | null;
   alt: string | null;
@@ -62,6 +63,9 @@ export default function PhotoModal({
   schoolPricing,
   onPhotoChange,
 }: PhotoModalProps) {
+  const getDisplayUrl = (p: Photo) => {
+    return `/api/watermark?url=${encodeURIComponent(p.originalUrl)}`;
+  };
   const [format, setFormat] = useState<PhotoFormat>(PhotoFormat.A4);
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -203,7 +207,7 @@ export default function PhotoModal({
           >
             <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative">
               <img
-                src={displayUrl}
+                src={getDisplayUrl(photo)}
                 alt={photo.alt || 'Фотография'}
                 className="w-full h-auto block"
                 style={{ maxWidth: '100%' }}
