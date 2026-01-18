@@ -198,7 +198,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
       )}
 
       {/* === MASONRY LAYOUT (PINTEREST STYLE) === */}
-      <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4 pb-10">
+      <div className="columns-2 md:columns-4 lg:columns-4 xl:columns-5 gap-4 space-y-4 pb-10">
         {photos.map((photo) => {
           const isSelected = selectedIds.has(photo.id);
 
