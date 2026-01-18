@@ -42,8 +42,7 @@ export async function POST(request: NextRequest) {
         },
       });
       if (order) orders.push(order);
-    } 
-    else if (schoolId) {
+    } else if (schoolId) {
       orders = await prisma.order.findMany({
         where: { classroom: { schoolId: schoolId } },
         include: {
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (!orders.length) {
       return NextResponse.json({ error: 'Заказы не найдены' }, { status: 404 });
     }
-    
+
     // 4. Группировка
     const ordersByClass: Record<string, any[]> = {};
     if (schoolId) {
@@ -73,70 +72,79 @@ export async function POST(request: NextRequest) {
       ordersByClass['Single_Order'] = orders;
     }
 
-    // 5. Проходим по заказам и качаем фото
+    // 5. Проходим по заказам и качаем фото с учётом количества и формата
     for (const [className, classOrders] of Object.entries(ordersByClass)) {
       const rootFolder = schoolId ? zip.folder(className) : zip;
       if (!rootFolder) continue;
 
       for (let orderIndex = 0; orderIndex < classOrders.length; orderIndex++) {
         const order = classOrders[orderIndex];
-        
-        const safeSurname = (order.parentSurname || 'Parent').replace(/[^\w\sа-яА-ЯёЁ\-]/g, '').trim();
+
+        const safeSurname = (order.parentSurname || 'Parent')
+          .replace(/[^\w\sа-яА-ЯёЁ\-]/g, '')
+          .trim();
         const safeOrderName = `Заказ_${String(orderIndex + 1).padStart(3, '0')}_${safeSurname}`;
-        
+
         const orderFolder = rootFolder.folder(safeOrderName);
         if (!orderFolder) continue;
 
-        const photos = order.items
-          .map((i: any) => i.photo)
-          .filter((p: any) => p && p.originalUrl);
-        
-        // --- ВАЖНОЕ ИСПРАВЛЕНИЕ: СКАЧИВАЕМ ЧЕРЕЗ SUPABASE SDK ---
-        await Promise.all(photos.map(async (photo: any, photoIndex: number) => {
+        const items = order.items || [];
+        const downloadTasks = items.map(async (item: any, itemIndex: number) => {
+          const formatFolder = orderFolder.folder(item.format || 'UNSPECIFIED');
+          if (!formatFolder) return;
+
           try {
-            // Очищаем путь
-            let storagePath = photo.originalUrl;
+            let storagePath = item.photo?.originalUrl;
+            if (!storagePath) {
+              throw new Error('Отсутствует originalUrl у фото');
+            }
             if (storagePath.includes('school-photos/')) {
-                storagePath = storagePath.split('school-photos/')[1];
+              storagePath = storagePath.split('school-photos/')[1];
             }
 
-            // Скачиваем файл через Admin Client
-            const { data, error } = await supabaseAdmin
-                .storage
-                .from('school-photos')
-                .download(storagePath);
+            const { data, error } = await supabaseAdmin.storage
+              .from('school-photos')
+              .download(storagePath);
 
             if (error || !data) {
-                throw new Error(error?.message || 'Не удалось скачать файл');
+              throw new Error(error?.message || 'Не удалось скачать файл');
             }
 
             const arrayBuffer = await data.arrayBuffer();
-            
-            // Определяем расширение
-            let extension = 'jpg';
-            if (photo.originalUrl.toLowerCase().endsWith('.png')) extension = 'png';
-            
-            const fileName = `photo-${String(photoIndex + 1).padStart(3, '0')}.${extension}`;
-            
-            orderFolder.file(fileName, arrayBuffer);
 
+            let extension = 'jpg';
+            const lower = item.photo.originalUrl.toLowerCase();
+            if (lower.endsWith('.png')) extension = 'png';
+            if (lower.endsWith('.jpeg')) extension = 'jpeg';
+            if (lower.endsWith('.webp')) extension = 'webp';
+
+            // Дублируем в зависимости от количества
+            const copies = Math.max(1, item.quantity || 1);
+            for (let copyIndex = 1; copyIndex <= copies; copyIndex++) {
+              const fileName = `photo-${String(itemIndex + 1).padStart(3, '0')}_copy${copyIndex}.${extension}`;
+              formatFolder.file(fileName, arrayBuffer);
+            }
           } catch (err: any) {
-            console.error(`🔥 Ошибка скачивания фото ID ${photo.id}:`, err);
-            orderFolder.file(`ERROR_photo_${photoIndex + 1}.txt`, `Путь: ${photo.originalUrl}\nОшибка: ${err.message}`);
+            console.error(`🔥 Ошибка скачивания ф��то OrderItem ${item.id}:`, err);
+            formatFolder.file(
+              `ERROR_item_${itemIndex + 1}.txt`,
+              `OrderItem: ${item.id}\nPhotoId: ${item.photoId}\nПуть: ${item.photo?.originalUrl}\nОшибка: ${err.message}`
+            );
           }
-        }));
+        });
+
+        await Promise.all(downloadTasks);
       }
     }
 
-    // ✅ ИСПРАВЛЕНИЕ: type: 'blob'
     const zipBlob = await zip.generateAsync({
       type: 'blob',
       compression: 'DEFLATE',
       compressionOptions: { level: 6 },
     });
 
-    const filename = schoolId 
-      ? `school-orders-${schoolId.slice(0, 8)}.zip` 
+    const filename = schoolId
+      ? `school-orders-${schoolId.slice(0, 8)}.zip`
       : `order-${orderId?.slice(0, 8)}.zip`;
 
     return new NextResponse(zipBlob, {
@@ -146,7 +154,6 @@ export async function POST(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
-
   } catch (error) {
     console.error('GLOBAL ZIP ERROR:', error);
     return NextResponse.json({ error: 'Server Error' }, { status: 500 });
