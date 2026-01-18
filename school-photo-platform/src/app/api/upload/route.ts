@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { uploadFile, getPublicUrl } from '@/lib/storage';
-import { addWatermark, createThumbnail } from '@/lib/watermark';
 import prisma from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
+import { addWatermark, createThumbnail } from '@/lib/watermark';
+import { uploadFileDirect, getPublicUrl } from '@/lib/storage';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
     const session = await getSession();
     if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -21,7 +20,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File and classId are required' }, { status: 400 });
     }
 
-    // Verify classroom ownership
     const classroom = await prisma.classroom.findUnique({
       where: { id: classId },
       include: { school: true },
@@ -31,36 +29,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Convert to buffer
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const originalBuffer = Buffer.from(bytes);
 
-    // Generate unique ID
     const fileId = uuidv4();
     const fileExtension = getFileExtension(file.name, file.type);
 
-    // Paths
     const originalPath = `originals/${classId}/${fileId}.${fileExtension}`;
     const watermarkedPath = `watermarked/${classId}/${fileId}.jpg`;
     const thumbnailPath = `thumbnails/${classId}/${fileId}.jpg`;
 
-    // Upload original
-    await uploadFile(buffer, originalPath, file.type || 'image/jpeg');
+    // Original
+    await uploadFileDirect(originalPath, originalBuffer, file.type || 'image/jpeg');
 
-    // Process and upload watermarked
-    const { buffer: watermarkedBuffer, width, height, size } = await addWatermark(buffer);
-    await uploadFile(watermarkedBuffer, watermarkedPath, 'image/jpeg');
+    // Watermarked
+    const { buffer: watermarkedBuffer, width, height, size } = await addWatermark(originalBuffer);
+    await uploadFileDirect(watermarkedPath, watermarkedBuffer, 'image/jpeg');
 
-    // Process and upload thumbnail (from original to keep detail)
-    const thumbnailBuffer = await createThumbnail(buffer);
-    await uploadFile(thumbnailBuffer, thumbnailPath, 'image/jpeg');
+    // Thumbnail
+    const thumbnailBuffer = await createThumbnail(originalBuffer);
+    await uploadFileDirect(thumbnailPath, thumbnailBuffer, 'image/jpeg');
 
-    // Public URLs
     const originalUrl = getPublicUrl(originalPath);
     const watermarkedUrl = getPublicUrl(watermarkedPath);
     const thumbnailUrl = getPublicUrl(thumbnailPath);
 
-    // Create database record
     const photo = await prisma.photo.create({
       data: {
         classId,

@@ -1,107 +1,68 @@
 import sharp from 'sharp';
 
-const MAX_WIDTH = 1500; // Maximum width for web optimization
+const MAX_WIDTH = 1500;
 const WATERMARK_TEXT = 'PREVIEW';
 const WATERMARK_OPACITY = 0.3;
 
-/**
- * Add watermark to image buffer
- * @param buffer - Original image buffer
- * @returns Processed image buffer with watermark
- */
 export async function addWatermark(buffer: Buffer): Promise<{
   buffer: Buffer;
   width: number;
   height: number;
   size: number;
 }> {
-  try {
-    const metadata = await sharp(buffer).metadata();
-
-    if (!metadata.width || !metadata.height) {
-      throw new Error('Unable to read image dimensions');
-    }
-
-    let width = metadata.width;
-    let height = metadata.height;
-
-    let processedBuffer = buffer;
-    if (width > MAX_WIDTH) {
-      const aspectRatio = height / width;
-      width = MAX_WIDTH;
-      height = Math.round(MAX_WIDTH * aspectRatio);
-
-      processedBuffer = await sharp(buffer)
-        .resize(width, height, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .toBuffer();
-    }
-
-    const watermarkSvg = createWatermarkSvg(width, height);
-    const watermarkBuffer = Buffer.from(watermarkSvg);
-
-    const finalBuffer = await sharp(processedBuffer)
-      .composite([
-        {
-          input: watermarkBuffer,
-          blend: 'over',
-        },
-      ])
-      .jpeg({
-        quality: 85,
-        progressive: true,
-      })
-      .toBuffer();
-
-    return {
-      buffer: finalBuffer,
-      width,
-      height,
-      size: finalBuffer.length,
-    };
-  } catch (error: any) {
-    console.error('Error adding watermark:', error);
-    throw new Error(error.message || 'Failed to process image');
+  const metadata = await sharp(buffer).metadata();
+  if (!metadata.width || !metadata.height) {
+    throw new Error('Unable to read image dimensions');
   }
+
+  let width = metadata.width;
+  let height = metadata.height;
+  let processedBuffer = buffer;
+
+  if (width > MAX_WIDTH) {
+    const aspectRatio = height / width;
+    width = MAX_WIDTH;
+    height = Math.round(MAX_WIDTH * aspectRatio);
+    processedBuffer = await sharp(buffer)
+      .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+      .toBuffer();
+  }
+
+  const watermarkSvg = createWatermarkSvg(width, height);
+  const watermarkBuffer = Buffer.from(watermarkSvg);
+
+  const finalBuffer = await sharp(processedBuffer)
+    .composite([{ input: watermarkBuffer, blend: 'over' }])
+    .jpeg({ quality: 85, progressive: true })
+    .toBuffer();
+
+  return {
+    buffer: finalBuffer,
+    width,
+    height,
+    size: finalBuffer.length,
+  };
 }
 
-export async function createThumbnail(
-  buffer: Buffer,
-  size: number = 300
-): Promise<Buffer> {
-  try {
-    return await sharp(buffer)
-      .resize(size, size, {
-        fit: 'cover',
-        position: 'center',
-      })
-      .jpeg({
-        quality: 80,
-      })
-      .toBuffer();
-  } catch (error: any) {
-    console.error('Error creating thumbnail:', error);
-    throw new Error(error.message || 'Failed to create thumbnail');
-  }
+export async function createThumbnail(buffer: Buffer, size: number = 300): Promise<Buffer> {
+  return await sharp(buffer)
+    .resize(size, size, { fit: 'cover', position: 'center' })
+    .jpeg({ quality: 80 })
+    .toBuffer();
 }
 
 function createWatermarkSvg(width: number, height: number): string {
   const fontSize = Math.min(width, height) * 0.08;
   const spacing = fontSize * 3;
   const rotationAngle = -30;
-
   const cols = Math.ceil(width / spacing) + 2;
   const rows = Math.ceil(height / spacing) + 2;
 
   let textElements = '';
-
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const x = col * spacing - spacing;
       const y = row * spacing - spacing;
-
       textElements += `
         <text
           x="${x}"
@@ -139,17 +100,11 @@ export async function getImageMetadata(buffer: Buffer): Promise<{
   format: string;
   size: number;
 }> {
-  try {
-    const metadata = await sharp(buffer).metadata();
-
-    return {
-      width: metadata.width || 0,
-      height: metadata.height || 0,
-      format: metadata.format || 'unknown',
-      size: buffer.length,
-    };
-  } catch (error: any) {
-    console.error('Error extracting metadata:', error);
-    throw new Error(error.message || 'Failed to extract image metadata');
-  }
+  const metadata = await sharp(buffer).metadata();
+  return {
+    width: metadata.width || 0,
+    height: metadata.height || 0,
+    format: metadata.format || 'unknown',
+    size: buffer.length,
+  };
 }
