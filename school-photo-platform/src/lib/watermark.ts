@@ -42,10 +42,25 @@ export async function addWatermark(buffer: Buffer): Promise<{
   console.log('✅ Watermark file found:', WATERMARK_FILE);
 
   // ✅ Применяем watermark
-  const composited = await sharp(processed)
-    .composite([{ input: WATERMARK_FILE, tile: true, blend: 'over' }])
-    .jpeg({ quality: 85, progressive: true })
-    .toBuffer();
+ // В watermark.ts - добавить прозрачность к watermark
+const watermarkBuffer = await sharp(WATERMARK_FILE)
+.ensureAlpha()  // Убедиться что есть альфа-канал
+.composite([{
+  input: Buffer.from([255, 255, 255, 128]), // Добавить полупрозрачность
+  raw: { width: 1, height: 1, channels: 4 },
+  tile: true,
+  blend: 'dest-in'
+}])
+.toBuffer();
+
+const composited = await sharp(processed)
+.composite([{ 
+  input: watermarkBuffer, 
+  tile: true, 
+  blend: 'over' 
+}])
+.jpeg({ quality: 85, progressive: true })
+.toBuffer();
 
   console.log(`✅ Watermark applied. Size: ${composited.length} bytes`);
 
