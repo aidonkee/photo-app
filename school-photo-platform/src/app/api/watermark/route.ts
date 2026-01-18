@@ -11,36 +11,35 @@ export async function GET(request: NextRequest) {
     if (!url) return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
 
     const response = await fetch(url);
-    if (!response.ok) return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
+    if (!response.ok) return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Создаем экземпляр sharp из оригинала
-    let sharpInstance = sharp(buffer as any);
-    
-    // Получаем метаданные, чтобы знать размер
-    const metadata = await sharpInstance.metadata();
-    
-    // Оптимизация: сжимаем до 1200px (родителям больше не надо для просмотра)
-    // Это сильно ускорит работу и уменьшит потребление памяти
-    if (metadata.width && metadata.width > 1200) {
-      sharpInstance = sharpInstance.resize(1200);
+    // 1. Инициализируем Sharp и ОБЯЗАТЕЛЬНО получаем метаданные
+    // Это заставляет Sharp «прочитать» оригинал до начала композиции
+    const image = sharp(buffer as any);
+    const metadata = await image.metadata();
+
+    if (!metadata.width || !metadata.height) {
+      throw new Error('Could not read image metadata');
     }
 
     let resultBuffer: Buffer;
 
+    // 2. Проверяем наличие файла вотермарки
     if (fs.existsSync(WATERMARK_PATH)) {
-      resultBuffer = await sharpInstance
+      resultBuffer = await image
         .composite([{
           input: WATERMARK_PATH,
-          tile: true,
-          blend: 'over',
+          tile: true,      // Размножаем вотермарку
+          blend: 'over',   // Накладываем ПОВЕРХ оригинала
         }])
-        .jpeg({ quality: 80 })
+        .jpeg({ quality: 80 }) 
         .toBuffer();
     } else {
-      resultBuffer = await sharpInstance.jpeg({ quality: 80 }).toBuffer();
+      // Если вотермарки нет, отдаем просто пожатый оригинал
+      resultBuffer = await image.jpeg({ quality: 80 }).toBuffer();
     }
 
     return new NextResponse(new Uint8Array(resultBuffer), {
