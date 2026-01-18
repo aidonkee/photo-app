@@ -24,12 +24,19 @@ export async function POST(request: NextRequest) {
       where: { id: classId },
       include: { school: true },
     });
+    
     if (!classroom || classroom.school.adminId !== session.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     const bytes = await file.arrayBuffer();
     const originalBuffer = Buffer.from(bytes);
+    
+    console.log('📸 Upload started:', {
+      fileName: file.name,
+      fileSize: originalBuffer.length,
+      classId,
+    });
 
     const fileId = uuidv4();
     const fileExtension = getFileExtension(file.name, file.type);
@@ -38,21 +45,18 @@ export async function POST(request: NextRequest) {
     const watermarkedPath = `watermarked/${classId}/${fileId}.jpg`;
     const thumbnailPath = `thumbnails/${classId}/${fileId}.jpg`;
 
-    // 1) Загружаем оригинал
+    // === ЭТАП 1: ОРИГИНАЛ ===
     await uploadFileDirect(originalPath, originalBuffer, file.type || 'image/jpeg');
 
-    // 2) Строго создаём вотермарк (если упадёт — весь запрос падает)
+    // === ЭТАП 2: WATERMARK (БЕЗ FALLBACK) ===
     const wm = await addWatermark(originalBuffer);
     await uploadFileDirect(watermarkedPath, wm.buffer, 'image/jpeg');
 
-    // 3) Миниатюра (не критично для безопасности — логируем, но не падаем)
-    try {
-      const thumbnailBuffer = await createThumbnail(originalBuffer);
-      await uploadFileDirect(thumbnailPath, thumbnailBuffer, 'image/jpeg');
-    } catch (err) {
-      console.error('Thumbnail step failed:', err);
-    }
+    // === ЭТАП 3: THUMBNAIL ===
+    const thumbnailBuffer = await createThumbnail(originalBuffer);
+    await uploadFileDirect(thumbnailPath, thumbnailBuffer, 'image/jpeg');
 
+    // === ЭТАП 4: DATABASE ===
     const originalUrl = getPublicUrl(originalPath);
     const watermarkedUrl = getPublicUrl(watermarkedPath);
     const thumbnailUrl = getPublicUrl(thumbnailPath);
@@ -71,6 +75,8 @@ export async function POST(request: NextRequest) {
         tags: [],
       },
     });
+
+    console.log('✅ Upload complete. Photo ID:', photo.id);
 
     return NextResponse.json(
       {
