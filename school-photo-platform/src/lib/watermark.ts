@@ -16,17 +16,15 @@ export async function addWatermark(buffer: Buffer): Promise<{
   size: number;
 }> {
   try {
-    // Get original image metadata
     const metadata = await sharp(buffer).metadata();
 
-    if (!metadata.width || !metadata. height) {
+    if (!metadata.width || !metadata.height) {
       throw new Error('Unable to read image dimensions');
     }
 
     let width = metadata.width;
     let height = metadata.height;
 
-    // Resize if image is too large
     let processedBuffer = buffer;
     if (width > MAX_WIDTH) {
       const aspectRatio = height / width;
@@ -35,17 +33,15 @@ export async function addWatermark(buffer: Buffer): Promise<{
 
       processedBuffer = await sharp(buffer)
         .resize(width, height, {
-          fit:  'inside',
+          fit: 'inside',
           withoutEnlargement: true,
         })
         .toBuffer();
     }
 
-    // Create SVG watermark overlay with EXACT dimensions
     const watermarkSvg = createWatermarkSvg(width, height);
     const watermarkBuffer = Buffer.from(watermarkSvg);
 
-    // Composite watermark onto image
     const finalBuffer = await sharp(processedBuffer)
       .composite([
         {
@@ -65,18 +61,12 @@ export async function addWatermark(buffer: Buffer): Promise<{
       height,
       size: finalBuffer.length,
     };
-  } catch (error:  any) {
+  } catch (error: any) {
     console.error('Error adding watermark:', error);
     throw new Error(error.message || 'Failed to process image');
   }
 }
 
-/**
- * Create thumbnail from image buffer
- * @param buffer - Original image buffer
- * @param size - Thumbnail size (default: 300)
- * @returns Thumbnail buffer
- */
 export async function createThumbnail(
   buffer: Buffer,
   size: number = 300
@@ -97,24 +87,16 @@ export async function createThumbnail(
   }
 }
 
-/**
- * Create SVG watermark pattern
- * @param width - Image width
- * @param height - Image height
- * @returns SVG string
- */
 function createWatermarkSvg(width: number, height: number): string {
-  const fontSize = Math.min(width, height) * 0.08; // 8% of smallest dimension
+  const fontSize = Math.min(width, height) * 0.08;
   const spacing = fontSize * 3;
   const rotationAngle = -30;
 
-  // Calculate number of repetitions
   const cols = Math.ceil(width / spacing) + 2;
-  const rows = Math. ceil(height / spacing) + 2;
+  const rows = Math.ceil(height / spacing) + 2;
 
   let textElements = '';
 
-  // Create tiled pattern
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const x = col * spacing - spacing;
@@ -151,12 +133,7 @@ function createWatermarkSvg(width: number, height: number): string {
   `;
 }
 
-/**
- * Extract image metadata
- * @param buffer - Image buffer
- * @returns Image metadata
- */
-export async function getImageMetadata(buffer:  Buffer): Promise<{
+export async function getImageMetadata(buffer: Buffer): Promise<{
   width: number;
   height: number;
   format: string;
