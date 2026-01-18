@@ -1,7 +1,9 @@
 import sharp from 'sharp';
 import path from 'path';
+import fs from 'fs';
 
 const MAX_WIDTH = 1500;
+const WATERMARK_FILE = path.join(process.cwd(), 'public', 'watermark.png');
 
 export async function addWatermark(buffer: Buffer): Promise<{
   buffer: Buffer;
@@ -10,64 +12,59 @@ export async function addWatermark(buffer: Buffer): Promise<{
   size: number;
 }> {
   try {
-    const metadata = await sharp(buffer).metadata();
-    if (!metadata.width || !metadata.height) {
+    const meta = await sharp(buffer).metadata();
+    if (!meta.width || !meta.height) {
       throw new Error('Unable to read image dimensions');
     }
 
-    let width = metadata.width;
-    let height = metadata.height;
-    let processedBuffer = buffer;
+    let width = meta.width;
+    let height = meta.height;
+    let processed = buffer;
 
-    // Ресайз
+    // resize if too wide
     if (width > MAX_WIDTH) {
-      const aspectRatio = height / width;
+      const ratio = height / width;
       width = MAX_WIDTH;
-      height = Math.round(MAX_WIDTH * aspectRatio);
-      processedBuffer = await sharp(buffer)
+      height = Math.round(MAX_WIDTH * ratio);
+      processed = await sharp(buffer)
         .resize(width, height, { fit: 'inside', withoutEnlargement: true })
         .toBuffer();
     }
 
-    // Путь к твоему PNG-логотипу
-    // Процесс ищет файл в корне проекта
-    const watermarkPath = path.join(process.cwd(),'public', 'watermark.png');
+    const watermarkExists = fs.existsSync(WATERMARK_FILE);
 
-    const finalBuffer = await sharp(processedBuffer)
-      .composite([
-        {
-          input: watermarkPath,
-          tile: true,       // Размножает картинку сеткой по всему фото
-          blend: 'over',    // Накладывает сверху
-           // Прозрачность (можно настроить в самом PNG)
-        },
-      ])
-      .jpeg({ quality: 85, progressive: true })
-      .toBuffer();
+    // Если нет watermark.png — просто вернём отресайзенный JPEG
+    const composited = watermarkExists
+      ? await sharp(processed)
+          .composite([{ input: WATERMARK_FILE, tile: true, blend: 'over' }])
+          .jpeg({ quality: 85, progressive: true })
+          .toBuffer()
+      : await sharp(processed)
+          .jpeg({ quality: 85, progressive: true })
+          .toBuffer();
 
     return {
-      buffer: finalBuffer,
+      buffer: composited,
       width,
       height,
-      size: finalBuffer.length,
+      size: composited.length,
     };
-  } catch (error: any) {
-    console.error('Sharp Watermark Error:', error);
-    // Если PNG не найден или упал sharp, возвращаем оригинал, чтобы не ломать загрузку
+  } catch (err: any) {
+    console.error('Sharp Watermark Error (fallback to original):', err);
+    // Фолбэк: отдать оригинал, но с реальными метаданными
+    const meta = await sharp(buffer).metadata();
     return {
-        buffer,
-        width: 0,
-        height: 0,
-        size: buffer.length
+      buffer,
+      width: meta.width || 0,
+      height: meta.height || 0,
+      size: buffer.length,
     };
   }
 }
 
 export async function createThumbnail(buffer: Buffer, size: number = 300): Promise<Buffer> {
-  return await sharp(buffer)
+  return sharp(buffer)
     .resize(size, size, { fit: 'cover', position: 'center' })
     .jpeg({ quality: 80 })
     .toBuffer();
 }
-
-// Функцию createWatermarkSvg можно удалить совсем
