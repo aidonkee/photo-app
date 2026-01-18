@@ -31,7 +31,7 @@ export async function addWatermark(buffer: Buffer): Promise<{
 
     // Путь к твоему PNG-логотипу
     // Процесс ищет файл в корне проекта
-    const watermarkPath = path.join(process.cwd(), 'watermark.png');
+    const watermarkPath = path.join(process.cwd(),'public', 'watermark.png');
 
     const finalBuffer = await sharp(processedBuffer)
       .composite([
