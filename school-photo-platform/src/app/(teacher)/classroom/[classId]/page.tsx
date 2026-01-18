@@ -51,7 +51,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
               Заблокировано
             </Badge>
           ) : (
-            <Badge className="bg-slate-900 text-sm px-3 py-1.5 h-10 hover:bg-slate-800">
+            <Badge className="bg-slate-100 text-sm px-3 py-1.5 h-10 hover:bg-slate-200">
               <Unlock className="w-4 h-4 mr-2" />
               Доступно для заказа
             </Badge>
@@ -60,12 +60,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
       </div>
 
       {/* Info Alert */}
-      <Alert className="bg-blue-50 border-blue-200 text-blue-900">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription>
-          Это предварительный просмотр. Водяные знаки будут удалены на финальных фотографиях.
-        </AlertDescription>
-      </Alert>
+      
 
       {/* Status Warning */}
       {data.classroom.isLocked && (
@@ -82,7 +77,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
         <ClassroomGallery photos={photos} />
       </div>
 
-      {/* Footer Actions */}
+      {/* Footer Actions 
       {photos.length > 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300">
           <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -98,7 +93,7 @@ export default async function ClassroomPhotosPage({ params }: PageProps) {
             </Button>
           </Link>
         </div>
-      )}
+      )} */}
     </div>
   );
-}
+} 

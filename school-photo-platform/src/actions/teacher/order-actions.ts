@@ -3,21 +3,21 @@
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { Prisma, OrderStatus } from '@prisma/client';
 
 export type TeacherOrder = {
   id: string;
   parentName: string;
   parentSurname: string;
-  // parentEmail удален, так как его нет в БД
   parentPhone: string | null;
   status: string;
-  totalAmount: number; // Мы смапим это из totalSum
+  totalAmount: number;
   createdAt: Date;
   items: {
     id: string;
     quantity: number;
     format: string;
-    pricePerUnit: number; // Мы смапим это из price
+    pricePerUnit: number;
     photo: {
       id: string;
       watermarkedUrl: string;
@@ -27,6 +27,7 @@ export type TeacherOrder = {
       height: number;
     };
   }[];
+  canEdit?: boolean; // разрешено ли учителю редактировать (isEditAllowed)
 };
 
 /**
@@ -36,7 +37,7 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
   const session = await getSession();
 
   if (!session || session.role !== 'TEACHER') {
-    redirect('/login'); // Или /teacher-login, проверь свой роутинг
+    redirect('/login');
   }
 
   const classId = session.classId;
@@ -44,6 +45,11 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
   if (!classId) {
     throw new Error('Invalid session: No classroom ID');
   }
+
+  const classroom = await prisma.classroom.findUnique({
+    where: { id: classId },
+    select: { isEditAllowed: true },
+  });
 
   try {
     const orders = await prisma.order.findMany({
@@ -73,20 +79,18 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
       id: order.id,
       parentName: order.parentName,
       parentSurname: order.parentSurname,
-      // parentEmail нет в БД, используем заглушку или удаляем
       parentPhone: order.parentPhone,
       status: order.status,
-      // Преобразуем Decimal (totalSum) в number
       totalAmount: Number(order.totalSum),
       createdAt: order.createdAt,
       items: order.items.map((item) => ({
         id: item.id,
         quantity: item.quantity,
         format: item.format,
-        // Преобразуем Decimal (price) в number
-        pricePerUnit: Number(item.price), 
+        pricePerUnit: Number(item.price),
         photo: item.photo,
       })),
+      canEdit: classroom?.isEditAllowed ?? false,
     }));
   } catch (error) {
     console.error('Error fetching teacher orders:', error);
@@ -110,11 +114,16 @@ export async function getOrderById(orderId: string): Promise<TeacherOrder | null
     throw new Error('Invalid session: No classroom ID');
   }
 
+  const classroom = await prisma.classroom.findUnique({
+    where: { id: classId },
+    select: { isEditAllowed: true },
+  });
+
   try {
     const order = await prisma.order.findUnique({
       where: {
         id: orderId,
-        classId, // Ensure teacher can only access their classroom's orders
+        classId,
       },
       include: {
         items: {
@@ -144,17 +153,16 @@ export async function getOrderById(orderId: string): Promise<TeacherOrder | null
       parentSurname: order.parentSurname,
       parentPhone: order.parentPhone,
       status: order.status,
-      // Исправлено: totalSum -> totalAmount
       totalAmount: Number(order.totalSum),
       createdAt: order.createdAt,
       items: order.items.map((item) => ({
         id: item.id,
         quantity: item.quantity,
         format: item.format,
-        // Исправлено: price -> pricePerUnit
         pricePerUnit: Number(item.price),
         photo: item.photo,
       })),
+      canEdit: classroom?.isEditAllowed ?? false,
     };
   } catch (error) {
     console.error('Error fetching order:', error);
@@ -179,7 +187,6 @@ export async function approveOrderAction(orderId: string) {
   }
 
   try {
-    // Verify the order belongs to this classroom
     const order = await prisma.order.findUnique({
       where: { id: orderId },
     });
@@ -188,7 +195,6 @@ export async function approveOrderAction(orderId: string) {
       throw new Error('Order not found or access denied');
     }
 
-    // Update order status
     await prisma.order.update({
       where: { id: orderId },
       data: {
@@ -200,5 +206,103 @@ export async function approveOrderAction(orderId: string) {
   } catch (error: any) {
     console.error('Error approving order:', error);
     throw new Error(error.message || 'Failed to approve order');
+  }
+}
+
+/**
+ * Decrease quantity of an order item (per unit). If quantity reaches 0, the item is removed.
+ * Requires: teacher session, same class, classroom.isEditAllowed = true, order not LOCKED/COMPLETED.
+ */
+export async function decreaseOrderItemQuantity(orderItemId: string, delta: number = 1) {
+  const session = await getSession();
+
+  if (!session || session.role !== 'TEACHER') {
+    throw new Error('Unauthorized');
+  }
+
+  const classId = session.classId;
+
+  if (!classId) {
+    throw new Error('Invalid session: No classroom ID');
+  }
+
+  if (delta <= 0) {
+    throw new Error('Delta must be positive');
+  }
+
+  const classroom = await prisma.classroom.findUnique({
+    where: { id: classId },
+    select: { isEditAllowed: true },
+  });
+
+  if (!classroom || !classroom.isEditAllowed) {
+    throw new Error('Edit permission not granted. Please request access from administrator.');
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const item = await tx.orderItem.findUnique({
+        where: { id: orderItemId },
+        include: {
+          order: true,
+        },
+      });
+
+      if (!item) {
+        throw new Error('Order item not found');
+      }
+
+      if (item.order.classId !== classId) {
+        throw new Error('Access denied');
+      }
+
+      if (item.order.status === OrderStatus.LOCKED || item.order.status === OrderStatus.COMPLETED) {
+        throw new Error('Order is locked and cannot be edited');
+      }
+
+      const newQty = item.quantity - delta;
+      if (newQty < 0) {
+        throw new Error('Quantity cannot be negative');
+      }
+
+      if (newQty === 0) {
+        await tx.orderItem.delete({
+          where: { id: orderItemId },
+        });
+      } else {
+        await tx.orderItem.update({
+          where: { id: orderItemId },
+          data: {
+            quantity: newQty,
+            subtotal: item.price.mul(new Prisma.Decimal(newQty)),
+          },
+        });
+      }
+
+      const totals = await tx.orderItem.aggregate({
+        _sum: { subtotal: true },
+        where: { orderId: item.orderId },
+      });
+
+      const totalSum = totals._sum.subtotal ?? new Prisma.Decimal(0);
+
+      const updatedOrder = await tx.order.update({
+        where: { id: item.orderId },
+        data: {
+          totalSum,
+        },
+      });
+
+      return {
+        newQuantity: Math.max(newQty, 0),
+        totalAmount: Number(totalSum),
+        orderStatus: updatedOrder.status,
+      };
+    });
+
+    return { success: true, ...result };
+  } catch (error: any) {
+    console.error('Error decreasing order item quantity:', error);
+    throw new Error(error.message || 'Failed to update order item');
   }
 }
