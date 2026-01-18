@@ -8,6 +8,7 @@ import { Image as ImageIcon } from 'lucide-react';
 type Photo = {
   id: string;
   watermarkedUrl: string;
+  originalUrl: string;
   thumbnailUrl: string | null;
   alt: string | null;
   width:  number;
