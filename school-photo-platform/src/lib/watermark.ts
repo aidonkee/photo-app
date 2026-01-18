@@ -1,12 +1,8 @@
 import sharp from 'sharp';
+import path from 'path';
 
 const MAX_WIDTH = 1500;
-const WATERMARK_TEXT = 'PREVIEW';
-const WATERMARK_OPACITY = 0.3;
 
-/**
- * Добавляет вотермарку на изображение
- */
 export async function addWatermark(buffer: Buffer): Promise<{
   buffer: Buffer;
   width: number;
@@ -23,7 +19,7 @@ export async function addWatermark(buffer: Buffer): Promise<{
     let height = metadata.height;
     let processedBuffer = buffer;
 
-    // Ресайз для оптимизации веба
+    // Ресайз
     if (width > MAX_WIDTH) {
       const aspectRatio = height / width;
       width = MAX_WIDTH;
@@ -33,17 +29,19 @@ export async function addWatermark(buffer: Buffer): Promise<{
         .toBuffer();
     }
 
-    // Создаем SVG вотермарку БЕЗ использования системных шрифтов (пути/фигуры)
-    // Либо используем простую сетку
-    const watermarkSvg = createWatermarkSvg(width, height);
-    const watermarkBuffer = Buffer.from(watermarkSvg);
+    // Путь к твоему PNG-логотипу
+    // Процесс ищет файл в корне проекта
+    const watermarkPath = path.join(process.cwd(), 'watermark.png');
 
     const finalBuffer = await sharp(processedBuffer)
-      .composite([{ 
-        input: watermarkBuffer, 
-        blend: 'over',
-        gravity: 'centre' 
-      }])
+      .composite([
+        {
+          input: watermarkPath,
+          tile: true,       // Размножает картинку сеткой по всему фото
+          blend: 'over',    // Накладывает сверху
+           // Прозрачность (можно настроить в самом PNG)
+        },
+      ])
       .jpeg({ quality: 85, progressive: true })
       .toBuffer();
 
@@ -55,89 +53,21 @@ export async function addWatermark(buffer: Buffer): Promise<{
     };
   } catch (error: any) {
     console.error('Sharp Watermark Error:', error);
-    throw new Error(`Watermark process failed: ${error.message}`);
+    // Если PNG не найден или упал sharp, возвращаем оригинал, чтобы не ломать загрузку
+    return {
+        buffer,
+        width: 0,
+        height: 0,
+        size: buffer.length
+    };
   }
 }
 
-/**
- * Создает превью (миниатюру)
- */
 export async function createThumbnail(buffer: Buffer, size: number = 300): Promise<Buffer> {
-  try {
-    return await sharp(buffer)
-      .resize(size, size, { 
-        fit: 'cover', 
-        position: 'center',
-        withoutEnlargement: true 
-      })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-  } catch (error: any) {
-    console.error('Sharp Thumbnail Error:', error);
-    return buffer; // Возвращаем оригинал если не удалось сжать
-  }
+  return await sharp(buffer)
+    .resize(size, size, { fit: 'cover', position: 'center' })
+    .jpeg({ quality: 80 })
+    .toBuffer();
 }
 
-/**
- * Генерирует SVG сетку. 
- * ВНИМАНИЕ: Чтобы избежать Fontconfig error, мы используем максимально простые стили.
- * Если ошибка сохранится, замени этот блок на наложение готового PNG файла.
- */
-function createWatermarkSvg(width: number, height: number): string {
-  const fontSize = Math.min(width, height) * 0.08;
-  const spacing = fontSize * 3;
-  const rotationAngle = -30;
-  const cols = Math.ceil(width / spacing) + 2;
-  const rows = Math.ceil(height / spacing) + 2;
-
-  let textElements = '';
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const x = col * spacing - spacing;
-      const y = row * spacing - spacing;
-      
-      // Используем системный шрифт 'serif' — он самый стабильный
-      textElements += `
-        <text
-          x="${x}"
-          y="${y}"
-          font-family="serif"
-          font-size="${fontSize}"
-          font-weight="bold"
-          fill="white"
-          fill-opacity="${WATERMARK_OPACITY}"
-          transform="rotate(${rotationAngle} ${x} ${y})"
-        >
-          ${WATERMARK_TEXT}
-        </text>
-      `;
-    }
-  }
-
-  return `
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <style>
-        text { filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5)); }
-      </style>
-      ${textElements}
-    </svg>
-  `;
-}
-
-/**
- * Получение метаданных
- */
-export async function getImageMetadata(buffer: Buffer): Promise<{
-  width: number;
-  height: number;
-  format: string;
-  size: number;
-}> {
-  const metadata = await sharp(buffer).metadata();
-  return {
-    width: metadata.width || 0,
-    height: metadata.height || 0,
-    format: metadata.format || 'unknown',
-    size: buffer.length,
-  };
-}
+// Функцию createWatermarkSvg можно удалить совсем
