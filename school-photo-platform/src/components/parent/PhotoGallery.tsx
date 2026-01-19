@@ -26,7 +26,7 @@ export default function PhotoGallery({ photos, schoolPricing }: PhotoGalleryProp
 
   // ✅ Генерируем безопасный URL через API
   const getDisplayUrl = (photo: Photo) => {
-    return `/api/watermark?url=${encodeURIComponent(photo.originalUrl)}`;
+    return photo.watermarkedUrl;
   };
 
   if (photos.length === 0) {

@@ -64,7 +64,7 @@ export default function PhotoModal({
   onPhotoChange,
 }: PhotoModalProps) {
   const getDisplayUrl = (p: Photo) => {
-    return `/api/watermark?url=${encodeURIComponent(p.originalUrl)}`;
+    return p.watermarkedUrl;
   };
   const [format, setFormat] = useState<PhotoFormat>(PhotoFormat.A4);
   const [quantity, setQuantity] = useState(1);
