@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { uploadFile, getPublicUrl } from '@/lib/storage';
-import { addWatermark, createThumbnail } from '@/lib/watermark';
+import { createLowQualityPreview, createThumbnail } from '@/lib/watermark';
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
 
@@ -75,7 +75,7 @@ export async function uploadPhotoAction(
       include: { school: true },
     });
 
-    // ЗАЩИТА: Проверяем владель��а (SUPER_ADMIN может загружать везде)
+    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может загружать везде)
     if (!classroom) {
       return { error: 'Classroom not found' };
     }
@@ -110,54 +110,53 @@ export async function uploadPhotoAction(
       const fileId = uuidv4();
       const fileExtension = (file.name.split('.').pop() || 'jpg').toLowerCase();
 
-      // 1. Upload ORIGINAL
+      // 1. Upload ORIGINAL (сохраняем КАК ПУТЬ; по RLS originals должен быть приватным)
       const originalPath = `originals/${classId}/${fileId}.${fileExtension}`;
       console.log('📤 Uploading ORIGINAL:', { path: originalPath, size: buffer.length, type: file.type });
       await uploadFile(buffer, originalPath, file.type || 'image/jpeg');
 
-      // 2. Add watermark (с детальным логированием + резервный путь)
-      let watermarkedBuffer: Buffer;
+      // 2. Создаём низкокачественное превью (без watermark)
+      let previewBuffer: Buffer;
       let width = 0;
       let height = 0;
       let size = 0;
 
       try {
-        const wmResult = await addWatermark(buffer);
-        watermarkedBuffer = wmResult.buffer;
-        width = wmResult.width;
-        height = wmResult.height;
-        size = wmResult.size;
-        console.log('✅ Watermark success:', { width, height, size });
-      } catch (wmErr: any) {
-        console.error('❌ addWatermark failed. Fallback to JPEG. Reason:', wmErr?.message || wmErr);
-        // Резервный вариант: конвертируем оригинал в JPEG, чтобы watermarked не был пуст
+        const preview = await createLowQualityPreview(buffer, 1200, 60);
+        previewBuffer = preview.buffer;
+        width = preview.width;
+        height = preview.height;
+        size = preview.size;
+        console.log('✅ Low-quality preview created:', { width, height, size });
+      } catch (e: any) {
+        console.error('❌ createLowQualityPreview failed. Fallback to JPEG:', e?.message || e);
         const meta = await sharp(buffer).metadata();
         width = meta.width || 0;
         height = meta.height || 0;
-        watermarkedBuffer = await sharp(buffer).jpeg({ quality: 85, progressive: true }).toBuffer();
-        size = watermarkedBuffer.length;
+        previewBuffer = await sharp(buffer).jpeg({ quality: 60, progressive: true }).toBuffer();
+        size = previewBuffer.length;
         console.log('⚠️ Fallback JPEG generated:', { width, height, size });
       }
 
-      // 3. Upload WATERMARKED
+      // 3. Upload WATERMARKED (теперь это low-res превью)
       const watermarkedPath = `watermarked/${classId}/${fileId}.jpg`;
-      console.log('📤 Uploading WATERMARKED:', { path: watermarkedPath, size: watermarkedBuffer.length });
-      await uploadFile(watermarkedBuffer, watermarkedPath, 'image/jpeg');
+      console.log('📤 Uploading WATERMARKED (low-res):', { path: watermarkedPath, size: previewBuffer.length });
+      await uploadFile(previewBuffer, watermarkedPath, 'image/jpeg');
 
-      // 4. Create THUMBNAIL
-      console.log('🔧 Creating THUMBNAIL from watermarked...');
+      // 4. Create THUMBNAIL из превью
+      console.log('🔧 Creating THUMBNAIL from low-res preview...');
       let thumbnailBuffer: Buffer;
       try {
-        thumbnailBuffer = await createThumbnail(watermarkedBuffer);
+        thumbnailBuffer = await createThumbnail(previewBuffer);
       } catch (thumbErr: any) {
         console.error('❌ createThumbnail failed. Fallback to simple resize. Reason:', thumbErr?.message || thumbErr);
-        thumbnailBuffer = await sharp(watermarkedBuffer).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer();
+        thumbnailBuffer = await sharp(previewBuffer).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer();
       }
       const thumbnailPath = `thumbnails/${classId}/${fileId}.jpg`;
       console.log('📤 Uploading THUMBNAIL:', { path: thumbnailPath, size: thumbnailBuffer.length });
       await uploadFile(thumbnailBuffer, thumbnailPath, 'image/jpeg');
 
-      // 5. Get public URLs
+      // 5. Get public URLs (ТОЛЬКО для low-res и thumbnail)
       const watermarkedUrl = getPublicUrl(watermarkedPath);
       const thumbnailUrl = getPublicUrl(thumbnailPath);
       console.log('🔗 Public URLs:', { watermarkedUrl, thumbnailUrl });
@@ -166,9 +165,9 @@ export async function uploadPhotoAction(
       await prisma.photo.create({
         data: {
           classId,
-          originalUrl: originalPath,     // путь в сторидж (может быть приватным по политикам)
-          watermarkedUrl,                // публичный URL
-          thumbnailUrl,                  // публичный URL
+          originalUrl: originalPath,     // путь в сторидж (приватный по политикам)
+          watermarkedUrl,                // публичный URL (низкое качество)
+          thumbnailUrl,                  // публичный URL (миниатюра)
           width,
           height,
           fileSize: size,
@@ -231,7 +230,7 @@ export async function deletePhotoAction(photoId: string) {
       throw new Error('Cannot delete photo that is part of an order');
     }
 
-    // Extract paths from URLs (watermarked/thumbnail - полные публичные URL, вытаскиваем относительные пути)
+    // Извлекаем относительные пути из публичных URL для watermarked/thumbnail
     const watermarkedPath = photo.watermarkedUrl.split('/storage/v1/object/public/school-photos/')[1];
     const thumbnailPath = photo.thumbnailUrl?.split('/storage/v1/object/public/school-photos/')[1];
 
