@@ -16,7 +16,7 @@ type Photo = {
 };
 
 type ClassroomGridProps = {
-  photos: Photo[];
+  photos:  Photo[];
 };
 
 // Хук для определения количества колонок
@@ -38,24 +38,59 @@ function useColumnCount() {
   return columns;
 }
 
-// Функция для пересортировки:  из горизонтального порядка в колоночный
+// ИСПРАВЛЕННАЯ функция пересортировки для CSS columns
+// CSS columns заполняет СВЕРХУ ВНИЗ по колонкам:  1,2,3 | 4,5,6 | 7,8,9
+// Нам нужно чтобы визуально было СЛЕВА НАПРАВО: 1,2,3 | 4,5,6 | 7,8,9
+// Поэтому мы переставляем элементы так, чтобы при колоночном заполн��нии
+// они визуально расположились по горизонтали
 function reorderForMasonry<T>(items: T[], columnCount: number): { item: T; originalIndex: number }[] {
   if (items.length === 0) return [];
   
-  const rowCount = Math.ceil(items.length / columnCount);
-  const result: { item: T; originalIndex: number }[] = [];
+  // Количество элементов в каждой колонке (колонки могут быть неравномерными)
+  const totalItems = items.length;
+  const baseItemsPerColumn = Math.floor(totalItems / columnCount);
+  const extraItems = totalItems % columnCount;
   
-  // Распределяем по колонкам так, чтобы индексы шли по горизонтали
+  // Вычисляем сколько элементов в каждой колонке
+  // Первые extraItems колонок получают на 1 элемент больше
+  const columnHeights:  number[] = [];
   for (let col = 0; col < columnCount; col++) {
-    for (let row = 0; row < rowCount; row++) {
-      const originalIndex = row * columnCount + col;
-      if (originalIndex < items.length) {
-        result.push({ item: items[originalIndex], originalIndex });
+    columnHeights. push(baseItemsPerColumn + (col < extraItems ? 1 : 0));
+  }
+  
+  // Создаём массив позиций:  для каждого оригинального индекса определяем
+  // куда его нужно поставить, чтобы при колоночном заполнении он оказался на нужном месте
+  const result: { item: T; originalIndex: number }[] = new Array(totalItems);
+  
+  let targetPosition = 0;
+  
+  // Идём по рядам (визуальным горизонтальным линиям)
+  const maxRows = Math.max(...columnHeights);
+  
+  for (let row = 0; row < maxRows; row++) {
+    for (let col = 0; col < columnCount; col++) {
+      // Проверяем, есть ли элемент в этой поз��ции (колонка может быть короче)
+      if (row < columnHeights[col]) {
+        // Вычисляем позицию в результирующем массиве для этой колонки и ряда
+        // (сумма высот предыдущих колонок + текущий ряд)
+        let positionInResult = 0;
+        for (let c = 0; c < col; c++) {
+          positionInResult += columnHeights[c];
+        }
+        positionInResult += row;
+        
+        // Оригинальный индекс - это просто порядковый номер (слева направо, сверху вниз)
+        const originalIndex = targetPosition;
+        
+        if (originalIndex < totalItems) {
+          result[positionInResult] = { item: items[originalIndex], originalIndex };
+        }
+        targetPosition++;
       }
     }
   }
   
-  return result;
+  return result. filter(Boolean); // Убираем возможные undefined
 }
 
 export default function ClassroomGrid({ photos }: ClassroomGridProps) {
@@ -78,7 +113,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
           Фотографии отсутствуют
         </h3>
         <p className="text-slate-600 text-lg">
-          Фотографии будут загружены в ближайшее время. 
+          Фотографии будут загружены в ближайшее время.  
         </p>
       </div>
     );
@@ -90,13 +125,13 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
       <div className="columns-2 sm: columns-3 md:columns-4 gap-4 space-y-4">
         {reorderedPhotos.map(({ item:  photo, originalIndex }) => {
           // Вычисляем aspect ratio для сохранения пропорций
-          const aspectRatio = photo. width / photo.height;
+          const aspectRatio = photo.width / photo. height;
 
           return (
             <div
-              key={photo.id}
+              key={photo. id}
               onClick={() => setSelectedPhoto(photo)}
-              className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-slate-400 transition-all hover:shadow-lg bg-slate-100 break-inside-avoid"
+              className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover: border-slate-400 transition-all hover:shadow-lg bg-slate-100 break-inside-avoid mb-4"
               style={{ aspectRatio }}
             >
               <WatermarkedImage
