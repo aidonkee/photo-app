@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import PhotoModal from './PhotoModal';
 import WatermarkedImage from '@/components/shared/WatermarkedImage';
@@ -32,7 +31,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
           Фотографии отсутствуют
         </h3>
         <p className="text-slate-600 text-lg">
-          Фотографии будут загружены в ближайшее время. 
+          Фотографии будут загружены в ближайшее время.
         </p>
       </div>
     );
@@ -40,8 +39,14 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
 
   return (
     <>
-      {/* CSS Grid — нумерация идёт слева направо, сверху вниз */}
-      <div className="grid grid-cols-2 sm: grid-cols-3 md: grid-cols-4 gap-4">
+      {/* ✅ Grid с горизонтальной нумерацией и сохранением пропорций */}
+      <div 
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+        style={{ 
+          gridAutoFlow: 'row',  // ✅ Заполнение по строкам (слева направо)
+          alignItems: 'start'    // ✅ Карточки не растягиваются по высоте
+        }}
+      >
         {photos.map((photo, index) => {
           const aspectRatio = photo.width / photo.height;
           
@@ -49,8 +54,8 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
             <div
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
-              className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover: border-slate-400 transition-all hover:shadow-lg bg-slate-100"
-              style={{ aspectRatio }}
+              className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-slate-400 transition-all hover:shadow-lg bg-slate-100 w-full"
+              style={{ aspectRatio }} // ✅ Сохраняем оригинальные пропорции
             >
               <WatermarkedImage
                 src={photo.thumbnailUrl || photo.watermarkedUrl}
