@@ -1,6 +1,9 @@
 'use client';
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
 =======
 >>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
 import React, { useState } from 'react';
@@ -15,7 +18,11 @@ type Photo = {
   thumbnailUrl: string | null;
   alt: string | null;
 <<<<<<< HEAD
+<<<<<<< HEAD
   width:  number;
+=======
+  width: number;
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
 =======
   width: number;
 >>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
@@ -40,7 +47,11 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
         </h3>
         <p className="text-slate-600 text-lg">
 <<<<<<< HEAD
+<<<<<<< HEAD
           Фотографии будут загружены в ближайшее время. 
+=======
+          Фотографии будут загружены в ближайшее время.
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
 =======
           Фотографии будут загружены в ближайшее время.
 >>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
@@ -51,6 +62,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
 
   return (
     <>
+<<<<<<< HEAD
 <<<<<<< HEAD
       {/* ✅ GRID с фиксированной высотой */}
       <div className="grid grid-cols-2 sm: grid-cols-3 md: grid-cols-4 gap-4">
@@ -93,6 +105,8 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
           </div>
         ))}
 =======
+=======
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
       {/* ✅ Grid с горизонтальной нумерацией и сохранением пропорций */}
       <div 
         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
@@ -143,6 +157,9 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
             </div>
           );
         })}
+<<<<<<< HEAD
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
+=======
 >>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
       </div>
 
