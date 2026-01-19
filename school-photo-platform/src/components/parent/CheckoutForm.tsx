@@ -109,7 +109,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
         {/* ТЕЛЕФОН */}
         <div className="space-y-2">
           <Label htmlFor="phone" className="text-sm font-semibold text-slate-700 ml-1">
-            Номер телефона *
+            Номер телефона (необязательно)
           </Label>
           <Input
             id="phone"

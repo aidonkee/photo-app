@@ -23,17 +23,19 @@ export async function submitOrderAction(
   cartItems: CartItem[]
 ): Promise<{ success?: boolean; orderId?: string; error?: string }> {
   
-  // Validation
-  if (!parentDetails.name || ! parentDetails.surname || !parentDetails.email) {
-    return { error: 'Name, surname, and email are required' };
+  // КРИТИКА: Убираем обязательную проверку email, если он опционален.
+  // Оставляем только Имя и Фамилию как обязательные.
+  if (!parentDetails.name || !parentDetails.surname) {
+    return { error: 'Имя и фамилия ученика обязательны' };
   }
 
-  if (! parentDetails.email.includes('@')) {
-    return { error: 'Please enter a valid email address' };
+  // Проверяем email на валидность только ЕСЛИ он заполнен
+  if (parentDetails.email && !parentDetails.email.includes('@')) {
+    return { error: 'Пожалуйста, введите корректный email адрес' };
   }
 
   if (cartItems.length === 0) {
-    return { error: 'Cart is empty' };
+    return { error: 'Корзина пуста' };
   }
 
   try {

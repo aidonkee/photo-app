@@ -26,10 +26,10 @@ export const classroomSchema = z.object({
 
 export const checkoutSchema = z.object({
   name: z.string().min(3, 'Введите полные фамилию и имя ученика'),
-  email: z.string().email('Пожалуйста, введите корректный адрес электронной почты').optional(),
-  phone: z.string().optional(),
+  email: z.string().email('Пожалуйста, введите корректный адрес электронной почты').optional().or(z.literal('')),
+  // Это позволит полю быть пустым и не ругаться на формат
+  phone: z.string().optional().or(z.literal('')), 
 });
-
 export const editRequestSchema = z.object({
   reason: z.string().min(10, 'Пожалуйста, укажите не менее 10 символов, объясняющих проблему'),
 });

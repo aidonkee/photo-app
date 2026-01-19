@@ -26,7 +26,7 @@ type CartDrawerProps = {
   onOpenChange: (open: boolean) => void;
   classId: string;
   schoolSlug: string;
-  schoolPricing?:  SchoolPricing | null;
+  schoolPricing?: SchoolPricing | null;
 };
 
 export default function CartDrawer({
@@ -47,69 +47,78 @@ export default function CartDrawer({
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
-    if (! isOpen) {
+    if (!isOpen) {
       setTimeout(() => setShowCheckout(false), 300);
     }
   };
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="mb-6">
+      {/* FIX: overflow-x-hidden и max-w-[100vw] предотвращают горизонтальный скролл 
+         flex flex-col h-full позволяет прибить футер с кнопкой "Оформить" к низу
+      */}
+      <SheetContent className="w-full sm:max-w-md flex flex-col h-full max-w-[100vw] overflow-x-hidden px-6">
+        
+        <SheetHeader className="mb-6 shrink-0 text-left">
           <SheetTitle className="flex items-center gap-2">
             {showCheckout && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 -ml-2 mr-1"
+                className="h-8 w-8 -ml-2 mr-1 shrink-0"
                 onClick={() => setShowCheckout(false)}
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            {showCheckout ?  'Оформление заказа' : 'Корзина'}
+            {showCheckout ? 'Оформление заказа' : 'Корзина'}
           </SheetTitle>
           <SheetDescription>
             {showCheckout
-              ? 'Заполните контактные данные для завершения заказа.'
-              : 'Просмотрите выбранные фотографии. '}
+              ? 'Заполните данные для заказа.'
+              : 'Проверьте выбранные фото.'}
           </SheetDescription>
         </SheetHeader>
 
-        {showCheckout ?  (
+        {showCheckout ? (
           /* ОФОРМЛЕНИЕ ЗАКАЗА */
-          <div className="space-y-6">
-            <div className="bg-slate-50 p-4 rounded-lg border">
-              <div className="flex justify-between font-medium mb-2">
-                <span>Всего к оплате:</span>
-                <span className="text-slate-900 font-semibold">
-                  {formatPrice(totalPrice)}
-                </span>
+          <ScrollArea className="flex-1 -mx-6 px-6">
+            <div className="space-y-6 pb-10">
+              <div className="bg-slate-50 p-4 rounded-lg border w-full">
+                <div className="flex justify-between font-medium mb-2">
+                  <span>Всего к оплате:</span>
+                  <span className="text-slate-900 font-semibold whitespace-nowrap">
+                    {formatPrice(totalPrice)}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Вы выбрали {items.reduce((acc, item) => acc + item.quantity, 0)} фото
+                </p>
               </div>
-              <p className="text-xs text-slate-500">
-                Вы выбрали {items.reduce((acc, item) => acc + item.quantity, 0)} фото
-              </p>
-            </div>
 
-            <CheckoutForm classId={classId} schoolSlug={schoolSlug} />
-          </div>
+              <CheckoutForm classId={classId} schoolSlug={schoolSlug} />
+            </div>
+          </ScrollArea>
         ) : (
           /* КОРЗИНА С ПРЕВЬЮ */
-          <div className="flex flex-col h-[calc(100vh-10rem)]">
+          // Используем flex-1 и overflow-hidden для правильного скролла внутри контейнера
+          <div className="flex flex-col flex-1 overflow-hidden">
             <ScrollArea className="flex-1 -mx-6 px-6">
-              <div className="space-y-4">
+              <div className="space-y-4 pb-6">
                 {items.length === 0 ? (
                   <Alert>
-                    <AlertDescription>Ваша корзина пуста. </AlertDescription>
+                    <AlertDescription>Ваша корзина пуста.</AlertDescription>
                   </Alert>
                 ) : (
                   items.map((item) => (
                     <div
                       key={`${item.photoId}-${item.format}`}
-                      className="flex gap-3 pb-4 border-b border-slate-200 last:border-0"
+                      // FIX: w-full гарантирует, что карточка не будет шире экрана
+                      className="flex w-full items-start gap-3 pb-4 border-b border-slate-200 last:border-0"
                     >
                       {/* ✅ ПРЕВЬЮ ФОТОГРАФИИ */}
-                      <div className="relative flex-shrink-0 w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                      {/* shrink-0 запрещает сжатие картинки */}
+                      <div className="relative shrink-0 w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                         <img
                           src={item.photoUrl}
                           alt={item.photoAlt || 'Фото'}
@@ -118,25 +127,26 @@ export default function CartDrawer({
                       </div>
 
                       {/* ИНФОРМАЦИЯ О ТОВАРЕ */}
-                      <div className="flex-1 flex flex-col justify-between min-w-0">
-                        {/* Верхняя часть:  формат + цена */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
+                      {/* min-w-0 критически важен для работы truncate внутри flex */}
+                      <div className="flex-1 min-w-0 flex flex-col h-20 justify-between">
+                        {/* Верхняя часть: название и цена */}
+                        <div className="flex justify-between gap-2">
+                          <div className="min-w-0 pr-2">
                             <p className="text-sm font-medium text-slate-900 truncate">
                               {FORMAT_LABELS[item.format]}
                             </p>
-                            <p className="text-xs text-slate-500 mt-0.5 truncate">
+                            <p className="text-xs text-slate-500 truncate">
                               {item.photoAlt || 'Фотография'}
                             </p>
                           </div>
-                          <p className="text-sm font-semibold text-slate-900 whitespace-nowrap">
+                          <p className="text-sm font-semibold text-slate-900 whitespace-nowrap shrink-0">
                             {formatPrice(item.pricePerUnit * item.quantity)}
                           </p>
                         </div>
 
-                        {/* Нижняя часть: кнопки управления */}
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-1 bg-slate-50 rounded-md p-0.5">
+                        {/* Нижняя часть: кнопки */}
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-1 bg-slate-50 rounded-md p-0.5 shrink-0">
                             <Button
                               type="button"
                               variant="ghost"
@@ -145,7 +155,7 @@ export default function CartDrawer({
                               onClick={() =>
                                 updateQuantity(
                                   item.photoId,
-                                  item. format,
+                                  item.format,
                                   Math.max(1, item.quantity - 1)
                                 )
                               }
@@ -175,7 +185,7 @@ export default function CartDrawer({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 shrink-0"
                             onClick={() => removeItem(item.photoId, item.format)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -188,17 +198,17 @@ export default function CartDrawer({
               </div>
             </ScrollArea>
 
-            {/* ИТОГО */}
-            <div className="pt-6 mt-auto bg-white border-t border-slate-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-medium text-slate-700">Итого: </p>
+            {/* ИТОГО (Footer) */}
+            <div className="pt-4 pb-6 mt-auto bg-white border-t border-slate-200 shrink-0 z-10">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-lg font-medium text-slate-700">Итого:</p>
                 <p className="text-2xl font-bold text-slate-900">
                   {formatPrice(totalPrice)}
                 </p>
               </div>
 
               <Button
-                className="w-full h-12 text-base bg-slate-900 hover:bg-slate-800 text-white"
+                className="w-full h-12 text-base bg-slate-900 hover:bg-slate-800 text-white rounded-xl"
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
               >
