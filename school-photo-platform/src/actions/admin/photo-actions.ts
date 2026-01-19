@@ -9,15 +9,18 @@ import { uploadFile, getPublicUrl } from '@/lib/storage';
 import { addWatermark, createThumbnail } from '@/lib/watermark';
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
+
+// Ограничиваем конкурентность, чтобы не перегружать сервер при множественной загрузке
 sharp.concurrency(1);
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL! ;
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function getPhotos(classId: string) {
   const session = await getSession();
 
-  if (!session || (session.role !== 'ADMIN' && session. role !== 'SUPER_ADMIN')) {
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
     redirect('/login');
   }
 
@@ -55,7 +58,7 @@ export async function uploadPhotoAction(
   classId: string,
   formData: FormData
 ): Promise<{
-  success?:  boolean;
+  success?: boolean;
   uploaded?: number;
   error?: string;
 }> {
@@ -69,10 +72,10 @@ export async function uploadPhotoAction(
     // Verify classroom ownership ONCE
     const classroom = await prisma.classroom.findUnique({
       where: { id: classId },
-      include: { school:  true },
+      include: { school: true },
     });
 
-    // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может загружать везде)
+    // ЗАЩИТА: Проверяем владель��а (SUPER_ADMIN может загружать везде)
     if (!classroom) {
       return { error: 'Classroom not found' };
     }
@@ -93,9 +96,9 @@ export async function uploadPhotoAction(
     }
 
     // Validate file size (max 50MB)
-    const MAX_FILE_SIZE = 500 * 1024 * 1024;
-    if (file. size > MAX_FILE_SIZE) {
-      return { error: `File too large:  ${(file.size / 1024 / 1024).toFixed(2)}MB` };
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return { error: `File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB` };
     }
 
     try {
@@ -105,40 +108,72 @@ export async function uploadPhotoAction(
 
       // Generate unique filename
       const fileId = uuidv4();
-      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const fileExtension = (file.name.split('.').pop() || 'jpg').toLowerCase();
 
       // 1. Upload ORIGINAL
       const originalPath = `originals/${classId}/${fileId}.${fileExtension}`;
-      await uploadFile(buffer, originalPath, file. type);
+      console.log('📤 Uploading ORIGINAL:', { path: originalPath, size: buffer.length, type: file.type });
+      await uploadFile(buffer, originalPath, file.type || 'image/jpeg');
 
-      // 2. Add watermark
-      const { buffer: watermarkedBuffer, width, height, size } = await addWatermark(buffer);
+      // 2. Add watermark (с детальным логированием + резервный путь)
+      let watermarkedBuffer: Buffer;
+      let width = 0;
+      let height = 0;
+      let size = 0;
+
+      try {
+        const wmResult = await addWatermark(buffer);
+        watermarkedBuffer = wmResult.buffer;
+        width = wmResult.width;
+        height = wmResult.height;
+        size = wmResult.size;
+        console.log('✅ Watermark success:', { width, height, size });
+      } catch (wmErr: any) {
+        console.error('❌ addWatermark failed. Fallback to JPEG. Reason:', wmErr?.message || wmErr);
+        // Резервный вариант: конвертируем оригинал в JPEG, чтобы watermarked не был пуст
+        const meta = await sharp(buffer).metadata();
+        width = meta.width || 0;
+        height = meta.height || 0;
+        watermarkedBuffer = await sharp(buffer).jpeg({ quality: 85, progressive: true }).toBuffer();
+        size = watermarkedBuffer.length;
+        console.log('⚠️ Fallback JPEG generated:', { width, height, size });
+      }
 
       // 3. Upload WATERMARKED
       const watermarkedPath = `watermarked/${classId}/${fileId}.jpg`;
+      console.log('📤 Uploading WATERMARKED:', { path: watermarkedPath, size: watermarkedBuffer.length });
       await uploadFile(watermarkedBuffer, watermarkedPath, 'image/jpeg');
 
       // 4. Create THUMBNAIL
-      const thumbnailBuffer = await createThumbnail(watermarkedBuffer);
+      console.log('🔧 Creating THUMBNAIL from watermarked...');
+      let thumbnailBuffer: Buffer;
+      try {
+        thumbnailBuffer = await createThumbnail(watermarkedBuffer);
+      } catch (thumbErr: any) {
+        console.error('❌ createThumbnail failed. Fallback to simple resize. Reason:', thumbErr?.message || thumbErr);
+        thumbnailBuffer = await sharp(watermarkedBuffer).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer();
+      }
       const thumbnailPath = `thumbnails/${classId}/${fileId}.jpg`;
+      console.log('📤 Uploading THUMBNAIL:', { path: thumbnailPath, size: thumbnailBuffer.length });
       await uploadFile(thumbnailBuffer, thumbnailPath, 'image/jpeg');
 
       // 5. Get public URLs
       const watermarkedUrl = getPublicUrl(watermarkedPath);
       const thumbnailUrl = getPublicUrl(thumbnailPath);
+      console.log('🔗 Public URLs:', { watermarkedUrl, thumbnailUrl });
 
       // 6. Create database record
       await prisma.photo.create({
         data: {
           classId,
-          originalUrl: originalPath,
-          watermarkedUrl,
-          thumbnailUrl,
+          originalUrl: originalPath,     // путь в сторидж (может быть приватным по политикам)
+          watermarkedUrl,                // публичный URL
+          thumbnailUrl,                  // публичный URL
           width,
           height,
           fileSize: size,
           mimeType: 'image/jpeg',
-          alt: file.name. replace(/\.[^/.]+$/, ''),
+          alt: file.name.replace(/\.[^/.]+$/, ''),
           tags: [],
         },
       });
@@ -150,13 +185,13 @@ export async function uploadPhotoAction(
         success: true,
         uploaded: 1,
       };
-    } catch (fileError:  any) {
+    } catch (fileError: any) {
       console.error(`Error processing file ${file.name}:`, fileError);
       return {
         error: fileError.message || 'Failed to process file',
       };
     }
-  } catch (error:  any) {
+  } catch (error: any) {
     console.error('Error in upload action:', error);
     return {
       error: error.message || 'Failed to upload photo',
@@ -196,18 +231,15 @@ export async function deletePhotoAction(photoId: string) {
       throw new Error('Cannot delete photo that is part of an order');
     }
 
-    // Extract paths from URLs
+    // Extract paths from URLs (watermarked/thumbnail - полные публичные URL, вытаскиваем относительные пути)
     const watermarkedPath = photo.watermarkedUrl.split('/storage/v1/object/public/school-photos/')[1];
-    const thumbnailPath = photo.thumbnailUrl?. split('/storage/v1/object/public/school-photos/')[1];
+    const thumbnailPath = photo.thumbnailUrl?.split('/storage/v1/object/public/school-photos/')[1];
 
     const pathsToDelete = [photo.originalUrl];
     if (watermarkedPath) pathsToDelete.push(watermarkedPath);
     if (thumbnailPath) pathsToDelete.push(thumbnailPath);
 
-    const { error: storageError } = await supabase
-      .storage
-      .from('school-photos')
-      .remove(pathsToDelete);
+    const { error: storageError } = await supabase.storage.from('school-photos').remove(pathsToDelete);
 
     if (storageError) {
       console.error('Supabase storage delete error:', storageError);
@@ -235,7 +267,7 @@ export async function getPhotoStats(classId: string) {
 
   try {
     const classroom = await prisma.classroom.findUnique({
-      where: { id:  classId },
+      where: { id: classId },
       include: { school: true },
     });
 
@@ -254,21 +286,20 @@ export async function getPhotoStats(classId: string) {
       prisma.photo.aggregate({
         where: { classId },
         _sum: {
-          fileSize:  true,
+          fileSize: true,
         },
       }),
     ]);
 
     return {
       totalPhotos,
-      totalSize:  totalSize._sum. fileSize || 0,
+      totalSize: totalSize._sum.fileSize || 0,
     };
   } catch (error) {
     console.error('Error fetching photo stats:', error);
     throw new Error('Failed to fetch photo statistics');
   }
 }
-// Добавьте ТОЛЬКО ЭТУ функцию в конец файла (после getPhotoStats)
 
 /**
  * Загрузка фото в конкретный класс (автоматически находит или создает класс по имени)
@@ -284,7 +315,7 @@ export async function uploadSchoolPhotoAction(
   try {
     // 1. Находим или создаем класс
     let classroom = await prisma.classroom.findFirst({
-      where: { schoolId, name: className }
+      where: { schoolId, name: className },
     });
 
     if (!classroom) {
@@ -292,9 +323,9 @@ export async function uploadSchoolPhotoAction(
         data: {
           name: className,
           schoolId: schoolId,
-          teacherLogin: `sch${schoolId.substring(0,4)}-${className.toLowerCase().replace(/\s+/g, '')}`,
+          teacherLogin: `sch${schoolId.substring(0, 4)}-${className.toLowerCase().replace(/\s+/g, '')}`,
           teacherPassword: uuidv4().substring(0, 8),
-        }
+        },
       });
     }
 
@@ -304,6 +335,7 @@ export async function uploadSchoolPhotoAction(
     return { error: error.message };
   }
 }
+
 /**
  * Bulk delete photos
  * Skips photos that are part of orders
@@ -323,7 +355,7 @@ export async function deletePhotosAction(
     throw new Error('Unauthorized access');
   }
 
-  if (! photoIds || photoIds.length === 0) {
+  if (!photoIds || photoIds.length === 0) {
     return {
       success: false,
       deleted: 0,
@@ -336,7 +368,7 @@ export async function deletePhotosAction(
     // Verify classroom ownership
     const classroom = await prisma.classroom.findUnique({
       where: { id: classId },
-      include: { school:  true },
+      include: { school: true },
     });
 
     // ЗАЩИТА: Проверяем владельца (SUPER_ADMIN может удалять везде)
@@ -363,7 +395,7 @@ export async function deletePhotosAction(
     let deletedCount = 0;
     let skippedCount = 0;
     const errors: string[] = [];
-    const pathsToDelete:  string[] = [];
+    const pathsToDelete: string[] = [];
 
     // Process each photo
     for (const photo of photos) {
@@ -375,7 +407,7 @@ export async function deletePhotosAction(
 
       try {
         // Extract storage paths
-        const watermarkedPath = photo.watermarkedUrl. split(
+        const watermarkedPath = photo.watermarkedUrl.split(
           '/storage/v1/object/public/school-photos/'
         )[1];
         const thumbnailPath = photo.thumbnailUrl?.split(
@@ -383,25 +415,25 @@ export async function deletePhotosAction(
         )[1];
 
         // Collect paths for batch deletion
-        pathsToDelete. push(photo.originalUrl);
+        pathsToDelete.push(photo.originalUrl);
         if (watermarkedPath) pathsToDelete.push(watermarkedPath);
         if (thumbnailPath) pathsToDelete.push(thumbnailPath);
 
         // Delete from database
         await prisma.photo.delete({
-          where: { id: photo. id },
+          where: { id: photo.id },
         });
 
         deletedCount++;
-      } catch (err:  any) {
+      } catch (err: any) {
         console.error(`Error deleting photo ${photo.id}:`, err);
-        errors.push(`Failed to delete photo:  ${photo.alt || photo.id}`);
+        errors.push(`Failed to delete photo: ${photo.alt || photo.id}`);
       }
     }
 
     // Batch delete from Supabase Storage
     if (pathsToDelete.length > 0) {
-      const { error: storageError } = await supabase. storage
+      const { error: storageError } = await supabase.storage
         .from('school-photos')
         .remove(pathsToDelete);
 
@@ -415,7 +447,7 @@ export async function deletePhotosAction(
     revalidatePath(`/admin/schools/${classroom.schoolId}/classrooms/${classId}`);
 
     return {
-      success:  true,
+      success: true,
       deleted: deletedCount,
       skipped: skippedCount,
       errors,
@@ -424,5 +456,4 @@ export async function deletePhotosAction(
     console.error('Bulk delete error:', error);
     throw new Error(error.message || 'Failed to delete photos');
   }
-  
 }

@@ -5,6 +5,20 @@ import fs from 'fs';
 const MAX_WIDTH = 1500;
 const WATERMARK_FILE = path.join(process.cwd(), 'public', 'watermark.png');
 
+// Фоллбэк: плиточный SVG с прозрачным текстом
+const svgOverlay = Buffer.from(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+    <defs>
+      <pattern id="wm" patternUnits="userSpaceOnUse" width="400" height="400" patternTransform="rotate(-30)">
+        <text x="20" y="200" font-size="48" font-family="Arial, sans-serif" fill="rgba(255,0,0,0.35)">
+          sample
+        </text>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#wm)" />
+  </svg>
+`);
+
 export async function addWatermark(buffer: Buffer): Promise<{
   buffer: Buffer;
   width: number;
@@ -12,7 +26,9 @@ export async function addWatermark(buffer: Buffer): Promise<{
   size: number;
 }> {
   console.log('🎨 Starting watermark process...');
-  
+  console.log('cwd:', process.cwd());
+  console.log('WATERMARK_FILE:', WATERMARK_FILE);
+
   const meta = await sharp(buffer).metadata();
   if (!meta.width || !meta.height) {
     throw new Error('Unable to read image dimensions');
@@ -24,43 +40,34 @@ export async function addWatermark(buffer: Buffer): Promise<{
 
   // Resize if needed
   if (width > MAX_WIDTH) {
-    console.log(`📏 Resizing from ${width}x${height} to ${MAX_WIDTH}x...`);
     const ratio = height / width;
     width = MAX_WIDTH;
     height = Math.round(MAX_WIDTH * ratio);
     processed = await sharp(buffer)
       .resize(width, height, { fit: 'inside', withoutEnlargement: true })
       .toBuffer();
-    console.log(`✅ Resized to ${width}x${height}`);
   }
 
-  // ✅ Проверяем наличие watermark файла
-  if (!fs.existsSync(WATERMARK_FILE)) {
-    throw new Error(`❌ Watermark file not found at: ${WATERMARK_FILE}`);
+  let composited: Buffer;
+
+  if (fs.existsSync(WATERMARK_FILE)) {
+    const wmBuffer = fs.readFileSync(WATERMARK_FILE);
+    console.log('✅ Watermark file found. size=', wmBuffer.length);
+
+    // ВАЖНО: прозрачность должна быть в самом watermark.png (альфа-канал).
+    // Здесь НЕ используем opacity, чтобы избежать TS ошибки.
+    composited = await sharp(processed)
+      .composite([{ input: wmBuffer, tile: true, blend: 'over' }])
+      .jpeg({ quality: 85, progressive: true })
+      .toBuffer();
+  } else {
+    console.warn('⚠️ Watermark file missing. Using SVG fallback.');
+    // Фоллбэк с RGBA-прозрачностью внутри SVG
+    composited = await sharp(processed)
+      .composite([{ input: svgOverlay, tile: true, blend: 'over' }])
+      .jpeg({ quality: 85, progressive: true })
+      .toBuffer();
   }
-  
-  console.log('✅ Watermark file found:', WATERMARK_FILE);
-
-  // ✅ Применяем watermark
- // В watermark.ts - добавить прозрачность к watermark
-const watermarkBuffer = await sharp(WATERMARK_FILE)
-.ensureAlpha()  // Убедиться что есть альфа-канал
-.composite([{
-  input: Buffer.from([255, 255, 255, 128]), // Добавить полупрозрачность
-  raw: { width: 1, height: 1, channels: 4 },
-  tile: true,
-  blend: 'dest-in'
-}])
-.toBuffer();
-
-const composited = await sharp(processed)
-.composite([{ 
-  input: watermarkBuffer, 
-  tile: true, 
-  blend: 'over' 
-}])
-.jpeg({ quality: 85, progressive: true })
-.toBuffer();
 
   console.log(`✅ Watermark applied. Size: ${composited.length} bytes`);
 
