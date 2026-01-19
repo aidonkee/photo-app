@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role { 
+  SUPER_ADMIN
+  ADMIN       // Photographer
+}
+
+enum OrderStatus {
+  PENDING                 // Parent submitted
+  APPROVED_BY_TEACHER     // Teacher confirmed
+  LOCKED                  // Class order submitted to Admin
+  COMPLETED               // Admin fulfilled
+}
+
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ✅ ОБНОВЛЕНО: Убрали MAGNET и DIGITAL
+enum PhotoFormat {
+  A4
+  A5
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(ADMIN)
+  
+  // Profile
+  firstName String? 
+  lastName  String?  
+  phone     String?
+  
+  // Relations
+  schools   School[]
+  
+  // Audit
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+}
+
+model School {
+  id             String      @id @default(uuid())
+  name           String
+  slug           String      @unique
+  
+  // Branding
+  primaryColor   String      @default("#f97316")
+  logoUrl        String?
+  
+  // Ownership
+  adminId        String
+  admin          User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  classrooms     Classroom[]
+  
+  // Settings
+  isActive       Boolean     @default(true)
+  publicLinkEnabled Boolean  @default(true)
+  isKazakhEnabled   Boolean  @default(false)
+  
+  // ✅ ОБНОВЛЕНО:  Только A4 и A5
+  priceA4        Int         @default(1500)  // A4 формат
+  priceA5        Int         @default(1000)  // A5 формат
+  
+  // Audit
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  @@index([slug])
+  @@index([adminId])
+}
+
+model Classroom {
+  id             String   @id @default(uuid())
+  name           String
+  
+  // School relation
+  schoolId       String
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  // Teacher Credentials
+  teacherLogin    String   @unique
+  teacherPassword String
+  
+  // Teacher Permissions
+  isEditAllowed   Boolean  @default(false)
+  editRequests    EditRequest[]
+  
+  // Relations
+  photos          Photo[]
+  orders          Order[]
+  
+  // Class Order Submission
+  isLocked        Boolean  @default(false)
+  lockedAt        DateTime?  
+  
+  // Audit
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([schoolId])
+  @@index([teacherLogin])
+}
+
+model Photo {
+  id             String   @id @default(uuid())
+  
+  // Classroom relation
+  classId        String
+  classroom      Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  // Image URLs
+  originalUrl    String
+  watermarkedUrl String
+  thumbnailUrl   String? 
+  
+  // Metadata
+  width          Int
+  height         Int
+  fileSize       Int
+  mimeType       String   @default("image/jpeg")
+  
+  // SEO/Search
+  alt            String?
+  tags           String[]
+  
+  // Order tracking
+  orderItems     OrderItem[]
+  
+  // Audit
+  uploadedAt     DateTime @default(now())
+  
+  @@index([classId])
+  @@index([uploadedAt])
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  
+  // Classroom relation
+  classId        String
+  classroom      Classroom   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  // Parent Info
+  parentName     String
+  parentSurname  String
+  parentPhone    String?
+  
+  // Order Details
+  status         OrderStatus @default(PENDING)
+  items          OrderItem[]
+  
+  // Financial
+  totalSum       Decimal     @db.Decimal(10, 2)
+  currency       String      @default("KZT")
+  
+  // Notes
+  notes          String?
+  
+  // Audit
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  submittedAt    DateTime?
+  completedAt    DateTime?
+  
+  @@index([classId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String      @id @default(uuid())
+  
+  // Order relation
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Photo relation
+  photoId   String
+  photo     Photo       @relation(fields: [photoId], references:  [id])
+  
+  // Snapshot
+  photoUrl  String
+  
+  // Order Details
+  format    PhotoFormat
+  quantity  Int         @default(1)
+  price     Decimal     @db.Decimal(10, 2)
+  subtotal  Decimal     @db.Decimal(10, 2)
+  
+  // Audit
+  createdAt DateTime    @default(now())
+  
+  @@index([orderId])
+  @@index([photoId])
+}
+
+model EditRequest {
+  id          String            @id @default(uuid())
+  
+  // Classroom relation
+  classId     String
+  classroom   Classroom         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  // Request details
+  reason      String
+  status      EditRequestStatus @default(PENDING)
+  
+  // Admin response
+  respondedAt DateTime?  
+  adminNote   String?
+  
+  // Audit
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  @@index([classId])
+  @@index([status])
+}
+
+model PlatformMetric {
+  id              String   @id @default(uuid())
+  date            DateTime @unique @db.Date
+  
+  totalSchools    Int      @default(0)
+  totalOrders     Int      @default(0)
+  totalRevenue    Decimal  @db.Decimal(12, 2)
+  activeAdmins    Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([date])
+}
