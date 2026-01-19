@@ -137,9 +137,13 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
             disabled={submitting}
             className="h-12 rounded-xl border-slate-200 text-base placeholder:text-slate-300"
           />
+<<<<<<< HEAD
           <p className="text-[10px] text-slate-400 ml-1">
             Для получения чека и уведомлений о готовности
           </p>
+=======
+       
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
         </div>
       </div>
 
@@ -167,9 +171,13 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
         )}
       </Button>
 
+<<<<<<< HEAD
       <p className="text-[10px] text-slate-400 text-center px-4">
         Нажимая кнопку, вы соглашаетесь с правилами сервиса и обработкой персональных данных.
       </p>
+=======
+     
+>>>>>>> da80273f9e7d10d1e0ec5315d15d11e63417c028
     </form>
   );
 }
