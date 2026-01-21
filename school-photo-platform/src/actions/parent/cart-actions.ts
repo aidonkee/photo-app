@@ -7,9 +7,9 @@ import { revalidatePath } from 'next/cache';
 /**
  * Get school and its classrooms by slug (WITH PRICING)
  */
-export async function getSchoolAndClasses(slug: string) {
+export async function getSchoolAndClasses(slug:  string) {
   try {
-    const school = await prisma.school. findUnique({
+    const school = await prisma. school. findUnique({
       where:  {
         slug,
         isActive: true,
@@ -19,7 +19,7 @@ export async function getSchoolAndClasses(slug: string) {
         id: true,
         name: true,
         slug: true,
-        primaryColor:   true,
+        primaryColor:  true,
         logoUrl: true,
         isKazakhEnabled: true,
         priceA4: true,
@@ -38,7 +38,7 @@ export async function getSchoolAndClasses(slug: string) {
             },
           },
           orderBy: {
-            name: 'asc',
+            name:  'asc',
           },
         },
       },
@@ -56,34 +56,27 @@ export async function getSchoolAndClasses(slug: string) {
 }
 
 /**
- * Распределяет фотки по колонкам для masonry layout
- * Сохраняет горизонтальную нумерацию (1,2,3,4 в первом ряду и т.д.)
+ * ✅ ИСПРАВЛЕНО: Распределяет фотки по колонкам СТРОГО ПО РЯДАМ
+ * Фото 1,2,3,4 идут в первый ряд (по одной в каждую колонку)
+ * Фото 5,6,7,8 идут во второй ряд и т.д.
  */
-function distributeToColumns<T extends { width: number; height: number }>(
+function distributeToColumnsHorizontally<T extends { id: string; width: number; height: number }>(
   photos: T[],
   columnCount: number
-): { columns: T[][]; photoIndexMap: Map<string, number> } {
+): { columns: T[][]; photoIndexMap: Record<string, number> } {
   // Создаём колонки
   const columns: T[][] = Array. from({ length: columnCount }, () => []);
-  const columnHeights: number[] = Array(columnCount).fill(0);
   
   // Карта для хранения оригинального индекса каждой фотки
-  const photoIndexMap = new Map<string, number>();
+  const photoIndexMap:  Record<string, number> = {};
   
-  // Распределяем фотки по колонкам, добавляя в самую короткую
+  // ✅ Распределяем фотки СТРОГО ПО РЯДАМ (слева направо)
+  // Фото 0 -> колонка 0, фото 1 -> колонка 1, фото 2 -> колонка 2, фото 3 -> колонка 3
+  // Фото 4 -> колонка 0, фото 5 -> колонка 1 и т.д.
   photos.forEach((photo, index) => {
-    // Находим самую короткую колонку
-    const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-    
-    // Добавляем фото в эту колонку
-    columns[shortestColumnIndex].push(photo);
-    
-    // Сохраняем оригинальный индекс (для нумерации)
-    photoIndexMap.set((photo as any).id, index);
-    
-    // Обновляем высоту колонки (используем aspect ratio)
-    const aspectRatio = photo.width / photo.height;
-    columnHeights[shortestColumnIndex] += 1 / aspectRatio;
+    const columnIndex = index % columnCount;
+    columns[columnIndex].push(photo);
+    photoIndexMap[photo.id] = index;
   });
   
   return { columns, photoIndexMap };
@@ -96,55 +89,52 @@ export async function getClassroomPhotos(classId: string) {
   try {
     const classroom = await prisma.classroom.findUnique({
       where: {
-        id:   classId,
+        id: classId,
         isLocked: false,
       },
-      include: {
+      include:  {
         school: {
           select: {
             id: true,
             name: true,
             slug: true,
-            primaryColor:  true,
+            primaryColor: true,
             isActive: true,
             publicLinkEnabled: true,
             priceA4: true,
             priceA5: true,
           },
         },
-        photos: {
+        photos:  {
           select: {
             id: true,
             originalUrl: true,
             watermarkedUrl: true,
             thumbnailUrl: true,
-            alt: true,
+            alt:  true,
             width: true,
             height: true,
-            uploadedAt: true, // ✅ Добавляем дату загрузки
+            uploadedAt: true,
           },
           orderBy: {
-            uploadedAt: 'asc', // ✅ Сортируем по дате загрузки (старые первые = порядок загрузки)
+            uploadedAt: 'asc', // Сортируем по дате загрузки
           },
         },
       },
     });
 
-    if (!classroom || !classroom.school. isActive || !classroom.school.publicLinkEnabled) {
+    if (!classroom || !classroom.school.isActive || !classroom.school.publicLinkEnabled) {
       return null;
     }
 
-    // ✅ Распределяем фотки по 4 колонкам для masonry
-    const { columns, photoIndexMap } = distributeToColumns(classroom.photos, 4);
+    // ✅ Распределяем фотки по 4 колонкам ГОРИЗОНТАЛЬНО
+    const { columns, photoIndexMap } = distributeToColumnsHorizontally(classroom.photos, 4);
 
     return {
       ...classroom,
-      // Оригинальный массив фоток (для модалки и навигации)
       photos: classroom.photos,
-      // Распределённые по колонкам фотки (для masonry grid)
       photoColumns: columns,
-      // Карта индексов для нумерации
-      photoIndexMap:  Object.fromEntries(photoIndexMap),
+      photoIndexMap,
     };
   } catch (error) {
     console.error('Error fetching classroom photos:', error);
@@ -159,39 +149,37 @@ export async function submitOrder(
   classId: string,
   parentDetails: {
     name: string;
-    surname: string;
+    surname:  string;
     email: string;
     phone: string;
   },
   cartItems: Array<{
     photoId: string;
     format: PhotoFormat;
-    quantity:   number;
+    quantity: number;
   }>
-): Promise<{ success? :   boolean; orderId?: string; error?: string }> {
+): Promise<{ success?:  boolean; orderId?: string; error?: string }> {
   
-  // Validation
-  if (!parentDetails.name || !parentDetails.  surname) {
+  if (!parentDetails.name || !parentDetails.surname) {
     return { error: 'Name and surname are required' };
   }
 
-  if (parentDetails.email && !  parentDetails.email.includes('@')) {
-    return { error: 'Please enter a valid email address' };
+  if (parentDetails.email && !parentDetails.email.includes('@')) {
+    return { error:  'Please enter a valid email address' };
   }
 
   if (cartItems.length === 0) {
-    return { error: 'Cart is empty' };
+    return { error:  'Cart is empty' };
   }
 
   try {
-    // Verify classroom exists and GET SCHOOL PRICING
-    const classroom = await prisma.classroom.findUnique({
-      where: { id: classId },
+    const classroom = await prisma.classroom. findUnique({
+      where:  { id: classId },
       include: {
         school: {
           select: {
-            id:   true,
-            isActive: true,
+            id: true,
+            isActive:  true,
             publicLinkEnabled: true,
             priceA4: true,
             priceA5: true,
@@ -204,17 +192,15 @@ export async function submitOrder(
       return { error: 'This classroom is no longer accepting orders' };
     }
 
-    if (!classroom.school.isActive || !classroom.school.publicLinkEnabled) {
+    if (!classroom. school.isActive || !classroom. school.publicLinkEnabled) {
       return { error: 'School storefront is currently unavailable' };
     }
 
-    // Create schoolPricing object for getPrice function
     const schoolPricing = {
       priceA4: classroom.school.priceA4,
       priceA5: classroom.school.priceA5,
     };
 
-    // Validate prices server-side with SCHOOL PRICING
     let totalAmount = 0;
     const validatedItems = [];
 
@@ -223,9 +209,8 @@ export async function submitOrder(
       const itemTotal = expectedPrice * item.quantity;
       totalAmount += itemTotal;
 
-      // Verify photo exists
       const photo = await prisma.photo.findUnique({
-        where: { id:  item.photoId },
+        where: { id: item. photoId },
       });
 
       if (!photo || photo.classId !== classId) {
@@ -233,7 +218,7 @@ export async function submitOrder(
       }
 
       validatedItems.push({
-        photo: { connect: { id: item.photoId } },
+        photo: { connect: { id:  item.photoId } },
         format: item.format,
         quantity: item.quantity,
         price: expectedPrice,
@@ -242,12 +227,11 @@ export async function submitOrder(
       });
     }
 
-    // Create order
-    const order = await prisma.order.create({
+    const order = await prisma. order.create({
       data: {
         classId,
-        parentName: parentDetails. name,
-        parentSurname: parentDetails.  surname,
+        parentName: parentDetails.name,
+        parentSurname: parentDetails.surname,
         parentPhone: parentDetails.phone || null,
         status: 'PENDING',
         totalSum: totalAmount,
@@ -255,7 +239,7 @@ export async function submitOrder(
           create: validatedItems,
         },
       },
-      include: {
+      include:  {
         items: true,
       },
     });
@@ -264,9 +248,9 @@ export async function submitOrder(
 
     return {
       success: true,
-      orderId: order.  id,
+      orderId: order.id,
     };
-  } catch (error:   any) {
+  } catch (error: any) {
     console.error('Error submitting order:', error);
     return {
       error: error.message || 'Failed to submit order.  Please try again.',
