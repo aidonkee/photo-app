@@ -44,15 +44,14 @@ type PhotoModalProps = {
   photo: Photo;
   allPhotos?:  Photo[];
   schoolPricing?: SchoolPricing | null;
-  onPhotoChange?:  (photo: Photo) => void;
+  onPhotoChange?: (photo: Photo) => void;
 };
 
-// ✅ Функция для генерации watermark URL
 function getWatermarkUrl(originalUrl: string): string {
   if (originalUrl.includes('/watermarked/')) {
     return originalUrl;
   }
-  return `/api/watermark/view?url=${encodeURIComponent(originalUrl)}`;
+  return `/api/watermark/view? url=${encodeURIComponent(originalUrl)}`;
 }
 
 export default function PhotoModal({
@@ -81,11 +80,10 @@ export default function PhotoModal({
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < allPhotos.length - 1;
 
-  // ✅ Генерируем watermark URL
   const displayUrl = getWatermarkUrl(photo.watermarkedUrl);
 
   useEffect(() => {
-    setFormat(PhotoFormat.A4);
+    setFormat(PhotoFormat. A4);
     setQuantity(1);
     setShowSuccess(false);
   }, [photo.id]);
@@ -125,7 +123,7 @@ export default function PhotoModal({
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (! touchStart || !touchEnd) return;
 
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
@@ -156,8 +154,13 @@ export default function PhotoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 overflow-x-visible">
-        {/* Desktop Navigation Arrows */}
+      <DialogContent 
+        className="
+          max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0
+          md:max-w-5xl md:w-[900px] md:max-h-[85vh] md:overflow-hidden
+        "
+      >
+        {/* Desktop Navigation Arrows - вынесены за пределы модалки */}
         {allPhotos.length > 1 && (
           <>
             {hasPrev && (
@@ -187,7 +190,7 @@ export default function PhotoModal({
             Выбор фотографии
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-slate-600">
-            {allPhotos.length > 1 ? (
+            {allPhotos.length > 1 ?  (
               <span>
                 {currentIndex + 1} из {allPhotos.length} • Используйте ← → или свайп
               </span>
@@ -197,20 +200,24 @@ export default function PhotoModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6">
+        {/* Mobile:  single column, scrollable | Desktop: two columns, fixed height */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 md:h-[calc(85vh-120px)]">
           {/* Photo Preview */}
           <div
-            className="space-y-3 relative"
+            className="space-y-3 relative md:flex md:flex-col md:h-full"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
-            <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative">
+            {/* Desktop: fixed container for image | Mobile: auto height */}
+            <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative md:flex-1 md:flex md:items-center md:justify-center md:min-h-0">
               <img
                 src={getDisplayUrl(photo)}
                 alt={photo.alt || 'Фотография'}
-                className="w-full h-auto block"
-                style={{ maxWidth: '100%' }}
+                className="
+                  w-full h-auto block
+                  md:max-w-full md:max-h-full md:w-auto md:h-auto md:object-contain
+                "
               />
 
               {/* Mobile Navigation Arrows */}
@@ -250,8 +257,8 @@ export default function PhotoModal({
             )}
           </div>
 
-          {/* Options */}
-          <div className="space-y-4">
+          {/* Options - Desktop:  scrollable if needed */}
+          <div className="space-y-4 md:overflow-y-auto md:max-h-full">
             <div className="space-y-2">
               <Label htmlFor="format" className="text-sm font-medium text-slate-900">
                 Формат
@@ -322,7 +329,7 @@ export default function PhotoModal({
 
             <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Цена за единицу: </span>
+                <span className="text-slate-600">Цена за единицу:</span>
                 <span className="font-medium text-slate-900 tabular-nums">
                   {formatPrice(price)}
                 </span>
