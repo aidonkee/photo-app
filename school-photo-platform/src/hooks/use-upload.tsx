@@ -4,11 +4,9 @@ import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
 
-import { savePhotoRecord, revalidateClassroomPhotos } from '@/actions/photo-db-actions';
-import { getSupabaseClient, getPublicUrl } from '@/lib/supabase/client';
+import { revalidateClassroomPhotos } from '@/actions/photo-db-actions';
 
 // Configuration
-const BUCKET_NAME = 'school-photos';
 const CONCURRENT_UPLOADS = 3;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
@@ -44,31 +42,9 @@ type UploadResult = {
 };
 
 /**
- * Extract image dimensions using browser Image API
- */
-async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve({ width: img.width, height: img.height });
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image'));
-    };
-
-    img.src = url;
-  });
-}
-
-/**
  * Validate file before upload
  */
-function validateFile(file: File): { valid: boolean; error?: string } {
+function validateFile(file: File): { valid: boolean; error?:  string } {
   // Check file size
   if (file.size > MAX_FILE_SIZE) {
     return {
@@ -88,7 +64,7 @@ function validateFile(file: File): { valid: boolean; error?: string } {
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error:  `Неподдерживаемый формат (разрешены: JPG, PNG, WebP)`,
+      error: `Неподдерживаемый формат (разрешены: JPG, PNG, WebP)`,
     };
   }
 
@@ -101,53 +77,43 @@ function validateFile(file: File): { valid: boolean; error?: string } {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Upload single file to Supabase with retry logic
+ * Upload single file via API with watermark processing
+ * This uses the same API endpoint as PhotoUploader
  */
-async function uploadFileWithRetry(
+async function uploadFileViaAPI(
   file: File,
   classId: string,
+  schoolId: string,
   retries = MAX_RETRIES
-): Promise<string> {
-  const supabase = getSupabaseClient();
-  const fileExtension = file.name.split('. ').pop() || 'jpg';
-  const timestamp = Date.now();
-  const uniqueId = uuidv4();
-  const fileName = `${timestamp}_${uniqueId}.${fileExtension}`;
-  const filePath = `originals/${classId}/${fileName}`;
-
+): Promise<{ success: boolean; id?:  string; error?: string }> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const { data, error } = await supabase. storage
-        .from(BUCKET_NAME)
-        .upload(filePath, file, {
-          cacheControl: '31536000', // 1 year cache
-          upsert: false,
-        });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('classId', classId);
+      formData.append('schoolId', schoolId);
 
-      if (error) {
-        // Don't retry on certain errors
-        if (error.message.includes('already exists')) {
-          throw new Error('Файл уже существует');
-        }
-        if (error.message.includes('Payload too large')) {
-          throw new Error('Файл слишком большой');
-        }
-        
-        throw error;
+      const response = await fetch(`/api/upload-photos? t=${Date.now()}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (! response.ok) {
+        throw new Error(result.error || 'Upload failed');
       }
 
-      if (! data) {
-        throw new Error('Upload failed:  no data returned');
-      }
-
-      // Return public URL
-      return getPublicUrl(BUCKET_NAME, data.path);
+      return { success: true, id: result. id };
     } catch (error:  any) {
       console.error(`Upload attempt ${attempt}/${retries} failed:`, error);
 
-      // If last attempt, throw error
+      // If last attempt, return error
       if (attempt === retries) {
-        throw new Error(error.message || 'Upload failed after retries');
+        return {
+          success: false,
+          error: error.message || 'Upload failed after retries',
+        };
       }
 
       // Wait before retrying (exponential backoff)
@@ -155,11 +121,11 @@ async function uploadFileWithRetry(
     }
   }
 
-  throw new Error('Upload failed');
+  return { success: false, error: 'Upload failed' };
 }
 
 /**
- * Main upload hook
+ * Main upload hook - now uses API for watermark processing
  */
 export function useUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -173,17 +139,17 @@ export function useUpload() {
   const [errors, setErrors] = useState<UploadError[]>([]);
 
   /**
-   * Upload files to Supabase and save metadata to database
+   * Upload files via API (with watermark processing on server)
    */
   const uploadFiles = useCallback(
-    async (files: File[], classId: string, schoolId:  string): Promise<UploadResult> => {
+    async (files: File[], classId: string, schoolId: string): Promise<UploadResult> => {
       if (files.length === 0) {
         return {
           success: false,
           uploadedCount: 0,
-          failedCount: 0,
+          failedCount:  0,
           uploadedPhotoIds: [],
-          errors: [{ fileName: '', error: 'Не выбраны файлы', canRetry: false }],
+          errors:  [{ fileName: '', error: 'Не выбраны файлы', canRetry: false }],
         };
       }
 
@@ -194,7 +160,7 @@ export function useUpload() {
         totalFiles: files.length,
         currentFileName: '',
         overallProgress: 0,
-        uploadedPhotoIds: [],
+        uploadedPhotoIds:  [],
       });
 
       const uploadedPhotoIds: string[] = [];
@@ -204,8 +170,6 @@ export function useUpload() {
       // Create upload tasks
       const uploadTasks = files.map((file, index) =>
         limit(async () => {
-          const uploadFile:  UploadFile = { file, id: uuidv4() };
-
           try {
             // Update current file progress
             setProgress((prev) => ({
@@ -220,35 +184,23 @@ export function useUpload() {
               throw new Error(validation.error);
             }
 
-            // 2. Extract image dimensions
-            const { width, height } = await getImageDimensions(file);
+            // 2. Upload via API (server handles watermark + thumbnail)
+            const result = await uploadFileViaAPI(file, classId, schoolId);
 
-            // 3. Upload file to Supabase
-            const originalUrl = await uploadFileWithRetry(file, classId);
-
-            // 4. Save metadata to database
-            const result = await savePhotoRecord({
-              classId,
-              originalUrl,
-              width,
-              height,
-              fileSize: file.size,
-              mimeType: file. type,
-              alt: file. name. replace(/\.[^/.]+$/, ''), // Remove extension
-            });
-
-            if (result.success && result.photoId) {
-              uploadedPhotoIds.push(result.photoId);
+            if (result.success && result.id) {
+              uploadedPhotoIds.push(result.id);
 
               // Update progress
               setProgress((prev) => ({
                 ... prev,
                 overallProgress: Math.round(((index + 1) / files.length) * 100),
-                uploadedPhotoIds: [... prev.uploadedPhotoIds, result.photoId],
+                uploadedPhotoIds: [...prev.uploadedPhotoIds, result.id! ],
               }));
+            } else {
+              throw new Error(result.error || 'Upload failed');
             }
-          } catch (error:  any) {
-            console.error(`Failed to upload ${file.name}:`, error);
+          } catch (error: any) {
+            console.error(`Failed to upload ${file.name}: `, error);
 
             const uploadError: UploadError = {
               fileName: file.name,
@@ -280,7 +232,7 @@ export function useUpload() {
         uploadedCount: uploadedPhotoIds.length,
         failedCount: uploadErrors.length,
         uploadedPhotoIds,
-        errors:  uploadErrors,
+        errors: uploadErrors,
       };
 
       return result;
