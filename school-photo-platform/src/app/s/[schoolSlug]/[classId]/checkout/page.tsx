@@ -142,4 +142,4 @@ export default function CheckoutPage({ params }: PageProps) {
       </div>
     </div>
   );
-}
+}  
