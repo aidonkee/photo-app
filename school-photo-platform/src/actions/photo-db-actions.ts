@@ -9,7 +9,7 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 
-const supabaseUrl = process.env. NEXT_PUBLIC_SUPABASE_URL! ;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -36,29 +36,28 @@ const svgOverlay = Buffer.from(`
 type PhotoRecordInput = {
   classId: string;
   originalUrl: string;
-  originalPath: string; // путь в storage (originals/classId/filename. jpg)
+  originalPath: string; // путь в storage (originals/classId/filename.jpg)
   width: number;
   height: number;
   fileSize: number;
   mimeType: string;
-  alt?:  string | null;
+  alt?: string | null;
 };
 
 /**
- * Process uploaded photo:  create watermark + thumbnail, save to DB
- * Called AFTER client uploads original to Supabase
+ * Process uploaded photo: create watermark + thumbnail, save to DB
  */
 export async function processAndSavePhoto(data: PhotoRecordInput) {
   // 1. Authentication check
   const session = await getSession();
   
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
-    throw new Error('Unauthorized:  Admin access required');
+    throw new Error('Unauthorized: Admin access required');
   }
 
   // 2. Validate classroom exists and belongs to this admin
   const classroom = await prisma.classroom.findUnique({
-    where: { id: data. classId },
+    where: { id: data.classId },
     include: {
       school: {
         select: {
@@ -70,17 +69,17 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
   });
 
   if (!classroom) {
-    throw new Error(`Classroom not found: ${data. classId}`);
+    throw new Error(`Classroom not found: ${data.classId}`);
   }
 
-  // 3. Authorization:  Check if this admin owns the school
-  if (session.role === 'ADMIN' && classroom.school.adminId !== session. userId) {
+  // 3. Authorization: Check if this admin owns the school
+  if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
     throw new Error('Forbidden: You do not have access to this classroom');
   }
 
   // 4. Validate input data
   if (!data.originalUrl || !data.originalPath || !data.width || !data.height || !data.fileSize) {
-    throw new Error('Invalid photo data:  missing required fields');
+    throw new Error('Invalid photo data: missing required fields');
   }
 
   try {
@@ -113,12 +112,11 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
       height = Math.round(maxWidth * ratio);
     }
 
-    let watermarkedBuffer:  Buffer;
+    let watermarkedBuffer: Buffer;
     
     // Наложение watermark
     if (fs.existsSync(WATERMARK_FILE)) {
       const wmBuffer = fs.readFileSync(WATERMARK_FILE);
-      // Ресайзим watermark под размер изображения
       const resizedWatermark = await sharp(wmBuffer)
         .resize(Math.min(500, Math.floor(width / 3)), null, { fit: 'inside' })
         .toBuffer();
@@ -129,11 +127,11 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
         .jpeg({ quality: 60, progressive: true })
         .toBuffer();
     } else {
-      // Фоллбэк:  SVG плитка
+      // Фоллбэк: SVG плитка
       watermarkedBuffer = await sharp(originalBuffer)
-        .resize(width, height, { fit:  'inside', withoutEnlargement: true })
-        .composite([{ input: svgOverlay, tile: true, blend:  'over' }])
-        .jpeg({ quality: 60, progressive:  true })
+        .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+        .composite([{ input: svgOverlay, tile: true, blend: 'over' }])
+        .jpeg({ quality: 60, progressive: true })
         .toBuffer();
     }
     console.log('✅ Watermarked preview created:', watermarkedBuffer.length, 'bytes');
@@ -151,10 +149,10 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
     const thumbnailPath = `thumbnails/${data.classId}/${fileId}.jpg`;
 
     console.log('📤 Uploading watermarked:', watermarkedPath);
-    const { error: wmError } = await supabase. storage
+    const { error: wmError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(watermarkedPath, watermarkedBuffer, {
-        contentType:  'image/jpeg',
+        contentType: 'image/jpeg',
         upsert: false,
       });
     if (wmError) throw new Error(`Failed to upload watermarked: ${wmError.message}`);
@@ -163,16 +161,16 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
     const { error: thumbError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(thumbnailPath, thumbnailBuffer, {
-        contentType:  'image/jpeg',
+        contentType: 'image/jpeg',
         upsert: false,
       });
     if (thumbError) throw new Error(`Failed to upload thumbnail: ${thumbError.message}`);
 
     // 10. Get public URLs
-    const { data: wmUrlData } = supabase.storage. from(BUCKET_NAME).getPublicUrl(watermarkedPath);
-    const { data: thumbUrlData } = supabase. storage.from(BUCKET_NAME).getPublicUrl(thumbnailPath);
+    const { data: wmUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(watermarkedPath);
+    const { data: thumbUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(thumbnailPath);
 
-    const watermarkedUrl = wmUrlData. publicUrl;
+    const watermarkedUrl = wmUrlData.publicUrl;
     const thumbnailUrl = thumbUrlData.publicUrl;
     console.log('🔗 Public URLs:', { watermarkedUrl, thumbnailUrl });
 
@@ -180,9 +178,9 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
     const photo = await prisma.photo.create({
       data: {
         classId: data.classId,
-        originalUrl: data.originalPath, // Путь к оригиналу (приватный)
-        watermarkedUrl,                  // Публичный URL (с watermark)
-        thumbnailUrl,                    // Публичный URL (миниатюра)
+        originalUrl: data.originalPath,
+        watermarkedUrl,
+        thumbnailUrl,
         width,
         height,
         fileSize: watermarkedBuffer.length,
@@ -200,7 +198,7 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
       watermarkedUrl,
       thumbnailUrl,
     };
-  } catch (error:  any) {
+  } catch (error: any) {
     console.error('Failed to process photo:', error);
     throw new Error(`Processing error: ${error.message}`);
   }
@@ -208,7 +206,6 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
 
 /**
  * Batch revalidation after all uploads complete
- * Call this ONCE at the end of upload batch
  */
 export async function revalidateClassroomPhotos(classId: string, schoolId: string) {
   const session = await getSession();
@@ -218,9 +215,7 @@ export async function revalidateClassroomPhotos(classId: string, schoolId: strin
   }
 
   try {
-    // Revalidate classroom page
     revalidatePath(`/admin/schools/${schoolId}/classrooms/${classId}`);
-    // Revalidate school page
     revalidatePath(`/admin/schools/${schoolId}`);
     
     return { success: true };

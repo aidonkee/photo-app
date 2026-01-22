@@ -11,7 +11,7 @@ import { getSupabaseClient, getPublicUrl } from '@/lib/supabase/client';
 const BUCKET_NAME = 'school-photos';
 const CONCURRENT_UPLOADS = 3;
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const RETRY_DELAY = 1000; 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
@@ -78,7 +78,7 @@ function validateFile(file: File): { valid: boolean; error?: string } {
   }
 
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    return { valid:  false, error: `Неподдерживаемый формат (разрешены: JPG, PNG, WebP)` };
+    return { valid: false, error: `Неподдерживаемый формат (разрешены: JPG, PNG, WebP)` };
   }
 
   return { valid: true };
@@ -98,7 +98,7 @@ async function uploadOriginalToSupabase(
   retries = MAX_RETRIES
 ): Promise<{ path: string; url: string }> {
   const supabase = getSupabaseClient();
-  const fileExtension = file.name.split('. ').pop() || 'jpg';
+  const fileExtension = file.name.split('.').pop() || 'jpg';
   const timestamp = Date.now();
   const uniqueId = uuidv4();
   const fileName = `${timestamp}_${uniqueId}.${fileExtension}`;
@@ -106,7 +106,7 @@ async function uploadOriginalToSupabase(
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const { data, error } = await supabase. storage
+      const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(filePath, file, {
           cacheControl: '31536000',
@@ -123,13 +123,13 @@ async function uploadOriginalToSupabase(
         throw error;
       }
 
-      if (! data) {
-        throw new Error('Upload failed:  no data returned');
+      if (!data) {
+        throw new Error('Upload failed: no data returned');
       }
 
       const url = getPublicUrl(BUCKET_NAME, data.path);
       return { path: data.path, url };
-    } catch (error:  any) {
+    } catch (error: any) {
       console.error(`Upload attempt ${attempt}/${retries} failed:`, error);
 
       if (attempt === retries) {
@@ -144,7 +144,7 @@ async function uploadOriginalToSupabase(
 }
 
 /**
- * Main upload hook - uploads original to Supabase, then processes on server
+ * Main upload hook
  */
 export function useUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -157,18 +157,15 @@ export function useUpload() {
   });
   const [errors, setErrors] = useState<UploadError[]>([]);
 
-  /**
-   * Upload files:  original to Supabase (fast), then process on server (watermark)
-   */
   const uploadFiles = useCallback(
     async (files: File[], classId: string, schoolId: string): Promise<UploadResult> => {
       if (files.length === 0) {
         return {
           success: false,
           uploadedCount: 0,
-          failedCount:  0,
+          failedCount: 0,
           uploadedPhotoIds: [],
-          errors:  [{ fileName: '', error: 'Не выбраны файлы', canRetry: false }],
+          errors: [{ fileName: '', error: 'Не выбраны файлы', canRetry: false }],
         };
       }
 
@@ -179,39 +176,33 @@ export function useUpload() {
         totalFiles: files.length,
         currentFileName: '',
         overallProgress: 0,
-        uploadedPhotoIds:  [],
+        uploadedPhotoIds: [],
       });
 
-      const uploadedPhotoIds:  string[] = [];
+      const uploadedPhotoIds: string[] = [];
       const uploadErrors: UploadError[] = [];
       const limit = pLimit(CONCURRENT_UPLOADS);
 
-      // Create upload tasks
       const uploadTasks = files.map((file, index) =>
         limit(async () => {
           try {
-            // Update current file progress
             setProgress((prev) => ({
               ...prev,
               currentFile: index + 1,
               currentFileName: file.name,
             }));
 
-            // 1. Validate file
             const validation = validateFile(file);
             if (!validation.valid) {
               throw new Error(validation.error);
             }
 
-            // 2. Extract image dimensions (client-side)
             const { width, height } = await getImageDimensions(file);
 
-            // 3. Upload ORIGINAL to Supabase (client-side, fast, no timeout)
-            console.log(`📤 Uploading original:  ${file.name}`);
+            console.log(`📤 Uploading original: ${file.name}`);
             const { path: originalPath, url: originalUrl } = await uploadOriginalToSupabase(file, classId);
             console.log(`✅ Original uploaded: ${originalPath}`);
 
-            // 4. Process on server (watermark + thumbnail + save to DB)
             console.log(`🔧 Processing on server: ${file.name}`);
             const result = await processAndSavePhoto({
               classId,
@@ -221,7 +212,7 @@ export function useUpload() {
               height,
               fileSize: file.size,
               mimeType: file.type,
-              alt: file.name. replace(/\.[^/.]+$/, ''),
+              alt: file.name.replace(/\.[^/.]+$/, ''),
             });
 
             if (result.success && result.photoId) {
@@ -234,13 +225,13 @@ export function useUpload() {
                 uploadedPhotoIds: [...prev.uploadedPhotoIds, result.photoId],
               }));
             }
-          } catch (error:  any) {
+          } catch (error: any) {
             console.error(`Failed to upload ${file.name}:`, error);
 
             const uploadError: UploadError = {
               fileName: file.name,
               error: error.message || 'Неизвестная ошибка',
-              canRetry: ! error.message?. includes('слишком большой'),
+              canRetry: !error.message?.includes('слишком большой'),
             };
 
             uploadErrors.push(uploadError);
@@ -249,10 +240,8 @@ export function useUpload() {
         })
       );
 
-      // Wait for all uploads to complete
-      await Promise. allSettled(uploadTasks);
+      await Promise.allSettled(uploadTasks);
 
-      // Batch revalidation at the end
       try {
         await revalidateClassroomPhotos(classId, schoolId);
       } catch (error) {
@@ -261,15 +250,13 @@ export function useUpload() {
 
       setIsUploading(false);
 
-      const result: UploadResult = {
+      return {
         success: uploadErrors.length === 0,
         uploadedCount: uploadedPhotoIds.length,
         failedCount: uploadErrors.length,
         uploadedPhotoIds,
         errors: uploadErrors,
       };
-
-      return result;
     },
     []
   );
