@@ -4,9 +4,11 @@ import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
 
-import { revalidateClassroomPhotos } from '@/actions/photo-db-actions';
+import { processAndSavePhoto, revalidateClassroomPhotos } from '@/actions/photo-db-actions';
+import { getSupabaseClient, getPublicUrl } from '@/lib/supabase/client';
 
 // Configuration
+const BUCKET_NAME = 'school-photos';
 const CONCURRENT_UPLOADS = 3;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
@@ -16,7 +18,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'
 // Types
 type UploadFile = {
   file: File;
-  id: string; // Unique ID for tracking
+  id: string;
 };
 
 type UploadProgress = {
@@ -42,30 +44,41 @@ type UploadResult = {
 };
 
 /**
+ * Extract image dimensions using browser Image API
+ */
+async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.width, height: img.height });
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image'));
+    };
+
+    img.src = url;
+  });
+}
+
+/**
  * Validate file before upload
  */
-function validateFile(file: File): { valid: boolean; error?:  string } {
-  // Check file size
+function validateFile(file: File): { valid: boolean; error?: string } {
   if (file.size > MAX_FILE_SIZE) {
-    return {
-      valid: false,
-      error: `Файл слишком большой (максимум 50 МБ)`,
-    };
+    return { valid: false, error: `Файл слишком большой (максимум 50 МБ)` };
   }
 
   if (file.size === 0) {
-    return {
-      valid: false,
-      error: 'Файл пустой',
-    };
+    return { valid: false, error: 'Файл пустой' };
   }
 
-  // Check MIME type
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    return {
-      valid: false,
-      error: `Неподдерживаемый формат (разрешены: JPG, PNG, WebP)`,
-    };
+    return { valid:  false, error: `Неподдерживаемый формат (разрешены: JPG, PNG, WebP)` };
   }
 
   return { valid: true };
@@ -77,55 +90,61 @@ function validateFile(file: File): { valid: boolean; error?:  string } {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Upload single file via API with watermark processing
- * This uses the same API endpoint as PhotoUploader
+ * Upload original file to Supabase (client-side, direct)
  */
-async function uploadFileViaAPI(
+async function uploadOriginalToSupabase(
   file: File,
   classId: string,
-  schoolId: string,
   retries = MAX_RETRIES
-): Promise<{ success: boolean; id?:  string; error?: string }> {
+): Promise<{ path: string; url: string }> {
+  const supabase = getSupabaseClient();
+  const fileExtension = file.name.split('. ').pop() || 'jpg';
+  const timestamp = Date.now();
+  const uniqueId = uuidv4();
+  const fileName = `${timestamp}_${uniqueId}.${fileExtension}`;
+  const filePath = `originals/${classId}/${fileName}`;
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('classId', classId);
-      formData.append('schoolId', schoolId);
+      const { data, error } = await supabase. storage
+        .from(BUCKET_NAME)
+        .upload(filePath, file, {
+          cacheControl: '31536000',
+          upsert: false,
+        });
 
-      const response = await fetch(`/api/upload-photos? t=${Date.now()}`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (! response.ok) {
-        throw new Error(result.error || 'Upload failed');
+      if (error) {
+        if (error.message.includes('already exists')) {
+          throw new Error('Файл уже существует');
+        }
+        if (error.message.includes('Payload too large')) {
+          throw new Error('Файл слишком большой');
+        }
+        throw error;
       }
 
-      return { success: true, id: result. id };
+      if (! data) {
+        throw new Error('Upload failed:  no data returned');
+      }
+
+      const url = getPublicUrl(BUCKET_NAME, data.path);
+      return { path: data.path, url };
     } catch (error:  any) {
       console.error(`Upload attempt ${attempt}/${retries} failed:`, error);
 
-      // If last attempt, return error
       if (attempt === retries) {
-        return {
-          success: false,
-          error: error.message || 'Upload failed after retries',
-        };
+        throw new Error(error.message || 'Upload failed after retries');
       }
 
-      // Wait before retrying (exponential backoff)
       await sleep(RETRY_DELAY * attempt);
     }
   }
 
-  return { success: false, error: 'Upload failed' };
+  throw new Error('Upload failed');
 }
 
 /**
- * Main upload hook - now uses API for watermark processing
+ * Main upload hook - uploads original to Supabase, then processes on server
  */
 export function useUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -139,7 +158,7 @@ export function useUpload() {
   const [errors, setErrors] = useState<UploadError[]>([]);
 
   /**
-   * Upload files via API (with watermark processing on server)
+   * Upload files:  original to Supabase (fast), then process on server (watermark)
    */
   const uploadFiles = useCallback(
     async (files: File[], classId: string, schoolId: string): Promise<UploadResult> => {
@@ -163,7 +182,7 @@ export function useUpload() {
         uploadedPhotoIds:  [],
       });
 
-      const uploadedPhotoIds: string[] = [];
+      const uploadedPhotoIds:  string[] = [];
       const uploadErrors: UploadError[] = [];
       const limit = pLimit(CONCURRENT_UPLOADS);
 
@@ -184,23 +203,39 @@ export function useUpload() {
               throw new Error(validation.error);
             }
 
-            // 2. Upload via API (server handles watermark + thumbnail)
-            const result = await uploadFileViaAPI(file, classId, schoolId);
+            // 2. Extract image dimensions (client-side)
+            const { width, height } = await getImageDimensions(file);
 
-            if (result.success && result.id) {
-              uploadedPhotoIds.push(result.id);
+            // 3. Upload ORIGINAL to Supabase (client-side, fast, no timeout)
+            console.log(`📤 Uploading original:  ${file.name}`);
+            const { path: originalPath, url: originalUrl } = await uploadOriginalToSupabase(file, classId);
+            console.log(`✅ Original uploaded: ${originalPath}`);
 
-              // Update progress
+            // 4. Process on server (watermark + thumbnail + save to DB)
+            console.log(`🔧 Processing on server: ${file.name}`);
+            const result = await processAndSavePhoto({
+              classId,
+              originalUrl,
+              originalPath,
+              width,
+              height,
+              fileSize: file.size,
+              mimeType: file.type,
+              alt: file.name. replace(/\.[^/.]+$/, ''),
+            });
+
+            if (result.success && result.photoId) {
+              uploadedPhotoIds.push(result.photoId);
+              console.log(`✅ Photo processed: ${result.photoId}`);
+
               setProgress((prev) => ({
-                ... prev,
+                ...prev,
                 overallProgress: Math.round(((index + 1) / files.length) * 100),
-                uploadedPhotoIds: [...prev.uploadedPhotoIds, result.id! ],
+                uploadedPhotoIds: [...prev.uploadedPhotoIds, result.photoId],
               }));
-            } else {
-              throw new Error(result.error || 'Upload failed');
             }
-          } catch (error: any) {
-            console.error(`Failed to upload ${file.name}: `, error);
+          } catch (error:  any) {
+            console.error(`Failed to upload ${file.name}:`, error);
 
             const uploadError: UploadError = {
               fileName: file.name,
@@ -215,14 +250,13 @@ export function useUpload() {
       );
 
       // Wait for all uploads to complete
-      await Promise.allSettled(uploadTasks);
+      await Promise. allSettled(uploadTasks);
 
       // Batch revalidation at the end
       try {
         await revalidateClassroomPhotos(classId, schoolId);
       } catch (error) {
         console.error('Revalidation failed:', error);
-        // Don't fail the whole operation if revalidation fails
       }
 
       setIsUploading(false);
