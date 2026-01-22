@@ -92,8 +92,6 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
         {/* ✅ Передаём photoColumns и photoIndexMap для правильной нумерации */}
         <PhotoGallery 
           photos={classroom.photos} 
-          photoColumns={classroom. photoColumns}
-          photoIndexMap={classroom. photoIndexMap}
           schoolPricing={schoolPricing} 
         />
       </main>
