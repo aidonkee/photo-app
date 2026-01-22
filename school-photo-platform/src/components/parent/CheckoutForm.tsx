@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle2, User } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CreditCard, User } from 'lucide-react';
 import { formatPrice } from '@/config/pricing';
 
 type CheckoutFormProps = {
@@ -34,11 +34,6 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
     formState: { errors },
   } = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: {
-      name: '',
-      phone: '',
-      email: '',
-    }
   });
 
   const onSubmit = async (data: CheckoutInput) => {
@@ -52,9 +47,10 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
         quantity: item.quantity,
       }));
 
+      // name — в схеме теперь будет содержать полное ФИО ученика
       const result = await submitOrder(classId, {
         ...data,
-        surname: '-', 
+        surname: '-', // Заглушка, так как мы объединили поля
       } as any, cartItems);
 
       if (result.error) {
@@ -88,7 +84,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-10 max-w-full overflow-x-hidden">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pb-10">
       <div className="space-y-4">
         {/* ФИО УЧЕНИКА */}
         <div className="space-y-2">
@@ -102,7 +98,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
               {...register('name')}
               placeholder="Иванов Алексей"
               disabled={submitting}
-              className="h-12 pl-10 rounded-xl border-slate-200 focus:border-slate-900 focus:ring-slate-900 transition-all text-base w-full"
+              className="h-12 pl-10 rounded-xl border-slate-200 focus:border-slate-900 focus:ring-slate-900 transition-all text-base"
             />
           </div>
           {errors.name && (
@@ -110,7 +106,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
           )}
         </div>
 
-        {/* ТЕЛЕФОН (НЕОБЯЗАТЕЛЬНО) */}
+        {/* ТЕЛЕФОН */}
         <div className="space-y-2">
           <Label htmlFor="phone" className="text-sm font-semibold text-slate-700 ml-1">
             Номер телефона (необязательно)
@@ -121,7 +117,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
             {...register('phone')}
             placeholder="+7 (___) ___-__-__"
             disabled={submitting}
-            className="h-12 rounded-xl border-slate-200 text-base w-full"
+            className="h-12 rounded-xl border-slate-200 text-base"
           />
           {errors.phone && (
             <p className="text-xs text-red-500 ml-1">{errors.phone.message}</p>
@@ -139,8 +135,13 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
             {...register('email')}
             placeholder="example@mail.ru"
             disabled={submitting}
-            className="h-12 rounded-xl border-slate-200 text-base placeholder:text-slate-300 w-full"
+            className="h-12 rounded-xl border-slate-200 text-base placeholder:text-slate-300"
           />
+
+          <p className="text-[10px] text-slate-400 ml-1">
+            Для получения чека и уведомлений о готовности
+          </p>
+
         </div>
       </div>
 
@@ -162,9 +163,18 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
             Оформляем...
           </span>
         ) : (
-          <>Оплатить {formatPrice(totalPrice)}</>
+          <>
+            Оплатить {formatPrice(totalPrice)}
+          </>
         )}
       </Button>
+
+
+      <p className="text-[10px] text-slate-400 text-center px-4">
+        Нажимая кнопку, вы соглашаетесь с правилами сервиса и обработкой персональных данных.
+      </p>
+
+
     </form>
   );
 }
