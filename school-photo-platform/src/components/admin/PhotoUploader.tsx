@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useUpload } from '@/hooks/use-upload';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -23,14 +22,22 @@ type PhotoUploaderProps = {
 
 export default function PhotoUploader({ classId, schoolId }: PhotoUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
+  
+  // Локальное состояние прогресса
+  const [uploadProgress, setUploadProgress] = useState({
+    current: 0,
+    total: 0,
+    percent: 0,
+    currentFileName: ''
+  });
+
   const [uploadResult, setUploadResult] = useState<{
     success: number;
     failed: number;
     errors: Array<{ fileName: string; error: string }>;
   } | null>(null);
-
-  const { uploadFiles, isUploading, progress, errors } = useUpload();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles((prev) => [...prev, ...acceptedFiles]);
@@ -42,37 +49,70 @@ export default function PhotoUploader({ classId, schoolId }: PhotoUploaderProps)
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const clearAll = () => {
-    setFiles([]);
-    setUploadComplete(false);
-    setUploadResult(null);
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
-    },
-    disabled: isUploading,
-    maxSize: 50 * 1024 * 1024, // 50MB
-  });
-
   const handleUpload = async () => {
     if (files.length === 0) return;
 
-    const result = await uploadFiles(files, classId, schoolId);
+    setIsUploading(true);
+    setUploadComplete(false);
+    
+    let successCount = 0;
+    let failedCount = 0;
+    const uploadErrors: Array<{ fileName: string; error: string }> = [];
+
+    // Обнуляем прогресс
+    setUploadProgress({ current: 0, total: files.length, percent: 0, currentFileName: '' });
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress(prev => ({ ...prev, currentFileName: file.name }));
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('classId', classId);
+      formData.append('schoolId', schoolId);
+
+      try {
+        const response = await fetch(`/api/upload-photos?t=${Date.now()}`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || `Ошибка сервера: ${response.status}`);
+        }
+
+        successCount++;
+      } catch (error: any) {
+        console.error(`Ошибка при загрузке ${file.name}:`, error);
+        failedCount++;
+        uploadErrors.push({
+          fileName: file.name,
+          error: error.message || 'Неизвестная ошибка',
+        });
+      }
+
+      // Обновляем прогресс после каждого файла
+      const currentIdx = i + 1;
+      setUploadProgress(prev => ({
+        ...prev,
+        current: currentIdx,
+        percent: Math.round((currentIdx / files.length) * 100)
+      }));
+    }
 
     setUploadResult({
-      success: result.uploadedCount,
-      failed: result. failedCount,
-      errors:  result.errors,
+      success: successCount,
+      failed: failedCount,
+      errors: uploadErrors,
     });
 
+    setIsUploading(false);
     setUploadComplete(true);
     setFiles([]);
 
-    // Reload page after success
-    if (result.uploadedCount > 0) {
+    if (successCount > 0) {
       setTimeout(() => {
         window.location.reload();
       }, 3000);
@@ -87,17 +127,20 @@ export default function PhotoUploader({ classId, schoolId }: PhotoUploaderProps)
     return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
   };
 
-  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
+    disabled: isUploading,
+    maxSize: 50 * 1024 * 1024,
+  });
 
   return (
     <div className="space-y-4">
-      {/* Drag & Drop Zone */}
+      {/* Зона загрузки */}
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-          isDragActive
-            ? 'border-slate-900 bg-slate-50'
-            : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+          isDragActive ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
         } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
       >
         <input {...getInputProps()} />
@@ -109,149 +152,73 @@ export default function PhotoUploader({ classId, schoolId }: PhotoUploaderProps)
             <p className="text-lg font-medium text-slate-700">
               {isDragActive ? 'Отпустите файлы здесь' : 'Перетащите фото сюда'}
             </p>
-            <p className="text-sm text-slate-500 mt-1">
-              или нажмите для выбора (JPG, PNG, WebP)
-            </p>
-            <p className="text-xs text-slate-400 mt-2">
-              Макс. размер файла: 50MB • Загрузка напрямую в облако
-            </p>
+            <p className="text-sm text-slate-500 mt-1">или нажмите для выбора</p>
           </div>
         </div>
       </div>
 
-      {/* Selected Files List */}
-      {files.length > 0 && ! isUploading && ! uploadComplete && (
+      {/* Список выбранных файлов */}
+      {files.length > 0 && !isUploading && !uploadComplete && (
         <Card className="p-4 border-slate-200">
           <div className="flex items-center justify-between mb-4">
-            <p className="font-medium text-slate-900">
-              Выбрано:  {files.length} файлов
-              <span className="text-sm text-slate-500 ml-2">
-                ({formatFileSize(totalSize)})
-              </span>
-            </p>
-            <Button variant="ghost" size="sm" onClick={clearAll}>
-              Очистить
-            </Button>
+            <p className="font-medium text-slate-900">Выбрано: {files.length}</p>
+            <Button variant="ghost" size="sm" onClick={() => setFiles([])}>Очистить</Button>
           </div>
-
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
             {files.slice(0, 10).map((file, idx) => (
-              <div
-                key={`${file.name}-${idx}`}
-                className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100"
-              >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <ImageIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  <span className="text-sm truncate text-slate-700">{file.name}</span>
-                  <span className="text-xs text-slate-400 flex-shrink-0">
-                    {formatFileSize(file. size)}
-                  </span>
-                </div>
-                <button
-                  onClick={() => removeFile(idx)}
-                  className="text-slate-400 hover:text-slate-600 ml-2"
-                >
+              <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+                <span className="text-sm truncate flex-1">{file.name}</span>
+                <button onClick={() => removeFile(idx)} className="text-slate-400 hover:text-slate-600 ml-2">
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
-            {files.length > 10 && (
-              <p className="text-sm text-slate-500 text-center py-2">
-                ...  и ещё {files.length - 10} файлов
-              </p>
-            )}
           </div>
-
-          <Button
-            onClick={handleUpload}
-            className="w-full mt-4 bg-slate-900 hover:bg-slate-800"
-          >
-            <UploadCloud className="w-4 h-4 mr-2" />
-            За��рузить {files.length} фото
+          <Button onClick={handleUpload} className="w-full bg-slate-900 hover:bg-slate-800 text-white">
+            Начать загрузку
           </Button>
         </Card>
       )}
 
-      {/* Upload Progress */}
+      {/* Индикатор прогресса */}
       {isUploading && (
         <Card className="p-6 border-slate-200">
           <div className="text-center mb-4">
             <Loader2 className="w-8 h-8 animate-spin text-slate-900 mx-auto mb-2" />
-            <p className="font-semibold text-slate-900">Загрузка фотографий...</p>
-            <p className="text-sm text-slate-500">Не закрывайте страницу</p>
+            <p className="font-semibold text-slate-900">Загрузка...</p>
           </div>
-
-          <Progress value={progress. overallProgress} className="h-2 mb-4" />
-
-          <div className="grid grid-cols-3 gap-4 text-center mb-4">
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{progress.totalFiles}</p>
-              <p className="text-xs text-slate-500">Всего</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">
-                {progress.uploadedPhotoIds.length}
-              </p>
-              <p className="text-xs text-slate-500">Загружено</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{progress.overallProgress}%</p>
-              <p className="text-xs text-slate-500">Прогресс</p>
-            </div>
+          <Progress value={uploadProgress.percent} className="h-2 mb-4" />
+          <div className="flex justify-between text-xs text-slate-500">
+            <span>Файл {uploadProgress.current} из {uploadProgress.total}</span>
+            <span>{uploadProgress.percent}%</span>
           </div>
-
-          {progress.currentFileName && (
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-              <p className="text-sm text-slate-700 truncate text-center">
-                Обработка:  <span className="font-medium">{progress.currentFileName}</span>
-              </p>
-            </div>
-          )}
+          <p className="text-xs text-center text-slate-400 mt-2 truncate italic">
+            {uploadProgress.currentFileName}
+          </p>
         </Card>
       )}
 
-      {/* Upload Results */}
+      {/* Результаты */}
       {uploadComplete && uploadResult && (
         <div className="space-y-3">
-          <Alert
-            variant={uploadResult.failed > 0 ? 'destructive' : 'default'}
-            className={uploadResult.failed === 0 ? 'bg-slate-50 border-slate-200' : ''}
-          >
-            {uploadResult.failed === 0 ? (
-              <CheckCircle2 className="h-4 w-4 text-slate-900" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertDescription className={uploadResult.failed === 0 ? 'text-slate-700' : ''}>
-              <p className="font-semibold mb-1">Загрузка завершена</p>
-              <p>
-                Успешно: <b>{uploadResult.success}</b>
-                {uploadResult.failed > 0 && (
-                  <> • Ошибок: <b>{uploadResult.failed}</b></>
-                )}
-              </p>
+          <Alert className={uploadResult.failed === 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
+            {uploadResult.failed === 0 ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <AlertCircle className="h-4 w-4 text-red-600" />}
+            <AlertDescription>
+              <p className="font-semibold">Загрузка завершена</p>
+              <p>Успешно: {uploadResult.success} | Ошибок: {uploadResult.failed}</p>
             </AlertDescription>
           </Alert>
 
           {uploadResult.errors.length > 0 && (
             <Card className="p-4 bg-slate-50 border-slate-200">
-              <p className="text-sm font-semibold text-slate-900 mb-2">
-                Не удалось загрузить: 
-              </p>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {uploadResult.errors.map((err, idx) => (
-                  <p key={idx} className="text-xs text-slate-600">
-                    • {err. fileName}: {err.error}
+                  <p key={idx} className="text-xs text-red-600">
+                    • {err.fileName}: {err.error}
                   </p>
                 ))}
               </div>
             </Card>
-          )}
-
-          {uploadResult.success > 0 && (
-            <p className="text-center text-sm text-slate-500">
-              Страница обновится через 3 секунды... 
-            </p>
           )}
         </div>
       )}

@@ -13,7 +13,7 @@ import { notFound } from 'next/navigation';
 
 type PageProps = {
   params: Promise<{
-    schoolSlug:  string;
+    schoolSlug: string;
     classId: string;
   }>;
 };
@@ -21,14 +21,14 @@ type PageProps = {
 export default function ClassroomGalleryPage({ params }: PageProps) {
   const { schoolSlug, classId } = use(params);
   const [classroom, setClassroom] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React. useState(true);
   const [cartOpen, setCartOpen] = useState(false);
   const getTotalItems = useCartStore((state) => state.getTotalItems());
 
   React.useEffect(() => {
     async function loadData() {
       const data = await getClassroomPhotos(classId);
-      if (!data) {
+      if (! data) {
         notFound();
       }
       setClassroom(data);
@@ -42,7 +42,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="h-12 w-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">Загрузка фотографий...</p>
+          <p className="text-slate-600">Загрузка фотографий... </p>
         </div>
       </div>
     );
@@ -52,10 +52,11 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
     notFound();
   }
 
+  // 🆕 Extract school pricing
   const schoolPricing = {
     priceA4: classroom.school.priceA4,
     priceA5: classroom.school.priceA5,
-    priceMagnet: classroom.school.priceMagnet,
+    priceMagnet: classroom. school.priceMagnet,
     priceDigital: classroom.school.priceDigital,
   };
 
@@ -76,7 +77,8 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
                 {classroom.name}
               </h1>
               <p className="text-lg text-slate-600 mt-2">
-                {classroom.photos.length} фотографи{classroom.photos.length !== 1 ? 'й' : 'я'} доступно
+                {classroom.photos.length} фотография
+                {classroom.photos.length !== 1 ?  'и' : ''} доступно
               </p>
             </div>
           </div>
@@ -85,13 +87,8 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
 
       {/* Gallery */}
       <main className="max-w-7xl mx-auto px-4 py-12">
-        {/* ✅ Передаём photoColumns и photoIndexMap для правильной нумерации */}
-        <PhotoGallery 
-          photos={classroom.photos} 
-          photoColumns={classroom. photoColumns}
-          photoIndexMap={classroom. photoIndexMap}
-          schoolPricing={schoolPricing} 
-        />
+        {/* 🆕 Pass schoolPricing to PhotoGallery */}
+        <PhotoGallery photos={classroom.photos} schoolPricing={schoolPricing} />
       </main>
 
       {/* Floating Cart Button */}

@@ -9,8 +9,8 @@ import { revalidatePath } from 'next/cache';
  */
 export async function getSchoolAndClasses(slug: string) {
   try {
-    const school = await prisma.school. findUnique({
-      where:  {
+    const school = await prisma.school.findUnique({
+      where: {
         slug,
         isActive: true,
         publicLinkEnabled: true,
@@ -19,9 +19,10 @@ export async function getSchoolAndClasses(slug: string) {
         id: true,
         name: true,
         slug: true,
-        primaryColor:   true,
+        primaryColor:  true,
         logoUrl: true,
         isKazakhEnabled: true,
+        // 🆕 Include pricing
         priceA4: true,
         priceA5: true,
         classrooms: {
@@ -56,47 +57,13 @@ export async function getSchoolAndClasses(slug: string) {
 }
 
 /**
- * Распределяет фотки по колонкам для masonry layout
- * Сохраняет горизонтальную нумерацию (1,2,3,4 в первом ряду и т.д.)
- */
-function distributeToColumns<T extends { width: number; height: number }>(
-  photos: T[],
-  columnCount: number
-): { columns: T[][]; photoIndexMap: Map<string, number> } {
-  // Создаём колонки
-  const columns: T[][] = Array. from({ length: columnCount }, () => []);
-  const columnHeights: number[] = Array(columnCount).fill(0);
-  
-  // Карта для хранения оригинального индекса каждой фотки
-  const photoIndexMap = new Map<string, number>();
-  
-  // Распределяем фотки по колонкам, добавляя в самую короткую
-  photos.forEach((photo, index) => {
-    // Находим самую короткую колонку
-    const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-    
-    // Добавляем фото в эту колонку
-    columns[shortestColumnIndex].push(photo);
-    
-    // Сохраняем оригинальный индекс (для нумерации)
-    photoIndexMap.set((photo as any).id, index);
-    
-    // Обновляем высоту колонки (используем aspect ratio)
-    const aspectRatio = photo.width / photo.height;
-    columnHeights[shortestColumnIndex] += 1 / aspectRatio;
-  });
-  
-  return { columns, photoIndexMap };
-}
-
-/**
- * Get classroom photos (WITH SCHOOL PRICING + COLUMNS DISTRIBUTION)
+ * Get classroom photos (WITH SCHOOL PRICING)
  */
 export async function getClassroomPhotos(classId: string) {
   try {
     const classroom = await prisma.classroom.findUnique({
       where: {
-        id:   classId,
+        id:  classId,
         isLocked: false,
       },
       include: {
@@ -105,11 +72,14 @@ export async function getClassroomPhotos(classId: string) {
             id: true,
             name: true,
             slug: true,
-            primaryColor:  true,
+            primaryColor: true,
             isActive: true,
             publicLinkEnabled: true,
+            // 🆕 Include pricing for PhotoModal
             priceA4: true,
             priceA5: true,
+           
+           
           },
         },
         photos: {
@@ -121,10 +91,9 @@ export async function getClassroomPhotos(classId: string) {
             alt: true,
             width: true,
             height: true,
-            uploadedAt: true, // ✅ Добавляем дату загрузки
           },
           orderBy: {
-            uploadedAt: 'asc', // ✅ Сортируем по дате загрузки (старые первые = порядок загрузки)
+            uploadedAt: 'desc',
           },
         },
       },
@@ -134,18 +103,7 @@ export async function getClassroomPhotos(classId: string) {
       return null;
     }
 
-    // ✅ Распределяем фотки по 4 колонкам для masonry
-    const { columns, photoIndexMap } = distributeToColumns(classroom.photos, 4);
-
-    return {
-      ...classroom,
-      // Оригинальный массив фоток (для модалки и навигации)
-      photos: classroom.photos,
-      // Распределённые по колонкам фотки (для masonry grid)
-      photoColumns: columns,
-      // Карта индексов для нумерации
-      photoIndexMap:  Object.fromEntries(photoIndexMap),
-    };
+    return classroom;
   } catch (error) {
     console.error('Error fetching classroom photos:', error);
     throw new Error('Failed to load photos');
@@ -166,16 +124,16 @@ export async function submitOrder(
   cartItems: Array<{
     photoId: string;
     format: PhotoFormat;
-    quantity:   number;
+    quantity:  number;
   }>
-): Promise<{ success? :   boolean; orderId?: string; error?: string }> {
+): Promise<{ success?:  boolean; orderId?: string; error?: string }> {
   
   // Validation
-  if (!parentDetails.name || !parentDetails.  surname) {
+  if (!parentDetails.name || !parentDetails. surname) {
     return { error: 'Name and surname are required' };
   }
 
-  if (parentDetails.email && !  parentDetails.email.includes('@')) {
+  if (parentDetails.email && ! parentDetails.email.includes('@')) {
     return { error: 'Please enter a valid email address' };
   }
 
@@ -190,9 +148,10 @@ export async function submitOrder(
       include: {
         school: {
           select: {
-            id:   true,
+            id:  true,
             isActive: true,
             publicLinkEnabled: true,
+            // 🆕 Get pricing for server-side validation
             priceA4: true,
             priceA5: true,
           },
@@ -219,13 +178,14 @@ export async function submitOrder(
     const validatedItems = [];
 
     for (const item of cartItems) {
+      // 🆕 Use school-specific pricing
       const expectedPrice = getPrice(item.format, schoolPricing);
       const itemTotal = expectedPrice * item.quantity;
       totalAmount += itemTotal;
 
       // Verify photo exists
       const photo = await prisma.photo.findUnique({
-        where: { id:  item.photoId },
+        where: { id: item.photoId },
       });
 
       if (!photo || photo.classId !== classId) {
@@ -246,8 +206,8 @@ export async function submitOrder(
     const order = await prisma.order.create({
       data: {
         classId,
-        parentName: parentDetails. name,
-        parentSurname: parentDetails.  surname,
+        parentName: parentDetails.name,
+        parentSurname: parentDetails. surname,
         parentPhone: parentDetails.phone || null,
         status: 'PENDING',
         totalSum: totalAmount,
@@ -260,16 +220,19 @@ export async function submitOrder(
       },
     });
 
+    // TODO: Send confirmation email to parent
+    // await sendOrderConfirmationEmail(parentDetails.email, order);
+
     revalidatePath(`/s/${classroom.school.id}`);
 
     return {
       success: true,
-      orderId: order.  id,
+      orderId: order. id,
     };
-  } catch (error:   any) {
+  } catch (error:  any) {
     console.error('Error submitting order:', error);
     return {
-      error: error.message || 'Failed to submit order.  Please try again.',
+      error: error.message || 'Failed to submit order. Please try again.',
     };
   }
 }
