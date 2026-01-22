@@ -20,6 +20,45 @@ type PhotoUploaderProps = {
   schoolId: string;
 };
 
+const uploadFileWithProgress = (
+  url: string, 
+  formData: FormData, 
+  onProgress: (percent: number) => void
+): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+
+    // Слушаем прогресс
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        onProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch (e) {
+          resolve(xhr.responseText);
+        }
+      } else {
+        try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.error || 'Upload failed'));
+        } catch {
+            reject(new Error(`Upload failed: ${xhr.statusText}`));
+        }
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(formData);
+  });
+};
+
 export default function PhotoUploader({ classId, schoolId }: PhotoUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -59,47 +98,51 @@ export default function PhotoUploader({ classId, schoolId }: PhotoUploaderProps)
     let failedCount = 0;
     const uploadErrors: Array<{ fileName: string; error: string }> = [];
 
-    // Обнуляем прогресс
-    setUploadProgress({ current: 0, total: files.length, percent: 0, currentFileName: '' });
+    // Для расчета общего прогресса
+    const totalFiles = files.length;
+    // Создаем массив прогресса для каждого файла [0, 0, 0...]
+    const filesProgress = new Array(totalFiles).fill(0);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      setUploadProgress(prev => ({ ...prev, currentFileName: file.name }));
-
+      
       const formData = new FormData();
       formData.append('file', file);
       formData.append('classId', classId);
       formData.append('schoolId', schoolId);
 
       try {
-        const response = await fetch(`/api/upload-photos?t=${Date.now()}`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || `Ошибка сервера: ${response.status}`);
-        }
+        // Используем нашу функцию вместо fetch
+        await uploadFileWithProgress(
+            `/api/upload-photos?t=${Date.now()}`, 
+            formData, 
+            (percent) => {
+                // Обновляем прогресс текущего файла
+                filesProgress[i] = percent;
+                
+                // Считаем средний прогресс по всем файлам
+                const totalPercent = filesProgress.reduce((a, b) => a + b, 0) / totalFiles;
+                
+                setUploadProgress({
+                    current: i + 1,
+                    total: totalFiles,
+                    percent: Math.round(totalPercent),
+                    currentFileName: file.name
+                });
+            }
+        );
 
         successCount++;
       } catch (error: any) {
         console.error(`Ошибка при загрузке ${file.name}:`, error);
         failedCount++;
+        // Даже если ошибка, считаем этот файл "завершенным" для прогресс бара
+        filesProgress[i] = 100; 
         uploadErrors.push({
           fileName: file.name,
           error: error.message || 'Неизвестная ошибка',
         });
       }
-
-      // Обновляем прогресс после каждого файла
-      const currentIdx = i + 1;
-      setUploadProgress(prev => ({
-        ...prev,
-        current: currentIdx,
-        percent: Math.round((currentIdx / files.length) * 100)
-      }));
     }
 
     setUploadResult({
