@@ -77,11 +77,6 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
               <h1 className="text-3xl font-bold text-slate-900">
                 {classroom.name}
               </h1>
-              <p className="text-lg text-slate-600 mt-2">
-                {classroom.photos.length !== 1 ?  'и' : ''} доступно
-                {classroom.photos.length} фотографи{classroom.photos.length !== 1 ? 'й' : 'я'} доступно
-
-              </p>
             </div>
           </div>
         </div>
