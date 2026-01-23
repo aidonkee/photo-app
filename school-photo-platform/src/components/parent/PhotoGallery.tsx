@@ -25,23 +25,34 @@ function useColumnCount() {
   const [columnCount, setColumnCount] = useState(4);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const updateColumnCount = () => {
-      if (window.innerWidth < 768) {
-        setColumnCount(2);
-      } else if (window.innerWidth < 1024) {
-        setColumnCount(3);
-      } else {
-        setColumnCount(4);
-      }
+      clearTimeout(timeoutId);
+
+      timeoutId = setTimeout(() => {
+        if (window.innerWidth < 768) {
+          setColumnCount(2);
+        } else if (window.innerWidth < 1024) {
+          setColumnCount(3);
+        } else {
+          setColumnCount(4);
+        }
+      }, 100);
     };
 
     updateColumnCount();
     window.addEventListener('resize', updateColumnCount);
-    return () => window.removeEventListener('resize', updateColumnCount);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', updateColumnCount);
+    };
   }, []);
 
   return columnCount;
 }
+
 
 /**
  * Распределяет фотки по колонкам СТРОГО ПО РЯДАМ (слева направо).

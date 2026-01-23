@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCartStore } from '@/stores/cart-store';
 import { useTranslation } from '@/stores/language-store';
 import {
@@ -79,7 +79,11 @@ export default function PhotoModal({
   const price = getPrice(format, schoolPricing);
   const totalPrice = price * quantity;
 
-  const currentIndex = allPhotos.findIndex((p) => p.id === photo.id);
+  const currentIndex = useMemo(() => {
+    if (!photo) return -1;
+    return allPhotos.findIndex(p => p.id === photo.id);
+  }, [allPhotos, photo]);
+  
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < allPhotos.length - 1;
 
