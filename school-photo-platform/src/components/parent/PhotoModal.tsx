@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useCartStore } from '@/stores/cart-store';
+import { useTranslation } from '@/stores/language-store';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,7 @@ type PhotoModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   photo: Photo;
-  allPhotos?:  Photo[];
+  allPhotos?: Photo[];
   schoolPricing?: SchoolPricing | null;
   onPhotoChange?: (photo: Photo) => void;
 };
@@ -51,7 +52,7 @@ function getWatermarkUrl(originalUrl: string): string {
   if (originalUrl.includes('/watermarked/')) {
     return originalUrl;
   }
-  return `/api/watermark/view? url=${encodeURIComponent(originalUrl)}`;
+  return `/api/watermark/view?url=${encodeURIComponent(originalUrl)}`;
 }
 
 export default function PhotoModal({
@@ -62,6 +63,8 @@ export default function PhotoModal({
   schoolPricing,
   onPhotoChange,
 }: PhotoModalProps) {
+  const { t } = useTranslation();
+
   const getDisplayUrl = (p: Photo) => {
     return p.watermarkedUrl;
   };
@@ -83,7 +86,7 @@ export default function PhotoModal({
   const displayUrl = getWatermarkUrl(photo.watermarkedUrl);
 
   useEffect(() => {
-    setFormat(PhotoFormat. A4);
+    setFormat(PhotoFormat.A4);
     setQuantity(1);
     setShowSuccess(false);
   }, [photo.id]);
@@ -123,7 +126,7 @@ export default function PhotoModal({
   };
 
   const onTouchEnd = () => {
-    if (! touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) return;
 
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
@@ -154,20 +157,17 @@ export default function PhotoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="
-          max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0
-          md:max-w-5xl md:w-[900px] md:max-h-[85vh] md:overflow-hidden
-        "
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 md:max-w-5xl md:w-[900px] md:max-h-[85vh] md:overflow-hidden"
       >
-        {/* Desktop Navigation Arrows - вынесены за пределы модалки */}
+        {/* Desktop Navigation Arrows */}
         {allPhotos.length > 1 && (
           <>
             {hasPrev && (
               <button
                 onClick={goToPrev}
                 className="hidden md:flex absolute -left-16 top-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white hover:bg-slate-100 text-slate-900 rounded-full shadow-lg border border-slate-200 transition-all hover:scale-110"
-                aria-label="Предыдущее фото"
+                aria-label={t('prev_photo')}
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
@@ -177,7 +177,7 @@ export default function PhotoModal({
               <button
                 onClick={goToNext}
                 className="hidden md:flex absolute -right-16 top-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white hover:bg-slate-100 text-slate-900 rounded-full shadow-lg border border-slate-200 transition-all hover:scale-110"
-                aria-label="Следующее фото"
+                aria-label={t('next_photo')}
               >
                 <ChevronRight className="w-6 h-6" />
               </button>
@@ -187,20 +187,19 @@ export default function PhotoModal({
 
         <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-200">
           <DialogTitle className="text-lg sm:text-xl font-semibold text-slate-900">
-            Выбор фотографии
+            {t('select_photo')}
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-slate-600">
-            {allPhotos.length > 1 ?  (
+            {allPhotos.length > 1 ? (
               <span>
-                {currentIndex + 1} из {allPhotos.length} • Используйте ← → или свайп
+                {currentIndex + 1} {t('of')} {allPhotos.length} • {t('use_arrows_or_swipe')}
               </span>
             ) : (
-              <span>Выберите формат и количество</span>
+              <span>{t('select_format_quantity')}</span>
             )}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Mobile:  single column, scrollable | Desktop: two columns, fixed height */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 md:h-[calc(85vh-120px)]">
           {/* Photo Preview */}
           <div
@@ -209,25 +208,21 @@ export default function PhotoModal({
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
-            {/* Desktop: fixed container for image | Mobile: auto height */}
             <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative md:flex-1 md:flex md:items-center md:justify-center md:min-h-0">
               <img
                 src={getDisplayUrl(photo)}
-                alt={photo.alt || 'Фотография'}
-                className="
-                  w-full h-auto block
-                  md:max-w-full md:max-h-full md:w-auto md:h-auto md:object-contain
-                "
+                alt={photo.alt || t('photo')}
+                className="w-full h-auto block md:max-w-full md:max-h-full md:w-auto md:h-auto md:object-contain"
               />
 
               {/* Mobile Navigation Arrows */}
               {allPhotos.length > 1 && (
                 <div className="md:hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
-                  {hasPrev ?  (
+                  {hasPrev ? (
                     <button
                       onClick={goToPrev}
                       className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
-                      aria-label="Предыдущее фото"
+                      aria-label={t('prev_photo')}
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -239,7 +234,7 @@ export default function PhotoModal({
                     <button
                       onClick={goToNext}
                       className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
-                      aria-label="Следующее фото"
+                      aria-label={t('next_photo')}
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -252,16 +247,16 @@ export default function PhotoModal({
 
             {allPhotos.length > 1 && (
               <p className="md:hidden text-center text-xs text-slate-400">
-                👆 Свайп влево/вправо для навигации
+                {t('swipe_hint')}
               </p>
             )}
           </div>
 
-          {/* Options - Desktop:  scrollable if needed */}
+          {/* Options */}
           <div className="space-y-4 md:overflow-y-auto md:max-h-full">
             <div className="space-y-2">
               <Label htmlFor="format" className="text-sm font-medium text-slate-900">
-                Формат
+                {t('format')}
               </Label>
               <Select
                 value={format}
@@ -290,7 +285,7 @@ export default function PhotoModal({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-slate-900">Количество</Label>
+              <Label className="text-sm font-medium text-slate-900">{t('quantity')}</Label>
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -329,18 +324,18 @@ export default function PhotoModal({
 
             <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Цена за единицу:</span>
+                <span className="text-slate-600">{t('price_per_unit')}</span>
                 <span className="font-medium text-slate-900 tabular-nums">
                   {formatPrice(price)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Количество:</span>
+                <span className="text-slate-600">{t('quantity')}:</span>
                 <span className="font-medium text-slate-900 tabular-nums">×{quantity}</span>
               </div>
               <div className="pt-2 border-t border-slate-200">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-900">Итого:</span>
+                  <span className="font-semibold text-slate-900">{t('order_total')}:</span>
                   <span className="text-2xl font-semibold text-slate-900 tabular-nums">
                     {formatPrice(totalPrice)}
                   </span>
@@ -352,7 +347,7 @@ export default function PhotoModal({
               <Alert className="bg-slate-900 border-slate-900 text-white">
                 <CheckCircle2 className="h-4 w-4 text-white" />
                 <AlertDescription className="text-white">
-                  Успешно добавлено в корзину!
+                  {t('added_to_cart')}
                 </AlertDescription>
               </Alert>
             )}
@@ -363,7 +358,7 @@ export default function PhotoModal({
               className="w-full h-11 text-base bg-slate-900 hover:bg-slate-800"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              Добавить в корзину
+              {t('add_to_cart')}
             </Button>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCartStore } from '@/stores/cart-store';
+import { useTranslation } from '@/stores/language-store';
 import {
   Sheet,
   SheetContent,
@@ -36,6 +37,7 @@ export default function CartDrawer({
   schoolSlug,
   schoolPricing,
 }: CartDrawerProps) {
+  const { t } = useTranslation();
   const items = useCartStore((state) => state.items);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -54,11 +56,7 @@ export default function CartDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      {/* FIX: overflow-x-hidden и max-w-[100vw] предотвращают горизонтальный скролл 
-         flex flex-col h-full позволяет прибить футер с кнопкой "Оформить" к низу
-      */}
       <SheetContent className="w-full sm:max-w-md flex flex-col h-full max-w-[100vw] overflow-x-hidden px-6">
-        
         <SheetHeader className="mb-6 shrink-0 text-left">
           <SheetTitle className="flex items-center gap-2">
             {showCheckout && (
@@ -71,28 +69,27 @@ export default function CartDrawer({
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            {showCheckout ? 'Оформление заказа' : 'Корзина'}
+            {showCheckout ? t('checkout_title') : t('cart_title')}
           </SheetTitle>
           <SheetDescription>
             {showCheckout
-              ? 'Заполните данные для заказа.'
-              : 'Проверьте выбранные фото.'}
+              ? t('checkout_fill_data')
+              : t('checkout_check_photos')}
           </SheetDescription>
         </SheetHeader>
 
         {showCheckout ? (
-          /* ОФОРМЛЕНИЕ ЗАКАЗА */
           <ScrollArea className="flex-1 -mx-6 px-6">
             <div className="space-y-6 pb-10">
               <div className="bg-slate-50 p-4 rounded-lg border w-full">
                 <div className="flex justify-between font-medium mb-2">
-                  <span>Всего к оплате:</span>
+                  <span>{t('total_to_pay')}</span>
                   <span className="text-slate-900 font-semibold whitespace-nowrap">
                     {formatPrice(totalPrice)}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Вы выбрали {items.reduce((acc, item) => acc + item.quantity, 0)} фото
+                  {t('you_selected')} {items.reduce((acc, item) => acc + item.quantity, 0)} {t('photos_selected')}
                 </p>
               </div>
 
@@ -100,43 +97,35 @@ export default function CartDrawer({
             </div>
           </ScrollArea>
         ) : (
-          /* КОРЗИНА С ПРЕВЬЮ */
-          // Используем flex-1 и overflow-hidden для правильного скролла внутри контейнера
           <div className="flex flex-col flex-1 overflow-hidden">
             <ScrollArea className="flex-1 -mx-6 px-6">
               <div className="space-y-4 pb-6">
                 {items.length === 0 ? (
                   <Alert>
-                    <AlertDescription>Ваша корзина пуста.</AlertDescription>
+                    <AlertDescription>{t('cart_your_empty')}</AlertDescription>
                   </Alert>
                 ) : (
                   items.map((item) => (
                     <div
                       key={`${item.photoId}-${item.format}`}
-                      // FIX: w-full гарантирует, что карточка не будет шире экрана
                       className="flex w-full items-start gap-3 pb-4 border-b border-slate-200 last:border-0"
                     >
-                      {/* ✅ ПРЕВЬЮ ФОТОГРАФИИ */}
-                      {/* shrink-0 запрещает сжатие картинки */}
                       <div className="relative shrink-0 w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                         <img
                           src={item.photoUrl}
-                          alt={item.photoAlt || 'Фото'}
+                          alt={item.photoAlt || t('photo')}
                           className="w-full h-full object-cover"
                         />
                       </div>
 
-                      {/* ИНФОРМАЦИЯ О ТОВАРЕ */}
-                      {/* min-w-0 критически важен для работы truncate внутри flex */}
                       <div className="flex-1 min-w-0 flex flex-col h-20 justify-between">
-                        {/* Верхняя часть: название и цена */}
                         <div className="flex justify-between gap-2">
                           <div className="min-w-0 pr-2">
                             <p className="text-sm font-medium text-slate-900 truncate">
                               {FORMAT_LABELS[item.format]}
                             </p>
                             <p className="text-xs text-slate-500 truncate">
-                              {item.photoAlt || 'Фотография'}
+                              {item.photoAlt || t('photo')}
                             </p>
                           </div>
                           <p className="text-sm font-semibold text-slate-900 whitespace-nowrap shrink-0">
@@ -144,7 +133,6 @@ export default function CartDrawer({
                           </p>
                         </div>
 
-                        {/* Нижняя часть: кнопки */}
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center gap-1 bg-slate-50 rounded-md p-0.5 shrink-0">
                             <Button
@@ -198,10 +186,9 @@ export default function CartDrawer({
               </div>
             </ScrollArea>
 
-            {/* ИТОГО (Footer) */}
             <div className="pt-4 pb-6 mt-auto bg-white border-t border-slate-200 shrink-0 z-10">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-lg font-medium text-slate-700">Итого:</p>
+                <p className="text-lg font-medium text-slate-700">{t('order_total')}:</p>
                 <p className="text-2xl font-bold text-slate-900">
                   {formatPrice(totalPrice)}
                 </p>
@@ -212,7 +199,7 @@ export default function CartDrawer({
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
               >
-                Оформить заказ
+                {t('place_order')}
               </Button>
             </div>
           </div>

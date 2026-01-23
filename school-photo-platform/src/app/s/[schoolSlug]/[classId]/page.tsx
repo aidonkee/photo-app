@@ -3,6 +3,7 @@
 import React, { useState, use } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/stores/cart-store';
+import { useTranslation } from '@/stores/language-store';
 import { getClassroomPhotos } from '@/actions/parent/cart-actions';
 import PhotoGallery from '@/components/parent/PhotoGallery';
 import CartDrawer from '@/components/parent/CartDrawer';
@@ -19,9 +20,10 @@ type PageProps = {
 };
 
 export default function ClassroomGalleryPage({ params }: PageProps) {
+  const { t, lang } = useTranslation();
   const { schoolSlug, classId } = use(params);
   const [classroom, setClassroom] = React.useState<any>(null);
-  const [loading, setLoading] = React. useState(true);
+  const [loading, setLoading] = React.useState(true);
   const [cartOpen, setCartOpen] = useState(false);
   const getTotalItems = useCartStore((state) => state.getTotalItems());
 
@@ -42,7 +44,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="h-12 w-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">Загрузка фотографий... </p>
+          <p className="text-slate-600">{t('loading_photos')}</p>
         </div>
       </div>
     );
@@ -52,13 +54,29 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
     notFound();
   }
 
-
-
   const schoolPricing = {
     priceA4: classroom.school.priceA4,
     priceA5: classroom.school.priceA5,
-    priceMagnet: classroom.school.priceMagnet,
-    priceDigital: classroom.school.priceDigital,
+  };
+
+  // Правильное склонение
+  const getPhotosWord = (count: number) => {
+    if (lang === 'kk') {
+      return t('photos_count');
+    }
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+      return 'фотографий';
+    }
+    if (lastDigit === 1) {
+      return 'фотография';
+    }
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'фотографии';
+    }
+    return 'фотографий';
   };
 
   return (
@@ -69,7 +87,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
           <Link href={`/s/${schoolSlug}`}>
             <Button variant="ghost" className="gap-2 mb-4">
               <ArrowLeft className="w-4 h-4" />
-              Назад к {classroom.school.name}
+              {t('back_to')} {classroom.school.name}
             </Button>
           </Link>
           <div className="flex items-center justify-between">
@@ -77,17 +95,19 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
               <h1 className="text-3xl font-bold text-slate-900">
                 {classroom.name}
               </h1>
+              <p className="text-lg text-slate-600 mt-2">
+                {classroom.photos.length} {getPhotosWord(classroom.photos.length)} {t('photos_available')}
+              </p>
             </div>
           </div>
         </div>
       </header>
 
       {/* Gallery */}
-      <main className="max-w-7xl mx-auto px-4 py-12">      
-        {/* ✅ Передаём photoColumns и photoIndexMap для правильной нумерации */}
-        <PhotoGallery 
-          photos={classroom.photos} 
-          schoolPricing={schoolPricing} 
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        <PhotoGallery
+          photos={classroom.photos}
+          schoolPricing={schoolPricing}
         />
       </main>
 
@@ -100,7 +120,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
             className="h-16 px-6 bg-slate-900 hover:bg-slate-800 shadow-2xl gap-3 text-lg"
           >
             <ShoppingCart className="w-6 h-6" />
-            Корзина
+            {t('cart_title')}
             <Badge className="bg-white text-slate-900 hover:bg-white ml-2">
               {getTotalItems}
             </Badge>

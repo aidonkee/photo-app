@@ -1,10 +1,10 @@
-// src/components/parent/PhotoGallery.tsx
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import PhotoModal from './PhotoModal';
 import { Image as ImageIcon } from 'lucide-react';
 import { SchoolPricing } from '@/config/pricing';
+import { useTranslation } from '@/stores/language-store';
 
 type Photo = {
   id: string;
@@ -18,21 +18,20 @@ type Photo = {
 
 type PhotoGalleryProps = {
   photos: Photo[];
-  schoolPricing?:  SchoolPricing | null;
+  schoolPricing?: SchoolPricing | null;
 };
 
-// ✅ Хук для определения количества колонок на клиенте
 function useColumnCount() {
   const [columnCount, setColumnCount] = useState(4);
 
   useEffect(() => {
     const updateColumnCount = () => {
       if (window.innerWidth < 768) {
-        setColumnCount(2); // mobile
-      } else if (window. innerWidth < 1024) {
-        setColumnCount(3); // tablet (md)
+        setColumnCount(2);
+      } else if (window.innerWidth < 1024) {
+        setColumnCount(3);
       } else {
-        setColumnCount(4); // desktop (lg+)
+        setColumnCount(4);
       }
     };
 
@@ -44,33 +43,45 @@ function useColumnCount() {
   return columnCount;
 }
 
-// ✅ Функция распределения фоток по колонкам СТРОГО ПО РЯДАМ
-function distributeToColumns<T extends { id: string }>(
-  photos: T[],
+/**
+ * Переставляет элементы так, чтобы при вертикальном заполнении CSS columns
+ * они визуально располагались горизонтально (слева направо).
+ */
+function reorderForCSSColumns<T>(
+  items: T[],
   columnCount: number
-): { columns: T[][]; photoIndexMap: Record<string, number> } {
-  const columns: T[][] = Array.from({ length: columnCount }, () => []);
-  const photoIndexMap: Record<string, number> = {};
+): { item: T; originalIndex: number }[] {
+  if (items.length === 0 || columnCount === 0) return [];
 
-  photos.forEach((photo, index) => {
-    const columnIndex = index % columnCount;
-    columns[columnIndex].push(photo);
-    photoIndexMap[photo.id] = index;
-  });
+  const totalItems = items.length;
+  const rowCount = Math.ceil(totalItems / columnCount);
+  const result: { item: T; originalIndex: number }[] = [];
 
-  return { columns, photoIndexMap };
+  for (let col = 0; col < columnCount; col++) {
+    for (let row = 0; row < rowCount; row++) {
+      const originalIndex = row * columnCount + col;
+      if (originalIndex < totalItems) {
+        result.push({
+          item: items[originalIndex],
+          originalIndex,
+        });
+      }
+    }
+  }
+
+  return result;
 }
 
-export default function PhotoGallery({ 
-  photos, 
-  schoolPricing 
+export default function PhotoGallery({
+  photos,
+  schoolPricing,
 }: PhotoGalleryProps) {
+  const { t } = useTranslation();
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const columnCount = useColumnCount();
 
-  // ✅ Распределяем фотки на клиенте с учётом реального количества колонок
-  const { columns, photoIndexMap } = useMemo(
-    () => distributeToColumns(photos, columnCount),
+  const reorderedPhotos = useMemo(
+    () => reorderForCSSColumns(photos, columnCount),
     [photos, columnCount]
   );
 
@@ -78,49 +89,36 @@ export default function PhotoGallery({
     return photo.watermarkedUrl;
   };
 
-  const getPhotoNumber = (photoId: string): number => {
-    return (photoIndexMap[photoId] ??  0) + 1;
-  };
-
   if (photos.length === 0) {
     return (
       <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
         <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">Фотографии отсутствуют</h3>
-        <p className="text-sm text-slate-500">Фотограф еще не загрузил снимки. </p>
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">{t('no_photos')}</h3>
+        <p className="text-sm text-slate-500">{t('no_photos_yet')}</p>
       </div>
     );
   }
 
   return (
     <>
-      {/* ✅ Сетка с динамическим количеством колонок */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-12">
-        {columns.map((column, colIndex) => (
-          <div key={colIndex} className="flex flex-col gap-4">
-            {column.map((photo) => {
-              const photoNumber = getPhotoNumber(photo.id);
-              
-              return (
-                <button
-                  key={photo.id}
-                  onClick={() => setSelectedPhoto(photo)}
-                  className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
-                >
-                  <img
-                    src={getDisplayUrl(photo)}
-                    alt={photo.alt || 'Фотография'}
-                    className="w-full h-auto object-contain block"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                  <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
-                    #{String(photoNumber).padStart(2, '0')}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 pb-12">
+        {reorderedPhotos.map(({ item: photo, originalIndex }) => (
+          <button
+            key={photo.id}
+            onClick={() => setSelectedPhoto(photo)}
+            className="block w-full mb-4 relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none break-inside-avoid"
+          >
+            <img
+              src={getDisplayUrl(photo)}
+              alt={photo.alt || t('photo')}
+              className="w-full h-auto object-contain block"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+            <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
+              #{String(originalIndex + 1).padStart(2, '0')}
+            </div>
+          </button>
         ))}
       </div>
 
