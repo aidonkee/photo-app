@@ -44,32 +44,25 @@ function useColumnCount() {
 }
 
 /**
- * Переставляет элементы так, чтобы при вертикальном заполнении CSS columns
- * они визуально располагались горизонтально (слева направо).
+ * Распределяет фотки по колонкам СТРОГО ПО РЯДАМ (слева направо).
+ * Фото 0,1,2,3 -> первый ряд
+ * Фото 4,5,6,7 -> второй ряд
  */
-function reorderForCSSColumns<T>(
-  items: T[],
+function distributeToColumns(
+  photos: Photo[],
   columnCount: number
-): { item: T; originalIndex: number }[] {
-  if (items.length === 0 || columnCount === 0) return [];
+): { photo: Photo; originalIndex: number }[][] {
+  const columns: { photo: Photo; originalIndex: number }[][] = Array.from(
+    { length: columnCount },
+    () => []
+  );
 
-  const totalItems = items.length;
-  const rowCount = Math.ceil(totalItems / columnCount);
-  const result: { item: T; originalIndex: number }[] = [];
+  photos.forEach((photo, index) => {
+    const columnIndex = index % columnCount;
+    columns[columnIndex].push({ photo, originalIndex: index });
+  });
 
-  for (let col = 0; col < columnCount; col++) {
-    for (let row = 0; row < rowCount; row++) {
-      const originalIndex = row * columnCount + col;
-      if (originalIndex < totalItems) {
-        result.push({
-          item: items[originalIndex],
-          originalIndex,
-        });
-      }
-    }
-  }
-
-  return result;
+  return columns;
 }
 
 export default function PhotoGallery({
@@ -80,8 +73,8 @@ export default function PhotoGallery({
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const columnCount = useColumnCount();
 
-  const reorderedPhotos = useMemo(
-    () => reorderForCSSColumns(photos, columnCount),
+  const columns = useMemo(
+    () => distributeToColumns(photos, columnCount),
     [photos, columnCount]
   );
 
@@ -101,24 +94,28 @@ export default function PhotoGallery({
 
   return (
     <>
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 pb-12">
-        {reorderedPhotos.map(({ item: photo, originalIndex }) => (
-          <button
-            key={photo.id}
-            onClick={() => setSelectedPhoto(photo)}
-            className="block w-full mb-4 relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none break-inside-avoid"
-          >
-            <img
-              src={getDisplayUrl(photo)}
-              alt={photo.alt || t('photo')}
-              className="w-full h-auto object-contain block"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-            <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
-              #{String(originalIndex + 1).padStart(2, '0')}
-            </div>
-          </button>
+      <div className="flex gap-4 pb-12">
+        {columns.map((column, colIndex) => (
+          <div key={colIndex} className="flex-1 flex flex-col gap-4">
+            {column.map(({ photo, originalIndex }) => (
+              <button
+                key={photo.id}
+                onClick={() => setSelectedPhoto(photo)}
+                className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
+              >
+                <img
+                  src={getDisplayUrl(photo)}
+                  alt={photo.alt || t('photo')}
+                  className="w-full h-auto object-contain block"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
+                  #{String(originalIndex + 1).padStart(2, '0')}
+                </div>
+              </button>
+            ))}
+          </div>
         ))}
       </div>
 
