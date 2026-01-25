@@ -47,7 +47,7 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
           return (
             <div
               key={photo.id}
-              className="break-inside-avoid relative group rounded-lg overflow-hidden cursor-zoom-in bg-slate-100 border border-slate-200"
+              className="break-inside-avoid relative group rounded-lg overflow-hidden cursor-zoom-in border border-slate-200"
               onClick={() => setSelectedPhoto(photo)}
               style={{ aspectRatio }}
             >
@@ -58,7 +58,7 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
                   alt={photo.alt || 'Фотография'}
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-contain hover:scale-105 transition-transform duration-500"
+                  className="object-cover hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               </div>

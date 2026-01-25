@@ -113,7 +113,7 @@ export default function PhotoGallery({
                 <button
                   key={photo.id}
                   onClick={() => setSelectedPhoto(photo)}
-                  className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
+                  className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
                   style={{ aspectRatio }}
                 >
                   <Image
@@ -121,7 +121,7 @@ export default function PhotoGallery({
                     alt={photo.alt || t('photo')}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    className="object-contain"
+                    className="object-cover"
                     priority={originalIndex < 8}
                   />
                   

@@ -45,7 +45,7 @@ export default function WatermarkedImage({
         alt={alt || 'Фото'}
         fill
         sizes={sizes}
-        className="object-contain"
+        className="object-cover"
         onError={() => setError(true)}
         loading="lazy"
       />

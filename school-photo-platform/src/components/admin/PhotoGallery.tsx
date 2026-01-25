@@ -216,13 +216,13 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
               style={{ aspectRatio }}
             >
               {/* Фотография (Полная, без кропа) */}
-              <div className="w-full h-full relative bg-slate-100">
+              <div className="w-full h-full relative">
                 <Image
                   src={photo.watermarkedUrl}
                   alt={photo.alt || 'Фотография'}
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                  className="object-contain"
+                  className="object-cover"
                   loading="lazy"
                 />
               </div>
