@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -9,8 +10,7 @@ type WatermarkedImageProps = {
   alt?:  string | null;
   className?: string;
   fallbackClassName?: string;
-  width?: number;
-  height?: number;
+  sizes?: string;
   onClick?: () => void;
 };
 
@@ -19,12 +19,10 @@ export default function WatermarkedImage({
   alt,
   className,
   fallbackClassName,
-  width,
-  height,
+  sizes = "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
   onClick,
 }: WatermarkedImageProps) {
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   if (! src || error) {
     return (
@@ -42,22 +40,13 @@ export default function WatermarkedImage({
 
   return (
     <div className={cn('relative', className)} onClick={onClick}>
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-          <div className="h-6 w-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-      <img
+      <Image
         src={src}
         alt={alt || 'Фото'}
-        width={width}
-        height={height}
-        className={cn(className, loading && 'opacity-0')}
-        onLoad={() => setLoading(false)}
-        onError={() => {
-          setError(true);
-          setLoading(false);
-        }}
+        fill
+        sizes={sizes}
+        className="object-cover"
+        onError={() => setError(true)}
         loading="lazy"
       />
     </div>
