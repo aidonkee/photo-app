@@ -3,52 +3,73 @@
 import prisma from '@/lib/prisma';
 import { PhotoFormat, getPrice } from '@/config/pricing';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
-type ParentDetails = {
-  name: string;
-  surname: string;
-  email: string;
-  phone?:  string;
-};
+/* ============================
+   ZOD SCHEMA (SERVER-SIDE)
+============================ */
 
-type CartItem = {
-  photoId: string;
-  format: PhotoFormat;
-  quantity: number;
-};
+const submitOrderSchema = z.object({
+  classId: z.string().uuid(),
+  parentDetails: z.object({
+    name: z.string().min(1),
+    surname: z.string().min(1),
+    email: z.string().email().or(z.literal('')).optional(),
+    phone: z.string().optional(),
+  }),
+  cartItems: z
+    .array(
+      z.object({
+        photoId: z.string().uuid(),
+        format: z.nativeEnum(PhotoFormat),
+        quantity: z.number().int().min(1).max(99),
+      })
+    )
+    .min(1),
+});
+
+/* ============================
+   SERVER ACTION
+============================ */
 
 export async function submitOrderAction(
   classId: string,
-  parentDetails: ParentDetails,
-  cartItems: CartItem[]
+  parentDetails: unknown,
+  cartItems: unknown
 ): Promise<{ success?: boolean; orderId?: string; error?: string }> {
-  
-  // КРИТИКА: Убираем обязательную проверку email, если он опционален.
-  // Оставляем только Имя и Фамилию как обязательные.
-  if (!parentDetails.name || !parentDetails.surname) {
-    return { error: 'Имя и фамилия ученика обязательны' };
+  /* ============================
+     🔒 ZOD VALIDATION (CRITICAL)
+  ============================ */
+
+  const parsed = submitOrderSchema.safeParse({
+    classId,
+    parentDetails,
+    cartItems,
+  });
+
+  if (!parsed.success) {
+    console.error('Zod validation error:', parsed.error.flatten());
+    return { error: 'Некорректные данные заказа' };
   }
 
-  // Проверяем email на валидность только ЕСЛИ он заполнен
-  if (parentDetails.email && !parentDetails.email.includes('@')) {
-    return { error: 'Пожалуйста, введите корректный email адрес' };
-  }
-
-  if (cartItems.length === 0) {
-    return { error: 'Корзина пуста' };
-  }
+  const {
+    parentDetails: validatedParent,
+    cartItems: validatedCart,
+  } = parsed.data;
 
   try {
-    // Verify classroom exists and GET SCHOOL PRICING
+    /* ============================
+       VERIFY CLASSROOM + SCHOOL
+    ============================ */
+
     const classroom = await prisma.classroom.findUnique({
       where: { id: classId },
       include: {
-        school:  {
+        school: {
           select: {
             id: true,
             isActive: true,
             publicLinkEnabled: true,
-            // 🆕 Get pricing
             priceA4: true,
             priceA5: true,
           },
@@ -56,37 +77,41 @@ export async function submitOrderAction(
       },
     });
 
-    if (!classroom || classroom. isLocked) {
-      return { error: 'This classroom is no longer accepting orders' };
+    if (!classroom || classroom.isLocked) {
+      return { error: 'Этот класс больше не принимает заказы' };
     }
 
     if (!classroom.school.isActive || !classroom.school.publicLinkEnabled) {
-      return { error: 'School storefront is currently unavailable' };
+      return { error: 'Витрина школы временно недоступна' };
     }
 
-    // Create schoolPricing object
+    /* ============================
+       SERVER-SIDE PRICING
+    ============================ */
+
     const schoolPricing = {
       priceA4: classroom.school.priceA4,
       priceA5: classroom.school.priceA5,
     };
 
-    // Validate prices server-side with SCHOOL PRICING
+    /* ============================
+       VALIDATE CART (NO TRUST)
+    ============================ */
+
     let totalAmount = 0;
     const validatedItems = [];
 
-    for (const item of cartItems) {
-      // 🆕 Use school-specific pricing
+    for (const item of validatedCart) {
       const expectedPrice = getPrice(item.format, schoolPricing);
       const itemTotal = expectedPrice * item.quantity;
       totalAmount += itemTotal;
 
-      // Verify photo exists and belongs to this classroom
       const photo = await prisma.photo.findUnique({
         where: { id: item.photoId },
       });
 
       if (!photo || photo.classId !== classId) {
-        return { error: 'Invalid photo in cart' };
+        return { error: 'Некорректная фотография в корзине' };
       }
 
       validatedItems.push({
@@ -99,13 +124,16 @@ export async function submitOrderAction(
       });
     }
 
-    // Create order with validated data
+    /* ============================
+       CREATE ORDER
+    ============================ */
+
     const order = await prisma.order.create({
       data: {
         classId,
-        parentName: parentDetails.name,
-        parentSurname:  parentDetails.surname,
-        parentPhone: parentDetails.phone || null,
+        parentName: validatedParent.name,
+        parentSurname: validatedParent.surname,
+        parentPhone: validatedParent.phone || null,
         status: 'PENDING',
         totalSum: totalAmount,
         items: {
@@ -117,9 +145,6 @@ export async function submitOrderAction(
       },
     });
 
-    // TODO: Send confirmation email
-    // await sendOrderConfirmationEmail(parentDetails.email, order);
-
     revalidatePath(`/s/${classroom.school.id}`);
 
     return {
@@ -129,7 +154,7 @@ export async function submitOrderAction(
   } catch (error: any) {
     console.error('Error submitting order:', error);
     return {
-      error: error.message || 'Failed to submit order. Please try again.',
+      error: error.message || 'Не удалось оформить заказ. Попробуйте ещё раз.',
     };
   }
 }

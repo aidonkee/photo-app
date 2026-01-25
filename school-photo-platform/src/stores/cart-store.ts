@@ -8,13 +8,13 @@ export type CartItem = {
   photoAlt: string | null;
   format: PhotoFormat;
   quantity: number;
-  pricePerUnit: number; 
+  pricePerUnit: number;
   photoThumbnail?: string;
 };
 
 type CartStore = {
   items: CartItem[];
-  addItem: (item:  Omit<CartItem, 'pricePerUnit'> & { pricePerUnit?:  number }) => void;
+  addItem: (item: Omit<CartItem, 'pricePerUnit'> & { pricePerUnit?: number }) => void;
   removeItem: (photoId: string, format: PhotoFormat) => void;
   updateQuantity: (photoId: string, format: PhotoFormat, quantity: number) => void;
   clearCart: () => void;
@@ -23,32 +23,41 @@ type CartStore = {
   getItemKey: (photoId: string, format: PhotoFormat) => string;
 };
 
-const getItemKey = (photoId: string, format: PhotoFormat) => `${photoId}-${format}`;
+const getItemKey = (photoId: string, format: PhotoFormat) =>
+  `${photoId}-${format}`;
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
 
+      /* ============================
+         ✅ FIXED: ATOMIC + IMMUTABLE
+      ============================ */
       addItem: (item) => {
-        const key = getItemKey(item.photoId, item.format);
-        const existingItemIndex = get().items.findIndex(
-          (i) => getItemKey(i.photoId, i.format) === key
-        );
+        set((state) => {
+          const pricePerUnit = item.pricePerUnit || 0;
 
-        // Price will be passed from PhotoModal (already calculated with school pricing)
-        const pricePerUnit = item.pricePerUnit || 0;
+          const existingIndex = state.items.findIndex(
+            (i) =>
+              i.photoId === item.photoId &&
+              i.format === item.format
+          );
 
-        if (existingItemIndex >= 0) {
-          set((state) => ({
-            items: state.items.map((i, index) =>
-              index === existingItemIndex
-                ? { ... i, quantity: i.quantity + item.quantity }
-                : i
-            ),
-          }));
-        } else {
-          set((state) => ({
+          if (existingIndex >= 0) {
+            return {
+              items: state.items.map((existingItem, index) =>
+                index === existingIndex
+                  ? {
+                      ...existingItem,
+                      quantity: existingItem.quantity + item.quantity,
+                    }
+                  : existingItem
+              ),
+            };
+          }
+
+          return {
             items: [
               ...state.items,
               {
@@ -56,14 +65,16 @@ export const useCartStore = create<CartStore>()(
                 pricePerUnit,
               },
             ],
-          }));
-        }
+          };
+        });
       },
 
       removeItem: (photoId, format) => {
         const key = getItemKey(photoId, format);
         set((state) => ({
-          items: state. items.filter((i) => getItemKey(i.photoId, i.format) !== key),
+          items: state.items.filter(
+            (i) => getItemKey(i.photoId, i.format) !== key
+          ),
         }));
       },
 
@@ -76,7 +87,9 @@ export const useCartStore = create<CartStore>()(
         const key = getItemKey(photoId, format);
         set((state) => ({
           items: state.items.map((i) =>
-            getItemKey(i.photoId, i.format) === key ? { ...i, quantity } : i
+            getItemKey(i.photoId, i.format) === key
+              ? { ...i, quantity }
+              : i
           ),
         }));
       },
@@ -85,13 +98,16 @@ export const useCartStore = create<CartStore>()(
 
       getTotalPrice: () => {
         return get().items.reduce(
-          (total, item) => total + item.pricePerUnit * item. quantity,
+          (total, item) => total + item.pricePerUnit * item.quantity,
           0
         );
       },
 
       getTotalItems: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0);
+        return get().items.reduce(
+          (total, item) => total + item.quantity,
+          0
+        );
       },
 
       getItemKey,

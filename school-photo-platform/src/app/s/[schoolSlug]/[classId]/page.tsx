@@ -9,8 +9,10 @@ import PhotoGallery from '@/components/parent/PhotoGallery';
 import CartDrawer from '@/components/parent/CartDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, AlertTriangle, RefreshCw } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+
 
 type PageProps = {
   params: Promise<{
@@ -18,23 +20,78 @@ type PageProps = {
     classId: string;
   }>;
 };
+type Photo = {
+  id: string;
+  originalUrl: string;
+  watermarkedUrl: string;
+  thumbnailUrl: string | null;
+  alt: string | null;
+  width: number;
+  height: number;
+  uploadedAt: string | Date;
+};
+
+type ClassroomData = {
+  id: string;
+  name: string;
+  school: {
+    name: string;
+    priceA4: number;
+    priceA5: number;
+  };
+  photos: Photo[];
+};
+// Компонент ошибки для галереи
+function GalleryErrorFallback() {
+  return (
+    <div className="text-center py-20 border-2 border-dashed border-red-200 rounded-2xl bg-red-50/50">
+      <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">
+        Ошибка загрузки галереи
+      </h3>
+      <p className="text-sm text-slate-500 mb-4">
+        Не удалось отобразить фотографии. Попробуйте обновить страницу.
+      </p>
+      <Button 
+        variant="outline" 
+        onClick={() => window.location.reload()}
+        className="gap-2"
+      >
+        <RefreshCw className="w-4 h-4" />
+        Обновить страницу
+      </Button>
+    </div>
+  );
+}
+
+// Компонент ошибки для корзины
+function CartErrorFallback() {
+  return null; // Просто скрываем кнопку корзины при ошибке
+}
 
 export default function ClassroomGalleryPage({ params }: PageProps) {
   const { t, lang } = useTranslation();
   const { schoolSlug, classId } = use(params);
-  const [classroom, setClassroom] = React.useState<any>(null);
+  const [classroom, setClassroom] = useState<ClassroomData | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const getTotalItems = useCartStore((state) => state.getTotalItems());
 
   React.useEffect(() => {
     async function loadData() {
-      const data = await getClassroomPhotos(classId);
-      if (!data) {
-        notFound();
+      try {
+        const data = await getClassroomPhotos(classId);
+        if (!data) {
+          notFound();
+        }
+        setClassroom(data);
+      } catch (err) {
+        console.error('Failed to load classroom:', err);
+        setError('Не удалось загрузить данные');
+      } finally {
+        setLoading(false);
       }
-      setClassroom(data);
-      setLoading(false);
     }
     loadData();
   }, [classId]);
@@ -50,6 +107,22 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Ошибка</h2>
+          <p className="text-slate-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Попробовать снова
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!classroom) {
     notFound();
   }
@@ -59,7 +132,6 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
     priceA5: classroom.school.priceA5,
   };
 
-  // Правильное склонение
   const getPhotosWord = (count: number) => {
     if (lang === 'kk') {
       return t('photos_count');
@@ -80,62 +152,88 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="py-8 px-4 border-b border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <Link href={`/s/${schoolSlug}`}>
-            <Button variant="ghost" className="gap-2 mb-4">
-              <ArrowLeft className="w-4 h-4" />
-              {t('back_to')} {classroom.school.name}
+    <ErrorBoundary
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <div className="text-center p-8">
+            <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+              Что-то пошло не так
+            </h2>
+            <p className="text-slate-600 mb-4">
+              Произошла непредвиденная ошибка
+            </p>
+            <Button onClick={() => window.location.reload()} className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Обновить страницу
             </Button>
-          </Link>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">
-                {classroom.name}
-              </h1>
-              <p className="text-lg text-slate-600 mt-2">
-                {classroom.photos.length} {getPhotosWord(classroom.photos.length)} {t('photos_available')}
-              </p>
-            </div>
           </div>
         </div>
-      </header>
+      }
+    >
+      <div className="min-h-screen bg-slate-50">
+        {/* Header */}
+        <header className="py-8 px-4 border-b border-slate-200 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <Link href={`/s/${schoolSlug}`}>
+              <Button variant="ghost" className="gap-2 mb-4">
+                <ArrowLeft className="w-4 h-4" />
+                {t('back_to')} {classroom.school.name}
+              </Button>
+            </Link>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900">
+                  {classroom.name}
+                </h1>
+                <p className="text-lg text-slate-600 mt-2">
+                  {classroom.photos.length} {getPhotosWord(classroom.photos.length)} {t('photos_available')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
 
-      {/* Gallery */}
-      <main className="max-w-7xl mx-auto px-4 py-12">
-        <PhotoGallery
-          photos={classroom.photos}
-          schoolPricing={schoolPricing}
-        />
-      </main>
+        {/* Gallery - обёрнута в отдельный ErrorBoundary */}
+        <main className="max-w-7xl mx-auto px-4 py-12">
+          <ErrorBoundary fallback={<GalleryErrorFallback />}>
+            <PhotoGallery
+              photos={classroom.photos}
+              schoolPricing={schoolPricing}
+            />
+          </ErrorBoundary>
+        </main>
 
-      {/* Floating Cart Button */}
-      {getTotalItems > 0 && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <Button
-            onClick={() => setCartOpen(true)}
-            size="lg"
-            className="h-16 px-6 bg-slate-900 hover:bg-slate-800 shadow-2xl gap-3 text-lg"
-          >
-            <ShoppingCart className="w-6 h-6" />
-            {t('cart_title')}
-            <Badge className="bg-white text-slate-900 hover:bg-white ml-2">
-              {getTotalItems}
-            </Badge>
-          </Button>
-        </div>
-      )}
+        {/* Floating Cart Button - обёрнут в ErrorBoundary */}
+        <ErrorBoundary fallback={<CartErrorFallback />}>
+          {getTotalItems > 0 && (
+            <div className="fixed bottom-6 right-6 z-50">
+              <Button
+                onClick={() => setCartOpen(true)}
+                size="lg"
+                className="h-16 px-6 bg-slate-900 hover:bg-slate-800 shadow-2xl gap-3 text-lg"
+              >
+                <ShoppingCart className="w-6 h-6" />
+                {t('cart_title')}
+                <Badge className="bg-white text-slate-900 hover:bg-white ml-2">
+                  {getTotalItems}
+                </Badge>
+              </Button>
+            </div>
+          )}
+        </ErrorBoundary>
 
-      {/* Cart Drawer */}
-      <CartDrawer
-        open={cartOpen}
-        onOpenChange={setCartOpen}
-        classId={classId}
-        schoolSlug={schoolSlug}
-        schoolPricing={schoolPricing}
-      />
-    </div>
+        {/* Cart Drawer - обёрнут в ErrorBoundary */}
+        <ErrorBoundary fallback={null}>
+          <CartDrawer
+            open={cartOpen}
+            onOpenChange={setCartOpen}
+            classId={classId}
+            schoolSlug={schoolSlug}
+            schoolPricing={schoolPricing}
+          />
+        </ErrorBoundary>
+      </div>
+    </ErrorBoundary>
   );
 }
