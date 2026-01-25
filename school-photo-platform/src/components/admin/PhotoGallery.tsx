@@ -202,7 +202,9 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
       <div className="columns-2 md:columns-4 lg:columns-4 xl:columns-5 gap-4 space-y-4 pb-10">
         {photos.map((photo) => {
           const isSelected = selectedIds.has(photo.id);
-          const aspectRatio = photo.width && photo.height ? photo.width / photo.height : 4/3;
+          const aspectRatio = (photo.width && photo.height && photo.height !== 0) 
+            ? photo.width / photo.height 
+            : 1.333;
 
           return (
             <div

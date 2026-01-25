@@ -107,7 +107,7 @@ export default function PhotoGallery({
             {column.map(({ photo, originalIndex }) => {
               const aspectRatio = (photo.width && photo.height && photo.height !== 0)
                 ? photo.width / photo.height
-                : 4/3;
+                : 1.333;
               
               return (
                 <button

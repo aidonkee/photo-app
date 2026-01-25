@@ -42,7 +42,7 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
         {photos.map((photo) => {
           const aspectRatio = (photo.width && photo.height && photo.height !== 0) 
             ? photo.width / photo.height 
-            : 4/3;
+            : 1.333;
           
           return (
             <div
