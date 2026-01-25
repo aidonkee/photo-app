@@ -10,6 +10,7 @@ type WatermarkedImageProps = {
   alt?:  string | null;
   className?: string;
   fallbackClassName?: string;
+  sizes?: string;
   onClick?: () => void;
 };
 
@@ -18,6 +19,7 @@ export default function WatermarkedImage({
   alt,
   className,
   fallbackClassName,
+  sizes = "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
   onClick,
 }: WatermarkedImageProps) {
   const [error, setError] = useState(false);
@@ -42,7 +44,7 @@ export default function WatermarkedImage({
         src={src}
         alt={alt || 'Фото'}
         fill
-        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        sizes={sizes}
         className="object-contain"
         onError={() => setError(true)}
         loading="lazy"

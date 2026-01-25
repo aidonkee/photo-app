@@ -105,7 +105,9 @@ export default function PhotoGallery({
         {columns.map((column, colIndex) => (
           <div key={colIndex} className="flex-1 flex flex-col gap-4">
             {column.map(({ photo, originalIndex }) => {
-              const aspectRatio = photo.width / photo.height;
+              const aspectRatio = (photo.width && photo.height && photo.height !== 0)
+                ? photo.width / photo.height
+                : 4/3;
               
               return (
                 <button

@@ -40,7 +40,9 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
       {/* MASONRY LAYOUT (Pinterest style) */}
       <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4">
         {photos.map((photo) => {
-          const aspectRatio = photo.width / photo.height;
+          const aspectRatio = (photo.width && photo.height && photo.height !== 0) 
+            ? photo.width / photo.height 
+            : 4/3;
           
           return (
             <div
