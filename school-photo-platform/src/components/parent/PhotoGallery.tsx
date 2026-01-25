@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 import PhotoModal from './PhotoModal';
 import { Image as ImageIcon } from 'lucide-react';
 import { SchoolPricing } from '@/config/pricing';
@@ -89,10 +90,6 @@ export default function PhotoGallery({
     [photos, columnCount]
   );
 
-  const getDisplayUrl = (photo: Photo) => {
-    return photo.watermarkedUrl;
-  };
-
   if (photos.length === 0) {
     return (
       <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
@@ -108,24 +105,32 @@ export default function PhotoGallery({
       <div className="flex gap-4 pb-12">
         {columns.map((column, colIndex) => (
           <div key={colIndex} className="flex-1 flex flex-col gap-4">
-            {column.map(({ photo, originalIndex }) => (
-              <button
-                key={photo.id}
-                onClick={() => setSelectedPhoto(photo)}
-                className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
-              >
-                <img
-                  src={getDisplayUrl(photo)}
-                  alt={photo.alt || t('photo')}
-                  className="w-full h-auto object-contain block"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
-                  #{String(originalIndex + 1).padStart(2, '0')}
-                </div>
-              </button>
-            ))}
+            {column.map(({ photo, originalIndex }) => {
+              const aspectRatio = photo.width / photo.height;
+              
+              return (
+                <button
+                  key={photo.id}
+                  onClick={() => setSelectedPhoto(photo)}
+                  className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
+                  style={{ aspectRatio }}
+                >
+                  <Image
+                    src={photo.thumbnailUrl || photo.watermarkedUrl}
+                    alt={photo.alt || t('photo')}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    className="object-contain"
+                    priority={originalIndex < 8}
+                  />
+                  
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                  <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
+                    #{String(originalIndex + 1).padStart(2, '0')}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         ))}
       </div>

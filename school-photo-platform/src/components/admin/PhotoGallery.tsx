@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import Image from 'next/image';
 import { deletePhotosAction } from '@/actions/admin/photo-actions';
 import DeletePhotoButton from './DeletePhotoButton';
 import { Button } from '@/components/ui/button';
@@ -201,6 +202,7 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
       <div className="columns-2 md:columns-4 lg:columns-4 xl:columns-5 gap-4 space-y-4 pb-10">
         {photos.map((photo) => {
           const isSelected = selectedIds.has(photo.id);
+          const aspectRatio = photo.width && photo.height ? photo.width / photo.height : 4/3;
 
           return (
             <div
@@ -209,14 +211,19 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
                 break-inside-avoid relative group rounded-lg overflow-hidden transition-all duration-300
                 ${isSelected ? 'ring-4 ring-slate-900 shadow-xl opacity-90' : 'border border-slate-200 shadow-sm hover:shadow-md'}
               `}
+              style={{ aspectRatio }}
             >
               {/* Фотография (Полная, без кропа) */}
-              <img
-                src={photo.watermarkedUrl}
-                alt={photo.alt || 'Фотография'}
-                className="w-full h-auto object-contain block bg-slate-100"
-                loading="lazy"
-              />
+              <div className="w-full h-full relative bg-slate-100">
+                <Image
+                  src={photo.watermarkedUrl}
+                  alt={photo.alt || 'Фотография'}
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  className="object-contain"
+                  loading="lazy"
+                />
+              </div>
 
               {/* === РЕЖИМ ВЫБОРА === */}
               {selectionMode && (

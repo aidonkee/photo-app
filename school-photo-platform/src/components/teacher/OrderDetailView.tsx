@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -166,18 +167,22 @@ export default function OrderDetailView({ order, canEdit }: OrderDetailViewProps
               <div className="flex flex-col sm:flex-row">
                 <div className="w-full sm:w-48 h-64 sm:h-auto bg-slate-100 border-b sm:border-b-0 sm:border-r border-slate-200 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
                   {item.photo.watermarkedUrl ? (
-                    <img
-                      src={item.photo.watermarkedUrl}
-                      alt={item.photo.alt || `Фотография ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <>
+                      <Image
+                        src={item.photo.watermarkedUrl}
+                        alt={item.photo.alt || `Фотография ${index + 1}`}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 192px"
+                        className="object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+                        #{index + 1}
+                      </div>
+                    </>
                   ) : (
                     <ImageIcon className="w-12 h-12 text-slate-300" />
                   )}
-                  <div className="absolute top-2 left-2 bg-slate-900/70 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-md z-10">
-                    #{index + 1}
-                  </div>
                 </div>
 
                 <div className="p-4 flex flex-col justify-between flex-1">

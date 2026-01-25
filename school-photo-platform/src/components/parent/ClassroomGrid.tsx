@@ -61,9 +61,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
               <WatermarkedImage
                 src={photo.thumbnailUrl || photo.watermarkedUrl}
                 alt={photo.alt}
-                width={photo.width}
-                height={photo.height}
-                className="w-full h-full object-contain"
+                className="w-full h-full"
                 fallbackClassName="w-full h-full bg-slate-100"
               />
 

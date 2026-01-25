@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,19 +40,27 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
     <>
       {/* MASONRY LAYOUT (Pinterest style) */}
       <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4">
-        {photos.map((photo) => (
-          <div
-            key={photo.id}
-            className="break-inside-avoid relative group rounded-lg overflow-hidden cursor-zoom-in bg-slate-100 border border-slate-200"
-            onClick={() => setSelectedPhoto(photo)}
-          >
-            {/* Изображение рендерится полностью, без обрезки */}
-            <img
-              src={photo.watermarkedUrl}
-              alt={photo.alt || 'Фотография'}
-              className="w-full h-auto object-contain block hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
+        {photos.map((photo) => {
+          const aspectRatio = photo.width / photo.height;
+          
+          return (
+            <div
+              key={photo.id}
+              className="break-inside-avoid relative group rounded-lg overflow-hidden cursor-zoom-in bg-slate-100 border border-slate-200"
+              onClick={() => setSelectedPhoto(photo)}
+              style={{ aspectRatio }}
+            >
+              {/* Изображение рендерится полностью, без обрезки */}
+              <div className="w-full h-full relative">
+                <Image
+                  src={photo.watermarkedUrl}
+                  alt={photo.alt || 'Фотография'}
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-contain hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
 
             {/* Затемнение при наведении */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -64,7 +73,8 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
               </Badge>
             </div>
           </div>
-        ))}
+          ))}
+        )}
       </div>
 
       {/* МОДАЛКА ПРОСМОТРА (LIGHTBOX) */}
@@ -99,11 +109,16 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
             <div className="relative w-full h-full flex items-center justify-center pointer-events-none"> 
               {/* pointer-events-none на контейнере, чтобы клик мимо фото закрывал (это дефолт Dialog), 
                   но само фото должно быть visible */}
-              <img
-                src={selectedPhoto.watermarkedUrl}
-                alt={selectedPhoto.alt || 'Просмотр'}
-                className="max-w-full max-h-full object-contain rounded-md shadow-2xl pointer-events-auto"
-              />
+              <div className="relative max-w-full max-h-full pointer-events-auto">
+                <Image
+                  src={selectedPhoto.watermarkedUrl}
+                  alt={selectedPhoto.alt || 'Просмотр'}
+                  width={selectedPhoto.width}
+                  height={selectedPhoto.height}
+                  className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
+                  style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
+                />
+              </div>
             </div>
           )}
         </DialogContent>
