@@ -6,7 +6,6 @@ import PhotoModal from './PhotoModal';
 import { Image as ImageIcon } from 'lucide-react';
 import { SchoolPricing } from '@/config/pricing';
 import { useTranslation } from '@/stores/language-store';
-import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 type Photo = {
   id: string;
   originalUrl: string;

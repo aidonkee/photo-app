@@ -10,8 +10,6 @@ type WatermarkedImageProps = {
   alt?:  string | null;
   className?: string;
   fallbackClassName?: string;
-  width?: number;
-  height?: number;
   onClick?: () => void;
 };
 
@@ -20,8 +18,6 @@ export default function WatermarkedImage({
   alt,
   className,
   fallbackClassName,
-  width,
-  height,
   onClick,
 }: WatermarkedImageProps) {
   const [error, setError] = useState(false);

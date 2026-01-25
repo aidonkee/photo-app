@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { X, Download, Maximize2, Image as ImageIcon } from 'lucide-react';
 
@@ -73,8 +72,8 @@ export default function ClassroomGallery({ photos }: ClassroomGalleryProps) {
               </Badge>
             </div>
           </div>
-          ))}
-        )}
+          );
+        })}
       </div>
 
       {/* МОДАЛКА ПРОСМОТРА (LIGHTBOX) */}
