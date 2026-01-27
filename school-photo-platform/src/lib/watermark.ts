@@ -53,10 +53,17 @@ export async function addWatermark(buffer: Buffer): Promise<{
   // Если есть watermark.png — накладываем плиткой (без opacity, чтобы не ругался TS)
   if (fs.existsSync(WATERMARK_FILE)) {
     const wmBuffer = fs.readFileSync(WATERMARK_FILE);
+    const metadata = await sharp(processed).metadata();
+
+    const resizedWatermark = await sharp(wmBuffer)
+        .resize(Math.min(500, Math.floor(metadata.width / 3)), null, { fit: 'inside' })
+        .toBuffer();
+
     composited = await sharp(processed)
-      .composite([{ input: wmBuffer, tile: true, blend: 'over' }])
-      .jpeg({ quality: 40, progressive: true })
-      .toBuffer();
+        .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+        .composite([{ input: resizedWatermark, tile: true, blend: 'over' }])
+        .jpeg({ quality: 60, progressive: true })
+        .toBuffer();
   } else {
     // Фоллбэк: SVG плитка
     composited = await sharp(processed)
