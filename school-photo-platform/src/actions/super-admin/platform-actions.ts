@@ -204,7 +204,7 @@ export async function getAdminDetails(adminId: string) {
 
     // 2. Считаем общую статистику по всем школам этого админа
     // Используем aggregate для максимальной производительности
-    const [schoolsCount, photosCount, ordersCount, revenueData] = await Promise.all([
+    const [schoolsCount, photosCount, ordersCount, revenueData, schoolsList] = await Promise.all([
       // Кол-во школ
       prisma.school.count({
         where: { adminId },
@@ -219,34 +219,33 @@ export async function getAdminDetails(adminId: string) {
       }),
       // Выручка (только COMPLETED)
       prisma.order.aggregate({
-        where: { 
+        where: {
           classroom: { school: { adminId } },
           status: 'COMPLETED'
         },
         _sum: { totalSum: true },
       }),
-    ]);
-
-    // 3. Получаем список школ с их личной статистикой
-    const schoolsList = await prisma.school.findMany({
-      where: { adminId },
-      include: {
-        _count: {
-          select: { classrooms: true },
-        },
-        // Чтобы посчитать выручку конкретной школы, нам придется подтянуть заказы
-        // В продакшене лучше делать отдельным raw query, но для MVP так пойдет
-        classrooms: {
-          select: {
-            orders: {
-              where: { status: 'COMPLETED' },
-              select: { totalSum: true },
+      // Список школ с их личной статистикой
+      prisma.school.findMany({
+        where: { adminId },
+        include: {
+          _count: {
+            select: { classrooms: true },
+          },
+          // Чтобы посчитать выручку конкретной школы, нам придется подтянуть заказы
+          // В продакшене лучше делать отдельным raw query, но для MVP так пойдет
+          classrooms: {
+            select: {
+              orders: {
+                where: { status: 'COMPLETED' },
+                select: { totalSum: true },
+              },
             },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
 
     // Преобразуем список школ, считая выручку на лету
     const formattedSchools = schoolsList.map(school => {

@@ -36,6 +36,7 @@
     "lucide-react": "^0.561.0",
     "next": "16.0.10",
     "p-limit": "^7.2.0",
+    "prisma-pgmq": "^1.0.1",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-dropzone": "^14.3.8",
