@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSession } from '@/lib/auth';
@@ -10,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatPrice, FORMAT_LABELS } from '@/config/pricing';
 import {
   ArrowLeft,
-  CheckCircle,
   Mail,
   Phone,
   Package,

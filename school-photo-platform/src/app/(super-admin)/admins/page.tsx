@@ -1,4 +1,3 @@
-import React from 'react';
 import { getAdminsList } from '@/actions/super-admin/platform-actions';
 import CreateAdminDialog from '@/components/super-admin/CreateAdminDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +13,9 @@ import {
   XCircle,
   ChevronRight
 } from 'lucide-react';
+import { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Управление фотографами | Супер Админ',
   description: 'Просмотр и управление всеми аккаунтами фотографов',
 };

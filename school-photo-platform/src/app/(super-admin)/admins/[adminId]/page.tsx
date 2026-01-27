@@ -1,17 +1,13 @@
-import React from 'react';
 import { notFound } from 'next/navigation';
 import { getAdminDetails } from '@/actions/super-admin/platform-actions';
 import { 
   Building2, 
-  Users, 
   Image as ImageIcon, 
   ShoppingCart, 
   Wallet,
   Calendar,
   Mail,
   Phone,
-  CheckCircle,
-  XCircle,
   ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

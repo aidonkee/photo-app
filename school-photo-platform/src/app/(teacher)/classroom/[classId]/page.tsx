@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { getClassroomPhotos, getTeacherDashboardData } from '@/actions/teacher/dashboard-actions';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import {
   Unlock,
   FileEdit,
   AlertCircle,
-  Info,
 } from 'lucide-react';
 
 type PageProps = {

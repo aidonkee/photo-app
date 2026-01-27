@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState, useEffect, use } from 'react';
+import { useActionState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateSchoolAction } from '@/actions/admin/school-actions';
@@ -22,7 +22,7 @@ export default function SchoolEditPage({ params }: PageProps) {
   const router = useRouter();
 
   const [state, formAction, isPending] = useActionState(
-    updateSchoolAction. bind(null, schoolId),
+    updateSchoolAction.bind(null, schoolId),
     null
   );
 

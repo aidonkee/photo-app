@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState } from 'react'; // В Next.js 15 используем useActionState
+import { useActionState } from 'react'; // В Next.js 15 используем useActionState
 import { teacherLoginAction } from '@/actions/teacher/auth-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState, useEffect, use } from 'react';
+import React, { useActionState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClassroomAction } from '@/actions/admin/classroom-actions';

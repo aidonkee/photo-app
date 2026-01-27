@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { getTeacherOrders, getOrderById } from '@/actions/teacher/order-actions';
 import ParentOrdersList from '@/components/teacher/ParentOrdersList';
@@ -6,8 +6,9 @@ import OrderDetailView from '@/components/teacher/OrderDetailView';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Проверка заказов',
   description: 'Панель учителя',
 };

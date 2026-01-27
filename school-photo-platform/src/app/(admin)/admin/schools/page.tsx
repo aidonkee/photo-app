@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { getSchools } from '@/actions/admin/school-actions';
 import SchoolForm from '@/components/admin/SchoolForm';
@@ -11,8 +10,9 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Мои Школы | Фотограф',
   description: 'Управляйте вашими школами',
 };

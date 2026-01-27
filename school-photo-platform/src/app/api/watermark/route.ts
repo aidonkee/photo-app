@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       console.error('❌ Failed to fetch image:', response.status, imageUrl);
       return NextResponse. json({ error: 'Failed to fetch image' }, { status: 500 });
-      return NextResponse. json({ error: 'Failed to fetch image' }, { status: 300 });
     }
 
     const arrayBuffer = await response.arrayBuffer();
