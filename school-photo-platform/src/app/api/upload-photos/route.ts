@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import { uploadFile, getPublicUrl } from '@/lib/storage';
+import { addWatermark } from '@/lib/watermark';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,12 +46,21 @@ export async function POST(request: NextRequest) {
         let buffer;
         
         if (fs.existsSync(WATERMARK_PATH)) {
-            const wmOverlay = await sharp(WATERMARK_PATH).resize(500, 500, { fit: 'inside' }).toBuffer();
+            const metadata = await sharpStream.clone().metadata();
+            // const wmOverlay = await sharp(WATERMARK_PATH)
+            //     .resize({
+            //         width: Math.min(500, metadata.width || 500),
+            //         height: Math.min(500, metadata.height || 500),
+            //         fit: 'inside'
+            //     })
+            //     .toBuffer();
+            // const wmOverlay = await sharp(WATERMARK_PATH).resize(500, 500, { fit: 'inside' }).toBuffer();
             buffer = await sharpStream.clone() // Важно: clone()
-                .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
-                .composite([{ input: wmOverlay, tile: true, blend: 'over' }])
-                .jpeg({ quality: 75 })
+                // .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 100 })
                 .toBuffer();
+            //     .composite([{ input: wmOverlay, tile: true, blend: 'over' }])
+            buffer = (await addWatermark(buffer)).buffer
         } else {
             buffer = await sharpStream.clone()
                 .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
