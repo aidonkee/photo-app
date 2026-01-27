@@ -14,7 +14,7 @@ const prisma = globalThis.prismaGlobal ??  prismaClientSingleton();
 try {
   await pgmq.createQueue(prisma, 'process-uploads');
 } catch (error) {
-  console.error('Failed to create queue:', error);
+  // console.error('Failed to create queue:', error);
 }
 
 export default prisma;
