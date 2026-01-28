@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
+import pLimit from "p-limit";
 
 export class ServerlessWorker {
   private prisma: PrismaClient;
@@ -16,12 +17,11 @@ export class ServerlessWorker {
     this.prisma = prisma;
     this.queueName = queueName;
     this.batchSize = batchSize;
-    this.visibilityWindow = 30;
+    this.visibilityWindow = 180;
   }
 
   async performTask(msg: any) {
-    const payload = msg.message;
-    console.log(`[Job ${msg.msg_id}] Processing:`) //, payload);
+    console.log(`[Job ${msg.msg_id}] Processing:`); //, payload);
 
     await processMsg(msg.message.data, this.prisma);
 
@@ -29,7 +29,7 @@ export class ServerlessWorker {
   }
 
   async runBatch() {
-    await pgmq.createQueue(this.prisma, this.queueName).catch(() => {});
+    // await pgmq.createQueue(this.prisma, this.queueName).catch(() => {});
 
     const messages = await pgmq.read(
       this.prisma,
@@ -42,17 +42,21 @@ export class ServerlessWorker {
 
     console.log(`🔥 Processing batch of ${messages.length} jobs...`);
 
+    const limit = pLimit(50);
     const results = await Promise.allSettled(
       messages.map(async (msg) => {
-        try {
-          await this.performTask(msg);
+        return limit(async () => {
+          try {
+            await this.performTask(msg);
 
-          await pgmq.archive(this.prisma, this.queueName, msg.msg_id);
-          return "success";
-        } catch (err) {
-          console.error(`[Job ${msg.msg_id}] Failed:`, err);
-          throw err;
-        }
+            await pgmq.archive(this.prisma, this.queueName, msg.msg_id);
+
+            return "success";
+          } catch (err) {
+            console.error(`[Job ${msg.msg_id}] Failed:`, err);
+            throw err;
+          }
+        });
       }),
     );
 
@@ -73,13 +77,16 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const BUCKET_NAME = "school-photos";
 const WATERMARK_FILE = path.join(process.cwd(), "public", "watermark.png");
 
-async function processMsg(data: {
-  originalPath: string;
-  width: any;
-  height: any;
-  classId: any;
-  alt: any;
-}, prisma: PrismaClient) {
+async function processMsg(
+  data: {
+    originalPath: string;
+    width: any;
+    height: any;
+    classId: any;
+    alt: any;
+  },
+  prisma: PrismaClient,
+) {
   try {
     console.log("📥 Downloading original:", data.originalPath);
     const { data: fileData, error: downloadError } = await supabase.storage
@@ -93,7 +100,11 @@ async function processMsg(data: {
     const originalBuffer = Buffer.from(await fileData.arrayBuffer());
     console.log("✅ Downloaded original:", originalBuffer.length, "bytes");
 
-    const fileId = data.originalPath?.split("/").pop()?.replace(/\.[^/.]+$/, "") || uuidv4();
+    const fileId =
+      data.originalPath
+        ?.split("/")
+        .pop()
+        ?.replace(/\.[^/.]+$/, "") || uuidv4();
 
     console.log("🔧 Creating low-quality preview...");
     const meta = await sharp(originalBuffer).metadata();

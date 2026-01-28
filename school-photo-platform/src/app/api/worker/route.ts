@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   try {
     // 2. Instantiate your worker with the existing Prisma connection
     // This reuses the DB pool, which is crucial for Serverless!
-    const worker = new ServerlessWorker(prisma, 'process-uploads', 3);
+    const worker = new ServerlessWorker(prisma, 'process-uploads', 2);
 
     // 3. Run one batch and return stats
     const stats = await worker.runBatch();

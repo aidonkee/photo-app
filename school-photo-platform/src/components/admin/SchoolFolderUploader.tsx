@@ -1,4 +1,5 @@
 "use client";
+import pLimit from "p-limit";
 
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -147,74 +148,78 @@ export default function SchoolFolderUploader({
     const totalFiles = groups.reduce((sum, g) => sum + g.files.length, 0);
     let processedFiles = 0;
 
+    const limit = pLimit(3);
     const uploadPromises = groups.map(async (group, i) => {
-      setClassGroups((prev) =>
-        prev.map((g, idx) => (idx === i ? { ...g, status: "uploading" } : g)),
-      );
-
-      try {
-        // Find or create classroom
-        const classroom = await findOrCreateClassroom(
-          schoolId,
-          group.className,
-        );
-
-        // Update group with classId
+      return limit(async () => {
         setClassGroups((prev) =>
-          prev.map((g, idx) =>
-            idx === i ? { ...g, classId: classroom.id } : g,
-          ),
+          prev.map((g, idx) => (idx === i ? { ...g, status: "uploading" } : g)),
         );
 
-        // Upload files
-        const result = await uploadFiles(group.files, classroom.id, schoolId);
+        try {
+          // Find or create classroom
+          const classroom = await findOrCreateClassroom(
+            schoolId,
+            group.className,
+          );
 
-        // Update specific group status based on result
-        setClassGroups((prev) =>
-          prev.map((g, idx) =>
-            idx === i
-              ? {
-                  ...g,
-                  status: result.failedCount > 0 ? "error" : "success",
-                  uploaded: result.uploadedCount,
-                  failed: result.failedCount,
-                }
-              : g,
-          ),
-        );
+          // Update group with classId
+          setClassGroups((prev) =>
+            prev.map((g, idx) =>
+              idx === i ? { ...g, classId: classroom.id } : g,
+            ),
+          );
 
-        // Update local counters
-        totalSuccess += result.uploadedCount;
-        totalFailed += result.failedCount;
-      } catch (error) {
-        console.error(`Failed to process class ${group.className}:`, error);
+          // Upload files
+          const result = await uploadFiles(group.files, classroom.id, schoolId);
 
-        // Handle error state for this specific group
-        setClassGroups((prev) =>
-          prev.map((g, idx) =>
-            idx === i
-              ? {
-                  ...g,
-                  status: "error",
-                  failed: group.files.length,
-                  error: error instanceof Error ? error.message : String(error),
-                }
-              : g,
-          ),
-        );
+          // Update specific group status based on result
+          setClassGroups((prev) =>
+            prev.map((g, idx) =>
+              idx === i
+                ? {
+                    ...g,
+                    status: result.failedCount > 0 ? "error" : "success",
+                    uploaded: result.uploadedCount,
+                    failed: result.failedCount,
+                  }
+                : g,
+            ),
+          );
 
-        totalFailed += group.files.length;
-      } finally {
-        // Update progress regardless of success/failure
-        processedFiles += group.files.length;
+          // Update local counters
+          totalSuccess += result.uploadedCount;
+          totalFailed += result.failedCount;
+        } catch (error) {
+          console.error(`Failed to process class ${group.className}:`, error);
 
-        setOverallProgress(Math.round((processedFiles / totalFiles) * 100));
-        setTotalStats({
-          total: totalFiles,
-          success: totalSuccess,
-          failed: totalFailed,
-        });
-      }
+          // Handle error state for this specific group
+          setClassGroups((prev) =>
+            prev.map((g, idx) =>
+              idx === i
+                ? {
+                    ...g,
+                    status: "error",
+                    failed: group.files.length,
+                    error:
+                      error instanceof Error ? error.message : String(error),
+                  }
+                : g,
+            ),
+          );
+
+          totalFailed += group.files.length;
+        } finally {
+          // Update progress regardless of success/failure
+          processedFiles += group.files.length;
+
+          setOverallProgress(Math.round((processedFiles / totalFiles) * 100));
+          setTotalStats({
+            total: totalFiles,
+            success: totalSuccess,
+            failed: totalFailed,
+          });
+        }
+      });
     });
 
     await Promise.all(uploadPromises);

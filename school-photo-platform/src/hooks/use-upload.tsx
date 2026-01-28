@@ -9,17 +9,11 @@ import { getSupabaseClient, getPublicUrl } from '@/lib/supabase/client';
 
 // Configuration
 const BUCKET_NAME = 'school-photos';
-const CONCURRENT_UPLOADS = 3;
+const CONCURRENT_UPLOADS = 10;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-
-// Types
-type UploadFile = {
-  file: File;
-  id: string;
-};
 
 type UploadProgress = {
   currentFile: number;
