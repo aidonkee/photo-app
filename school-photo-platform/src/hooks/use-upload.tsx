@@ -211,11 +211,10 @@ export function useUpload() {
             if (result.success) { // && result.photoId) {
               uploadedPhotoIds.push("1"); // Temporary solution
               // console.log(`✅ Photo processed: ${result.photoId}`);
-
               setProgress((prev) => ({
                 ...prev,
                 overallProgress: Math.round(((index + 1) / files.length) * 100),
-                // uploadedPhotoIds: [...prev.uploadedPhotoIds, result.photoId],
+                uploadedPhotoIds: [...prev.uploadedPhotoIds, "1"],
               }));
             }
           } catch (error: any) {
