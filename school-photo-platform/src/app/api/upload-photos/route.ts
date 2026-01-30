@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
-import path from "path";
 import { uploadFile, getPublicUrl } from "@/lib/storage";
 import { addWatermark } from "@/lib/watermark";
 

@@ -120,8 +120,7 @@ async function processMsg(
 
     let watermarkedBuffer: Buffer;
 
-    const wmBuffer = fs.readFileSync(WATERMARK_FILE);
-    watermarkedBuffer = (await addWatermark(wmBuffer)).buffer;
+    watermarkedBuffer = (await addWatermark(originalBuffer)).buffer;
     console.log(
       "✅ Watermarked preview created:",
       watermarkedBuffer.length,
@@ -132,7 +131,7 @@ async function processMsg(
     console.log("🔧 Creating thumbnail...");
     const thumbnailBuffer = await sharp(watermarkedBuffer)
       .resize(300, 300, { fit: "cover", position: "center" })
-      .jpeg({ quality: 70 })
+      .jpeg({ quality: 100 })
       .toBuffer();
     console.log("✅ Thumbnail created:", thumbnailBuffer.length, "bytes");
 
@@ -148,7 +147,8 @@ async function processMsg(
         upsert: false,
       });
     if (wmError)
-      throw new Error(`Failed to upload watermarked: ${wmError.message}`);
+      if (wmError.message !== "The resource already exists")
+          throw new Error(`Failed to upload watermarked: ${wmError.message}`);
 
     console.log("📤 Uploading thumbnail:", thumbnailPath);
     const { error: thumbError } = await supabase.storage
