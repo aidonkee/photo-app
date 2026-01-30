@@ -48,24 +48,24 @@ export async function POST(request: NextRequest) {
     const sharpStream = sharp(originalBuffer);
 
     // Подготовка вотермарки
+    let buffer;
+    buffer = await sharpStream
+      .clone()
+      .jpeg({ quality: 100 })
+      .toBuffer();
+    const wmBuffer = (await addWatermark(buffer)).buffer;
+
     const watermarkTask = (async () => {
-      let buffer;
-      const metadata = await sharpStream.clone().metadata();
-      buffer = await sharpStream
-        .clone()
-        .jpeg({ quality: 100 })
-        .toBuffer();
-      buffer = (await addWatermark(buffer)).buffer;
-      return uploadFile(buffer, watermarkedPath, "image/jpeg");
+      return uploadFile(wmBuffer, watermarkedPath, "image/jpeg");
     })();
 
+    const thumbnailBuffer = await sharp(wmBuffer)
+      .resize(300, 300, { fit: "cover", position: "center" })
+      .jpeg({ quality: 70 })
+      .toBuffer();
+    
     const thumbnailTask = (async () => {
-      const buffer = await sharpStream
-        .clone()
-        .resize(400, 400, { fit: "cover" })
-        .jpeg({ quality: 60 })
-        .toBuffer();
-      return uploadFile(buffer, thumbnailPath, "image/jpeg");
+      return uploadFile(thumbnailBuffer, thumbnailPath, "image/jpeg");
     })();
 
     // Получение метаданных (быстро)
