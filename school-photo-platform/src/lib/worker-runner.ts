@@ -6,6 +6,7 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import pLimit from "p-limit";
+import { addWatermark } from "./watermark";
 
 export class ServerlessWorker {
   private prisma: PrismaClient;
@@ -30,7 +31,6 @@ export class ServerlessWorker {
 
   async runBatch() {
     // await pgmq.createQueue(this.prisma, this.queueName).catch(() => {});
-
     const messages = await pgmq.read(
       this.prisma,
       this.queueName,
@@ -120,38 +120,8 @@ async function processMsg(
 
     let watermarkedBuffer: Buffer;
 
-    // Наложение watermark
-    if (fs.existsSync(WATERMARK_FILE)) {
-      const wmBuffer = fs.readFileSync(WATERMARK_FILE);
-      const resizedWatermark = await sharp(wmBuffer)
-        .resize(Math.min(500, Math.floor(width / 3)), null, { fit: "inside" })
-        .toBuffer();
-
-      watermarkedBuffer = await sharp(originalBuffer)
-        .resize(width, height, { fit: "inside", withoutEnlargement: true })
-        .composite([{ input: resizedWatermark, tile: true, blend: "over" }])
-        .jpeg({ quality: 60, progressive: true })
-        .toBuffer();
-    } else {
-      // Фоллбэк: SVG плитка
-      const svgOverlay = Buffer.from(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
-        <defs>
-          <pattern id="wm" patternUnits="userSpaceOnUse" width="400" height="400" patternTransform="rotate(-30)">
-            <text x="20" y="200" font-size="48" font-family="Arial, sans-serif" fill="rgba(255,0,0,0.35)">
-              sample
-            </text>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#wm)" />
-      </svg>
-`);
-      watermarkedBuffer = await sharp(originalBuffer)
-        .resize(width, height, { fit: "inside", withoutEnlargement: true })
-        .composite([{ input: svgOverlay, tile: true, blend: "over" }])
-        .jpeg({ quality: 60, progressive: true })
-        .toBuffer();
-    }
+    const wmBuffer = fs.readFileSync(WATERMARK_FILE);
+    watermarkedBuffer = (await addWatermark(wmBuffer)).buffer;
     console.log(
       "✅ Watermarked preview created:",
       watermarkedBuffer.length,
@@ -187,8 +157,9 @@ async function processMsg(
         contentType: "image/jpeg",
         upsert: false,
       });
-    if (thumbError)
-      throw new Error(`Failed to upload thumbnail: ${thumbError.message}`);
+    if (thumbError) {
+      if (thumbError.message != "The resource already exists")
+          throw new Error(`Failed to upload thumbnail: ${thumbError.message}`);
 
     // 10. Get public URLs
     const { data: wmUrlData } = supabase.storage
