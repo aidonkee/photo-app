@@ -8,6 +8,7 @@ import fs from "fs";
 import pLimit from "p-limit";
 import { addWatermark } from "./watermark";
 
+
 export class ServerlessWorker {
   private prisma: PrismaClient;
   private queueName: string;
@@ -31,6 +32,7 @@ export class ServerlessWorker {
 
   async runBatch() {
     // await pgmq.createQueue(this.prisma, this.queueName).catch(() => {});
+    const messages = await pgmq.read(
       this.prisma,
       this.queueName,
       this.visibilityWindow,
@@ -159,7 +161,7 @@ async function processMsg(
     if (thumbError) {
       if (thumbError.message != "The resource already exists")
           throw new Error(`Failed to upload thumbnail: ${thumbError.message}`);
-
+    }
     // 10. Get public URLs
     const { data: wmUrlData } = supabase.storage
       .from(BUCKET_NAME)
@@ -200,4 +202,4 @@ async function processMsg(
     console.error("Failed to process photo:", error);
     throw new Error(`Processing error: ${error.message}`);
   }
-}
+  }
