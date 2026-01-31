@@ -174,6 +174,7 @@ export function useUpload() {
       });
 
       const uploadedPhotoIds: string[] = [];
+      let overallProgress = 0;
       const uploadErrors: UploadError[] = [];
       const limit = pLimit(CONCURRENT_UPLOADS);
 
@@ -210,10 +211,11 @@ export function useUpload() {
 
             if (result.success) { // && result.photoId) {
               uploadedPhotoIds.push("1"); // Temporary solution
+              overallProgress += 1
               // console.log(`✅ Photo processed: ${result.photoId}`);
               setProgress((prev) => ({
                 ...prev,
-                overallProgress: Math.round(((index + 1) / files.length) * 100),
+                overallProgress: Math.round((overallProgress / files.length) * 100),
                 uploadedPhotoIds: [...prev.uploadedPhotoIds, "1"],
               }));
             }
