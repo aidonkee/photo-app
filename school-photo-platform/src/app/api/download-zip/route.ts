@@ -4,13 +4,11 @@ import prisma from '@/lib/prisma';
 import JSZip from 'jszip';
 import { createClient } from '@supabase/supabase-js';
 
-// ✅ ВАЖНО: фиксируем Node runtime (не Edge), иначе blob/Buffer/zip часто ведут себя плохо
+// ✅ Важно: ZIP/Buffer нормально работает только в nodejs runtime
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Если ты на Vercel и у тебя Next это поддерживает — можешь увеличить лимит
-// export const maxDuration = 60;
 
-// Инициализируем Supabase Admin Client (с полными правами)
+// Supabase Admin Client (service role)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -34,13 +32,8 @@ function getExtFromUrl(url: string) {
 }
 
 function extractStoragePath(originalUrl: string) {
-  // originalUrl может быть:
-  // - полным публичным URL
-  // - путем вида "school-photos/...."
-  // - путем внутри бакета
   let storagePath = originalUrl;
 
-  // если это URL, вытащим pathname
   try {
     if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
       const u = new URL(storagePath);
@@ -50,10 +43,8 @@ function extractStoragePath(originalUrl: string) {
     // ignore
   }
 
-  // уберём ведущие слэши
   storagePath = storagePath.replace(/^\/+/, '');
 
-  // если путь содержит "school-photos/" — отрежем префикс
   const marker = 'school-photos/';
   if (storagePath.includes(marker)) {
     storagePath = storagePath.split(marker)[1];
@@ -64,15 +55,15 @@ function extractStoragePath(originalUrl: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1) Проверка авторизации
+    // 1) Auth
     const session = await getSession();
     if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Нет доступа' }, { status: 401 });
     }
 
-    // 2) Параметры
-    const body = await request.json();
-    const { orderId, schoolId } = body as { orderId?: string; schoolId?: string };
+    // 2) Params
+    const reqBody = await request.json();
+    const { orderId, schoolId } = reqBody as { orderId?: string; schoolId?: string };
 
     if (!orderId && !schoolId) {
       return NextResponse.json({ error: 'orderId или schoolId обязателен' }, { status: 400 });
@@ -81,7 +72,7 @@ export async function POST(request: NextRequest) {
     const zip = new JSZip();
     let orders: any[] = [];
 
-    // 3) Получаем заказы
+    // 3) Load orders
     if (orderId) {
       const order = await prisma.order.findUnique({
         where: { id: orderId },
@@ -112,7 +103,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Заказы не найдены' }, { status: 404 });
     }
 
-    // 4) Группировка
+    // 4) Grouping
     const ordersByClass: Record<string, any[]> = {};
     if (schoolId) {
       for (const order of orders) {
@@ -124,7 +115,7 @@ export async function POST(request: NextRequest) {
       ordersByClass['Single_Order'] = orders;
     }
 
-    // 5) Проходим по заказам и скачиваем фото
+    // 5) Download files into zip
     for (const [className, classOrders] of Object.entries(ordersByClass)) {
       const rootFolder = schoolId ? zip.folder(className) : zip;
       if (!rootFolder) continue;
@@ -161,7 +152,6 @@ export async function POST(request: NextRequest) {
             const arrayBuffer = await data.arrayBuffer();
             const extension = getExtFromUrl(originalUrl);
 
-            // Дублируем в зависимости от количества
             const copies = Math.max(1, item.quantity || 1);
             for (let copyIndex = 1; copyIndex <= copies; copyIndex++) {
               const fileName = `photo-${String(itemIndex + 1).padStart(3, '0')}_copy${copyIndex}.${extension}`;
@@ -185,7 +175,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ✅ КЛЮЧЕВОЙ ФИКС: nodebuffer вместо blob (быстрее/стабильнее в Node)
+    // 6) Generate zip (Buffer)
     const zipBuffer = await zip.generateAsync({
       type: 'nodebuffer',
       compression: 'DEFLATE',
@@ -196,12 +186,14 @@ export async function POST(request: NextRequest) {
       ? `school-orders-${schoolId.slice(0, 8)}.zip`
       : `order-${orderId!.slice(0, 8)}.zip`;
 
-    return new NextResponse(zipBuffer, {
+    // ✅ ВАЖНО: NextResponse типы иногда ругаются на Buffer — даём Uint8Array
+    const body = new Uint8Array(zipBuffer);
+
+    return new NextResponse(body, {
       status: 200,
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': String(zipBuffer.length),
         'Cache-Control': 'no-store',
       },
     });
