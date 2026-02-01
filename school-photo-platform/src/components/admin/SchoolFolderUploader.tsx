@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { findOrCreateClassroom } from "@/actions/admin/classroom-actions";
 import { useUpload } from "@/hooks/use-upload";
+import { useRouter } from "next/navigation";
 
 type SchoolFolderUploaderProps = {
   schoolId: string;
@@ -51,6 +52,8 @@ export default function SchoolFolderUploader({
     failed: 0,
     total: 0,
   });
+  const router = useRouter();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadFiles } = useUpload();
@@ -189,6 +192,7 @@ export default function SchoolFolderUploader({
           // Update local counters
           totalSuccess += result.uploadedCount;
           totalFailed += result.failedCount;
+          processedFiles += result.uploadedPhotoIds.length;
         } catch (error) {
           console.error(`Failed to process class ${group.className}:`, error);
 
@@ -210,8 +214,6 @@ export default function SchoolFolderUploader({
           totalFailed += group.files.length;
         } finally {
           // Update progress regardless of success/failure
-          processedFiles += group.files.length;
-
           setOverallProgress(Math.round((processedFiles / totalFiles) * 100));
           setTotalStats({
             total: totalFiles,
@@ -226,11 +228,14 @@ export default function SchoolFolderUploader({
 
     setPhase("complete");
 
-    // Reload page after delay if successful
-    if (totalSuccess > 0) {
+    if (totalFailed === 0 && totalSuccess > 0) {
       setTimeout(() => {
-        window.location.reload();
-      }, 4000);
+        // const router = useRouter();
+        // router.reload();
+        setPhase("idle");
+        handleReset();
+        router.refresh();
+      }, 2000);
     }
   };
 
