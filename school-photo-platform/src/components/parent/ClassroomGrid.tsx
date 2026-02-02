@@ -55,15 +55,13 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
             <div
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
-              className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-slate-400 transition-all hover:shadow-lg bg-slate-100 w-full"
+              className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-slate-400 transition-all hover:shadow-lg w-full"
               style={{ aspectRatio }} 
             >
               <WatermarkedImage
                 src={photo.thumbnailUrl || photo.watermarkedUrl}
                 alt={photo.alt}
-                width={photo.width}
-                height={photo.height}
-                className="w-full h-full object-contain"
+                className="w-full h-full"
                 fallbackClassName="w-full h-full bg-slate-100"
               />
 

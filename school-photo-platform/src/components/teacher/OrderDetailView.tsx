@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -166,10 +167,12 @@ export default function OrderDetailView({ order, canEdit }: OrderDetailViewProps
               <div className="flex flex-col sm:flex-row">
                 <div className="w-full sm:w-48 h-64 sm:h-auto bg-slate-100 border-b sm:border-b-0 sm:border-r border-slate-200 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
                   {item.photo.watermarkedUrl ? (
-                    <img
+                    <Image
                       src={item.photo.watermarkedUrl}
                       alt={item.photo.alt || `Фотография ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 100vw, 192px"
+                      className="object-cover"
                       loading="lazy"
                     />
                   ) : (
