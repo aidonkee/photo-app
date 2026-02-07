@@ -7,29 +7,29 @@ import { redirect } from 'next/navigation';
 
 // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 
-function transliterate(word:  string) {
+function transliterate(word: string) {
   const a: Record<string, string> = {
-    "Ё":"YO","Й":"I","Ц":"TS","У":"U","К":"K","Е":"E","Н":"N","Г":"G","Ш":"SH","Щ":"SCH","З":"Z","Х":"H","Ъ":"","ё":"yo","й":"i","ц":"ts","у":"u","к":"k","е":"e","н":"n","г":"g","ш":"sh","щ":"sch","з":"z","х":"h","ъ":"","Ф":"F","Ы":"I","В":"V","А":"A","П":"P","Р":"R","О":"O","Л":"L","Д":"D","Ж":"ZH","Э":"E","ф":"f","ы":"i","в":"v","а":"a","п":"p","р":"r","о":"o","л":"l","д":"d","ж":"zh","э":"e","Я":"Ya","Ч":"CH","С":"S","М":"M","И":"I","Т":"T","Ь":"","Б":"B","Ю":"YU","я":"ya","ч":"ch","с":"s","м":"m","и":"i","т":"t","ь":"","б":"b","ю":"yu"
+    "Ё": "YO", "Й": "I", "Ц": "TS", "У": "U", "К": "K", "Е": "E", "Н": "N", "Г": "G", "Ш": "SH", "Щ": "SCH", "З": "Z", "Х": "H", "Ъ": "", "ё": "yo", "й": "i", "ц": "ts", "у": "u", "к": "k", "е": "e", "н": "n", "г": "g", "ш": "sh", "щ": "sch", "з": "z", "х": "h", "ъ": "", "Ф": "F", "Ы": "I", "В": "V", "А": "A", "П": "P", "Р": "R", "О": "O", "Л": "L", "Д": "D", "Ж": "ZH", "Э": "E", "ф": "f", "ы": "i", "в": "v", "а": "a", "п": "p", "р": "r", "о": "o", "л": "l", "д": "d", "ж": "zh", "э": "e", "Я": "Ya", "Ч": "CH", "С": "S", "М": "M", "И": "I", "Т": "T", "Ь": "", "Б": "B", "Ю": "YU", "я": "ya", "ч": "ch", "с": "s", "м": "m", "и": "i", "т": "t", "ь": "", "б": "b", "ю": "yu"
   };
   return word.split('').map((char) => a[char] || char).join("");
 }
 
 async function generateTeacherLogin(schoolSlug: string, className: string): Promise<string> {
-  const latinName = transliterate(className); 
+  const latinName = transliterate(className);
   const cleanName = latinName
-    . toLowerCase()
+    .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
     .substring(0, 10);
-  
+
   const baseLogin = `${schoolSlug}_${cleanName}`;
   let login = baseLogin;
   let counter = 1;
 
   while (true) {
-    const existing = await prisma. classroom.findUnique({
+    const existing = await prisma.classroom.findUnique({
       where: { teacherLogin: login },
     });
-    
+
     if (!existing) {
       return login;
     }
@@ -44,7 +44,7 @@ function generatePassword(): string {
 
 // --- ОСНОВНЫЕ ЭКШЕНЫ ---
 
-export async function getClassrooms(schoolId:  string) {
+export async function getClassrooms(schoolId: string) {
   const session = await getSession();
 
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
@@ -52,7 +52,7 @@ export async function getClassrooms(schoolId:  string) {
   }
 
   try {
-    const school = await prisma. school.findUnique({
+    const school = await prisma.school.findUnique({
       where: { id: schoolId },
     });
 
@@ -61,7 +61,7 @@ export async function getClassrooms(schoolId:  string) {
       redirect('/admin/dashboard');
     }
 
-    const classrooms = await prisma.classroom. findMany({
+    const classrooms = await prisma.classroom.findMany({
       where: { schoolId },
       include: {
         _count: {
@@ -83,7 +83,7 @@ export async function getClassrooms(schoolId:  string) {
   }
 }
 
-export async function getClassroomById(classId:  string) {
+export async function getClassroomById(classId: string) {
   const session = await getSession();
 
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
@@ -91,7 +91,7 @@ export async function getClassroomById(classId:  string) {
   }
 
   try {
-    const classroom = await prisma. classroom.findUnique({
+    const classroom = await prisma.classroom.findUnique({
       where: { id: classId },
       include: {
         school: true,
@@ -142,13 +142,13 @@ export async function createClassroomAction(
     });
 
     if (!school) return { error: 'School not found' };
-    if (session.role === 'ADMIN' && school. adminId !== session.userId) {
+    if (session.role === 'ADMIN' && school.adminId !== session.userId) {
       return { error: 'Access denied' };
     }
 
     const plainPassword = generatePassword();
-    const teacherLogin = await generateTeacherLogin(school. slug, name);
-    
+    const teacherLogin = await generateTeacherLogin(school.slug, name);
+
     const classroom = await prisma.classroom.create({
       data: {
         name: name.trim(),
@@ -164,7 +164,7 @@ export async function createClassroomAction(
 
     return {
       success: true,
-      classroomId:  classroom.id,
+      classroomId: classroom.id,
       teacherLogin,
       plainPassword,
       message: 'Classroom created successfully',
@@ -197,14 +197,11 @@ export async function deleteClassroomAction(classId: string) {
     });
 
     if (!classroom) throw new Error('Classroom not found');
-    if (session.role === 'ADMIN' && classroom.school. adminId !== session.userId) {
+    if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
       throw new Error('Access denied');
     }
 
-    if (classroom._count.photos > 0 || classroom._count.orders > 0) {
-      throw new Error('Cannot delete classroom with existing photos or orders');
-    }
-
+    // ✅ Cascade delete allowed
     await prisma.classroom.delete({
       where: { id: classId },
     });
@@ -222,10 +219,10 @@ export async function deleteClassroomAction(classId: string) {
  * 🆕 Find or create a classroom by name within a school
  * Used by SchoolFolderUploader for automatic class creation during bulk upload
  */
-export async function findOrCreateClassroom(schoolId:  string, className: string) {
+export async function findOrCreateClassroom(schoolId: string, className: string) {
   const session = await getSession();
 
-  if (!session || (session.role !== 'ADMIN' && session. role !== 'SUPER_ADMIN')) {
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
     throw new Error('Unauthorized');
   }
 
@@ -239,14 +236,14 @@ export async function findOrCreateClassroom(schoolId:  string, className: string
     throw new Error('School not found');
   }
 
-  if (session.role === 'ADMIN' && school.adminId !== session. userId) {
+  if (session.role === 'ADMIN' && school.adminId !== session.userId) {
     throw new Error('Access denied');
   }
 
   // Normalize class name
   const normalizedName = className.trim();
 
-  if (! normalizedName) {
+  if (!normalizedName) {
     throw new Error('Class name cannot be empty');
   }
 

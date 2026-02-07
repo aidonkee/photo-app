@@ -14,6 +14,9 @@ type PageProps = {
   }>;
 };
 
+import DeleteButton from '@/components/admin/DeleteButton';
+import { deleteClassroomAction } from '@/actions/admin/classroom-actions';
+
 export default async function ClassroomPage({ params }: PageProps) {
   const { schoolId, classId } = await params;
   const classroom = await getClassroomById(classId);
@@ -40,6 +43,15 @@ export default async function ClassroomPage({ params }: PageProps) {
             <p className="text-sm text-slate-500">
               {classroom._count?.photos || 0} фотографий
             </p>
+          </div>
+          <div className="ml-auto">
+            <DeleteButton
+              id={classId}
+              entityName="Класс"
+              deleteAction={deleteClassroomAction}
+              redirectUrl={`/admin/schools/${schoolId}`}
+              className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border-red-200"
+            />
           </div>
         </div>
       </div>
