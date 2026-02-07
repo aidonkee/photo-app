@@ -178,7 +178,7 @@ export default function PhotoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-full w-full h-[100dvh] p-0 gap-0 border-0 overflow-hidden bg-black flex flex-col"
+        className="!max-w-none !w-screen !h-screen !p-0 !gap-0 !border-0 !rounded-none overflow-hidden bg-black flex flex-col"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">{t('select_photo')}</DialogTitle>
