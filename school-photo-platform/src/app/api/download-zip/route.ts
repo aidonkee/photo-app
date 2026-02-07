@@ -84,10 +84,17 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+      // Optional: Filter single order if not paid? 
+      // User requirement: "load only those photos with status paid". 
+      // If Admin explicitly requests ONE order, they might want it regardless. 
+      // But for bulk school download, definitely filter.
       if (order) orders.push(order);
     } else if (schoolId) {
       orders = await prisma.order.findMany({
-        where: { classroom: { schoolId } },
+        where: {
+          classroom: { schoolId },
+          isPaid: true // ✅ ONLY PAID ORDERS
+        },
         include: {
           classroom: { select: { id: true, name: true } },
           items: {

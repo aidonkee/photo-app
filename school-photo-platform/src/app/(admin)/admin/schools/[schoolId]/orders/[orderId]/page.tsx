@@ -14,6 +14,7 @@ import {
   Package,
 } from 'lucide-react';
 import DownloadOrderButton from '@/components/admin/DownloadOrderButton';
+import AdminOrderPaymentToggle from '@/components/admin/AdminOrderPaymentToggle';
 
 type PageProps = {
   params: Promise<{
@@ -25,7 +26,7 @@ type PageProps = {
 const STATUS_LABELS = {
   PENDING: 'Ожидает подтверждения',
   APPROVED_BY_TEACHER: 'Одобрен учителем',
-  LOCKED:  'Заблокирован',
+  LOCKED: 'Заблокирован',
   COMPLETED: 'Выполнен',
 } as const;
 
@@ -40,7 +41,7 @@ export default async function OrderDetailsPage({ params }: PageProps) {
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
-      day:   '2-digit',
+      day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
@@ -48,12 +49,12 @@ export default async function OrderDetailsPage({ params }: PageProps) {
     }).format(new Date(date));
   };
 
-  const formatPrice = (amount:   number) => {
+  const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('ru-KZ', {
       style: 'currency',
       currency: 'KZT',
-      minimumFractionDigits:  0,
-      maximumFractionDigits:  0,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -75,7 +76,7 @@ export default async function OrderDetailsPage({ params }: PageProps) {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-                Заказ #{order.id.  slice(0, 8).toUpperCase()}
+                Заказ #{order.id.slice(0, 8).toUpperCase()}
               </h1>
               <p className="text-sm text-slate-600 mt-1">
                 {order.classroom.school.name} • {order.classroom.name}
@@ -133,14 +134,14 @@ export default async function OrderDetailsPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="pt-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {order.items.  map((item, index) => (
+                {order.items.map((item, index) => (
                   <div
                     key={item.id}
                     className="group relative bg-slate-100 rounded-md border border-slate-200 overflow-hidden h-48"
                   >
                     <img
-                      src={item.  photo.  thumbnailUrl || item.photo.watermarkedUrl}
-                      alt={item.  photo.alt || `Фото ${index + 1}`}
+                      src={item.photo.thumbnailUrl || item.photo.watermarkedUrl}
+                      alt={item.photo.alt || `Фото ${index + 1}`}
                       className="w-full h-full object-contain"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
@@ -174,7 +175,12 @@ export default async function OrderDetailsPage({ params }: PageProps) {
             <CardContent className="pt-4 space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Статус</span>
+                  <span className="text-slate-600">Оплата</span>
+                  <AdminOrderPaymentToggle orderId={order.id} isPaid={order.isPaid} />
+                </div>
+
+                <div className="flex items-center justify-between text-sm pt-2">
+                  <span className="text-slate-600">Статус заказа</span>
                   <Badge variant="outline" className="border-slate-300 text-slate-700">
                     {STATUS_LABELS[order.status]}
                   </Badge>
@@ -211,7 +217,7 @@ export default async function OrderDetailsPage({ params }: PageProps) {
                   <div className="flex-1">
                     <p className="text-xs text-slate-500">Количество фото</p>
                     <p className="text-sm font-medium text-slate-900">
-                      {order.items.  reduce((sum, item) => sum + item.quantity, 0)} шт.
+                      {order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.
                     </p>
                   </div>
                 </div>

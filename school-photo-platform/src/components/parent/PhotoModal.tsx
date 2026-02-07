@@ -184,7 +184,7 @@ export default function PhotoModal({
         <DialogTitle className="sr-only">{t('select_photo')}</DialogTitle>
 
         {/* Main Photo Container with All Overlays */}
-        <div 
+        <div
           className="relative w-full h-full flex items-center justify-center overflow-hidden"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -201,7 +201,7 @@ export default function PhotoModal({
           <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4">
             <Button
               size="sm"
-              className="bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white gap-1 sm:gap-2 rounded-full shadow-lg border-0 font-medium text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+              className="bg-red-600 hover:bg-red-700 text-white gap-1 sm:gap-2 rounded-full shadow-lg border-0 font-medium text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
               onClick={() => onOpenChange(false)}
             >
               <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -211,7 +211,7 @@ export default function PhotoModal({
             <Button
               variant="ghost"
               size="icon"
-              className="bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white rounded-full shadow-lg h-8 w-8 sm:h-10 sm:w-10"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg h-8 w-8 sm:h-10 sm:w-10"
               onClick={() => onOpenChange(false)}
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -224,7 +224,7 @@ export default function PhotoModal({
               {hasPrev && (
                 <button
                   onClick={goToPrev}
-                  className="absolute left-2 sm:left-3 md:left-6 z-40 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white rounded-full transition-all shadow-lg"
+                  className="absolute left-2 sm:left-3 md:left-6 z-40 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full transition-all shadow-lg"
                   aria-label="Previous photo"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
@@ -234,7 +234,7 @@ export default function PhotoModal({
               {hasNext && (
                 <button
                   onClick={goToNext}
-                  className="absolute right-2 sm:right-3 md:right-6 z-40 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white rounded-full transition-all shadow-lg"
+                  className="absolute right-2 sm:right-3 md:right-6 z-40 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full transition-all shadow-lg"
                   aria-label="Next photo"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
@@ -256,38 +256,38 @@ export default function PhotoModal({
                   <div
                     key={fmt}
                     className={cn(
-                      "flex items-center justify-between p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl transition-all flex-1 shadow-lg backdrop-blur-sm",
+                      "flex items-center justify-between p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl transition-all flex-1 shadow-lg backdrop-blur-md border-2 border-black",
                       isSelected
-                        ? "bg-green-600/90"
-                        : "bg-black/70"
+                        ? "bg-green-100"
+                        : "bg-white/90"
                     )}
                   >
                     <div className="flex flex-col mr-2 sm:mr-3">
-                      <span className="font-bold text-sm sm:text-base md:text-lg text-white">
+                      <span className="font-extrabold text-sm sm:text-base md:text-lg text-black">
                         {FORMAT_LABELS[fmt]}
                       </span>
-                      <span className="text-xs sm:text-sm md:text-base font-semibold text-white/90">
+                      <span className="text-xs sm:text-sm md:text-base font-bold text-black/80">
                         {formatPrice(itemPrice)}
                       </span>
                     </div>
 
-                    <div className="flex items-center rounded-lg sm:rounded-xl shadow-sm bg-white/10">
+                    <div className="flex items-center rounded-lg sm:rounded-xl shadow-sm bg-black/5 border border-black/10">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-l-lg sm:rounded-l-xl hover:bg-white/20 text-white"
+                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-l-lg sm:rounded-l-xl hover:bg-black/10 text-black"
                         onClick={() => updateQuantity(fmt, -1)}
                         disabled={qty <= 0}
                       >
                         <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
-                      <span className="w-8 sm:w-10 md:w-12 text-center font-bold text-base sm:text-lg md:text-xl text-white">
+                      <span className="w-8 sm:w-10 md:w-12 text-center font-extrabold text-base sm:text-lg md:text-xl text-black">
                         {qty}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-r-lg sm:rounded-r-xl hover:bg-white/20 text-white"
+                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-r-lg sm:rounded-r-xl hover:bg-black/10 text-black"
                         onClick={() => updateQuantity(fmt, 1)}
                         disabled={qty >= 99}
                       >
@@ -306,9 +306,9 @@ export default function PhotoModal({
                 disabled={totalItemsCount === 0 || showSuccess}
                 className={cn(
                   "w-full sm:max-w-md h-12 sm:h-14 md:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-base md:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
-                  showSuccess 
-                    ? "bg-green-600/90 hover:bg-green-700/90" 
-                    : "bg-black/70 hover:bg-black/80",
+                  showSuccess
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700",
                   totalItemsCount === 0 && "opacity-50"
                 )}
               >
@@ -320,10 +320,10 @@ export default function PhotoModal({
                 ) : (
                   <>
                     <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-                    <span>
+                    <span className="font-extrabold">
                       {t('add_to_cart')}
                       {totalPrice > 0 && (
-                        <span className="ml-1 sm:ml-2 font-black">
+                        <span className="ml-1 sm:ml-2">
                           • {formatPrice(totalPrice)}
                         </span>
                       )}

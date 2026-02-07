@@ -10,9 +10,9 @@ type DownloadSchoolOrdersButtonProps = {
   totalOrders: number;
 };
 
-export default function DownloadSchoolOrdersButton({ 
-  schoolId, 
-  totalOrders 
+export default function DownloadSchoolOrdersButton({
+  schoolId,
+  totalOrders
 }: DownloadSchoolOrdersButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -32,7 +32,7 @@ export default function DownloadSchoolOrdersButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body:  JSON.stringify({ schoolId }),
+        body: JSON.stringify({ schoolId }),
       });
 
       if (!response.ok) {
@@ -58,7 +58,7 @@ export default function DownloadSchoolOrdersButton({
         setIsSuccess(false);
       }, 3000);
 
-    } catch (error:  any) {
+    } catch (error: any) {
       console.error('Ошибка скачивания:', error);
       toast.error(error.message || 'Не удалось скачать архив');
     } finally {
@@ -85,7 +85,7 @@ export default function DownloadSchoolOrdersButton({
       ) : (
         <>
           <PackageOpen className="w-4 h-4" />
-          Скачать все заказы ({totalOrders})
+          Скачать оплаченные ({totalOrders})
         </>
       )}
     </Button>

@@ -17,7 +17,7 @@ export async function getSchoolOrders(schoolId: string) {
   try {
     // Проверка прав доступа к школе
     const school = await prisma.school.findUnique({
-      where: { id:  schoolId },
+      where: { id: schoolId },
       select: { adminId: true },
     });
 
@@ -31,13 +31,13 @@ export async function getSchoolOrders(schoolId: string) {
     }
 
     // Получаем заказы с информацией о классе
-    const orders = await prisma.order. findMany({
+    const orders = await prisma.order.findMany({
       where: {
         classroom: {
-          schoolId:  schoolId,
+          schoolId: schoolId,
         },
       },
-      include:  {
+      include: {
         classroom: {
           select: {
             id: true,
@@ -51,7 +51,7 @@ export async function getSchoolOrders(schoolId: string) {
         },
       },
       orderBy: {
-        createdAt:  'desc',
+        createdAt: 'desc',
       },
     });
 
@@ -73,14 +73,14 @@ export async function getOrderDetails(orderId: string) {
   }
 
   try {
-    const order = await prisma.order. findUnique({
-      where:  { id: orderId },
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
       include: {
         classroom: {
           include: {
             school: {
               select: {
-                id:  true,
+                id: true,
                 name: true,
                 adminId: true,
               },
@@ -101,7 +101,7 @@ export async function getOrderDetails(orderId: string) {
             },
           },
           orderBy: {
-            createdAt:  'asc',
+            createdAt: 'asc',
           },
         },
       },
@@ -132,14 +132,14 @@ export async function updateOrderStatus(
 ) {
   const session = await getSession();
 
-  if (!session || (session.role !== 'ADMIN' && session. role !== 'SUPER_ADMIN')) {
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
     return { error: 'Нет доступа' };
   }
 
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include:  {
+      include: {
         classroom: {
           include: {
             school: {
@@ -168,7 +168,50 @@ export async function updateOrderStatus(
 
     return { success: true, order: updatedOrder };
   } catch (error) {
-    console.error('Ошибка обновления статуса:', error);
-    return { error:  'Не удалось обновить статус' };
+    return { error: 'Не удалось обновить статус' };
+  }
+}
+
+/**
+ * Переключить статус оплаты заказа
+ */
+export async function toggleOrderPaymentStatus(orderId: string, isPaid: boolean) {
+  const session = await getSession();
+
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    throw new Error('Нет доступа');
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        classroom: {
+          include: {
+            school: {
+              select: { adminId: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new Error('Заказ не найден');
+    }
+
+    if (session.role === 'ADMIN' && order.classroom.school.adminId !== session.userId) {
+      throw new Error('Доступ запрещен');
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { isPaid },
+    });
+
+    return { success: true, isPaid: updatedOrder.isPaid };
+  } catch (error: any) {
+    console.error('Ошибка обновления статуса оплаты:', error);
+    throw new Error(error.message || 'Не удалось обновить статус оплаты');
   }
 }

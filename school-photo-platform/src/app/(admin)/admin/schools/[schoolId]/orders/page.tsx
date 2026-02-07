@@ -30,7 +30,7 @@ type PageProps = {
 const STATUS_LABELS = {
   PENDING: 'Ожидает',
   APPROVED_BY_TEACHER: 'Одобрен учителем',
-  LOCKED:  'Заблокирован',
+  LOCKED: 'Заблокирован',
   COMPLETED: 'Выполнен',
 } as const;
 
@@ -41,9 +41,9 @@ const STATUS_VARIANTS = {
   COMPLETED: 'outline',
 } as const;
 
-export default async function SchoolOrdersPage({ params }:  PageProps) {
+export default async function SchoolOrdersPage({ params }: PageProps) {
   const { schoolId } = await params;
-  
+
   const [school, orders] = await Promise.all([
     getSchoolById(schoolId),
     getSchoolOrders(schoolId),
@@ -52,7 +52,7 @@ export default async function SchoolOrdersPage({ params }:  PageProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
       day: '2-digit',
-      month:  '2-digit',
+      month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -63,8 +63,8 @@ export default async function SchoolOrdersPage({ params }:  PageProps) {
     return new Intl.NumberFormat('ru-KZ', {
       style: 'currency',
       currency: 'KZT',
-      minimumFractionDigits:  0,
-      maximumFractionDigits:  0,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -89,15 +89,15 @@ export default async function SchoolOrdersPage({ params }:  PageProps) {
                 Заказы школы
               </h1>
               <p className="text-sm text-slate-600 mt-1">
-                {school. name} • {orders.length} {orders.length === 1 ? 'заказ' : 'заказов'}
+                {school.name} • {orders.length} {orders.length === 1 ? 'заказ' : 'заказов'}
               </p>
             </div>
           </div>
 
           {/* ✅ КНОПКА СКАЧИВАНИЯ ВСЕХ ЗАКАЗОВ */}
-          <DownloadSchoolOrdersButton 
-            schoolId={schoolId} 
-            totalOrders={orders.length} 
+          <DownloadSchoolOrdersButton
+            schoolId={schoolId}
+            totalOrders={orders.length}
           />
         </div>
       </div>
@@ -133,6 +133,7 @@ export default async function SchoolOrdersPage({ params }:  PageProps) {
                   <TableHead className="text-xs font-semibold text-slate-900">Родитель</TableHead>
                   <TableHead className="text-xs font-semibold text-slate-900">Фото</TableHead>
                   <TableHead className="text-xs font-semibold text-slate-900">Сумма</TableHead>
+                  <TableHead className="text-xs font-semibold text-slate-900">Оплата</TableHead>
                   <TableHead className="text-xs font-semibold text-slate-900">Статус</TableHead>
                   <TableHead className="text-xs font-semibold text-slate-900">Дата</TableHead>
                   <TableHead className="text-xs font-semibold text-slate-900 text-right">Действия</TableHead>
@@ -151,10 +152,21 @@ export default async function SchoolOrdersPage({ params }:  PageProps) {
                       {order.parentName} {order.parentSurname}
                     </TableCell>
                     <TableCell className="text-sm text-slate-600">
-                      {order._count. items} шт.
+                      {order._count.items} шт.
                     </TableCell>
                     <TableCell className="text-sm font-semibold text-slate-900 tabular-nums">
-                      {formatPrice(Number(order. totalSum))}
+                      {formatPrice(Number(order.totalSum))}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs border-0 px-2 py-0.5 ${order.isPaid
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-slate-100 text-slate-500'
+                          }`}
+                      >
+                        {order.isPaid ? 'Оплачено' : 'Не оплачено'}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANTS[order.status]} className="text-xs border-slate-300 text-slate-700">

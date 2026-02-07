@@ -178,6 +178,7 @@ model Order {
   // Financial
   totalSum       Decimal     @db.Decimal(10, 2)
   currency       String      @default("KZT")
+  isPaid         Boolean     @default(false)
   
   // Notes
   notes          String?

@@ -27,6 +27,7 @@ export type TeacherOrder = {
       height: number;
     };
   }[];
+  isPaid: boolean;
   canEdit?: boolean; // разрешено ли учителю редактировать (isEditAllowed)
 };
 
@@ -90,6 +91,7 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
         pricePerUnit: Number(item.price),
         photo: item.photo,
       })),
+      isPaid: order.isPaid,
       canEdit: classroom?.isEditAllowed ?? false,
     }));
   } catch (error) {
@@ -162,6 +164,7 @@ export async function getOrderById(orderId: string): Promise<TeacherOrder | null
         pricePerUnit: Number(item.price),
         photo: item.photo,
       })),
+      isPaid: order.isPaid,
       canEdit: classroom?.isEditAllowed ?? false,
     };
   } catch (error) {
@@ -206,6 +209,45 @@ export async function approveOrderAction(orderId: string) {
   } catch (error: any) {
     console.error('Error approving order:', error);
     throw new Error(error.message || 'Failed to approve order');
+  }
+}
+
+/**
+ * Toggle Order Payment Status
+ */
+export async function toggleOrderPaymentStatus(orderId: string, isPaid: boolean) {
+  const session = await getSession();
+
+  // Allow ADMIN, SUPER_ADMIN, and TEACHER to toggle payment status
+  if (!session || (session.role !== 'TEACHER' && session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    throw new Error('Unauthorized');
+  }
+
+  // If TEACHER, verify ownership
+  if (session.role === 'TEACHER') {
+    const classId = session.classId;
+    if (!classId) throw new Error('Invalid session: No classroom ID');
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { classId: true },
+    });
+
+    if (!order || order.classId !== classId) {
+      throw new Error('Access denied');
+    }
+  }
+
+  try {
+    const result = await prisma.order.update({
+      where: { id: orderId },
+      data: { isPaid },
+    });
+
+    return { success: true, isPaid: result.isPaid };
+  } catch (error: any) {
+    console.error('Error toggling payment status:', error);
+    throw new Error(error.message || 'Failed to update payment status');
   }
 }
 

@@ -8,8 +8,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import RequestEditDialog from './RequestEditDialog';
 import { Image as ImageIcon, AlertCircle, Info, Minus, Loader2 } from 'lucide-react';
 import type { TeacherOrder } from '@/actions/teacher/order-actions';
-import { decreaseOrderItemQuantity } from '@/actions/teacher/order-actions';
+import { decreaseOrderItemQuantity, toggleOrderPaymentStatus } from '@/actions/teacher/order-actions';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 type OrderDetailViewProps = {
   order: TeacherOrder | null;
@@ -97,6 +100,19 @@ export default function OrderDetailView({ order, canEdit }: OrderDetailViewProps
     });
   };
 
+  const handlePaymentToggle = (checked: boolean) => {
+    startTransition(async () => {
+      try {
+        await toggleOrderPaymentStatus(order.id, checked);
+        toast.success(checked ? 'Статус обновлен: Оплачено' : 'Статус обновлен: Не оплачено');
+        router.refresh();
+      } catch (err: any) {
+        toast.error('Не удалось обновить статус оплаты');
+        console.error(err);
+      }
+    });
+  };
+
   const isLocked = useMemo(
     () => order.status === 'LOCKED' || order.status === 'COMPLETED',
     [order.status]
@@ -145,6 +161,17 @@ export default function OrderDetailView({ order, canEdit }: OrderDetailViewProps
           </div>
 
           <div className="flex items-center gap-3 self-start md:self-auto">
+            <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
+              <Switch
+                id="payment-status"
+                checked={order.isPaid}
+                onCheckedChange={handlePaymentToggle}
+                disabled={isPending}
+              />
+              <Label htmlFor="payment-status" className="text-sm font-medium text-slate-700 cursor-pointer">
+                {order.isPaid ? 'Оплачено' : 'Не оплачено'}
+              </Label>
+            </div>
             {getStatusBadge(order.status)}
             <RequestEditDialog parentName={`${order.parentName} ${order.parentSurname}`} />
           </div>
