@@ -52,8 +52,8 @@ function GalleryErrorFallback() {
       <p className="text-sm text-slate-500 mb-4">
         Не удалось отобразить фотографии. Попробуйте обновить страницу.
       </p>
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         onClick={() => window.location.reload()}
         className="gap-2"
       >
@@ -76,7 +76,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const getTotalItems = useCartStore((state) => state.getTotalItems());
+  const getTotalItems = useCartStore((state) => state.getTotalItems(classId));
 
   React.useEffect(() => {
     async function loadData() {
@@ -175,12 +175,20 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
         {/* Header */}
         <header className="py-8 px-4 border-b border-slate-200 bg-white">
           <div className="max-w-7xl mx-auto">
-            <Link href={`/s/${schoolSlug}`}>
-              <Button variant="ghost" className="gap-2 mb-4">
-                <ArrowLeft className="w-4 h-4" />
-                {t('back_to')} {classroom.school.name}
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <Link href={`/s/${schoolSlug}`}>
+                <Button variant="ghost" className="gap-2 -ml-2 text-slate-600 hover:text-slate-900">
+                  <ArrowLeft className="w-4 h-4" />
+                  {t('back_to')} {classroom.school.name}
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline" className="gap-2">
+                  Зайти как учитель
+                </Button>
+              </Link>
+            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-slate-900">
@@ -200,6 +208,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
             <PhotoGallery
               photos={classroom.photos}
               schoolPricing={schoolPricing}
+              classId={classId}
             />
           </ErrorBoundary>
         </main>

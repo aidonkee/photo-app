@@ -38,14 +38,15 @@ export default function CartDrawer({
   schoolPricing,
 }: CartDrawerProps) {
   const { t } = useTranslation();
-  const items = useCartStore((state) => state.items);
+  const allItems = useCartStore((state) => state.items);
+  const items = allItems.filter(item => item.classId === classId);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
 
   const [showCheckout, setShowCheckout] = useState(false);
 
-  const totalPrice = getTotalPrice();
+  const totalPrice = getTotalPrice(classId);
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -56,8 +57,8 @@ export default function CartDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col h-full max-w-[100vw] overflow-x-hidden px-6">
-        <SheetHeader className="mb-6 shrink-0 text-left">
+      <SheetContent className="w-full sm:max-w-md flex flex-col h-full max-w-[100vw] px-0 gap-0">
+        <SheetHeader className="px-6 py-4 border-b border-slate-200 shrink-0 text-left">
           <SheetTitle className="flex items-center gap-2">
             {showCheckout && (
               <Button
@@ -79,8 +80,8 @@ export default function CartDrawer({
         </SheetHeader>
 
         {showCheckout ? (
-          <ScrollArea className="flex-1 -mx-6 px-6">
-            <div className="space-y-6 pb-10">
+          <ScrollArea className="flex-1 px-6">
+            <div className="space-y-6 py-6">
               <div className="bg-slate-50 p-4 rounded-lg border w-full">
                 <div className="flex justify-between font-medium mb-2">
                   <span>{t('total_to_pay')}</span>
@@ -97,9 +98,9 @@ export default function CartDrawer({
             </div>
           </ScrollArea>
         ) : (
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <ScrollArea className="flex-1 -mx-6 px-6">
-              <div className="space-y-4 pb-6">
+          <div className="flex flex-col flex-1 min-h-0">
+            <ScrollArea className="flex-1">
+              <div className="p-6 space-y-4">
                 {items.length === 0 ? (
                   <Alert>
                     <AlertDescription>{t('cart_your_empty')}</AlertDescription>
@@ -108,7 +109,7 @@ export default function CartDrawer({
                   items.map((item) => (
                     <div
                       key={`${item.photoId}-${item.format}`}
-                      className="flex w-full items-start gap-3 pb-4 border-b border-slate-200 last:border-0"
+                      className="flex w-full items-start gap-3 pb-4 border-b border-slate-200 last:border-0 last:pb-0"
                     >
                       <div className="relative shrink-0 w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                         <img
@@ -142,6 +143,7 @@ export default function CartDrawer({
                               className="h-7 w-7 bg-white shadow-sm hover:bg-slate-100"
                               onClick={() =>
                                 updateQuantity(
+                                  item.classId,
                                   item.photoId,
                                   item.format,
                                   Math.max(1, item.quantity - 1)
@@ -162,7 +164,7 @@ export default function CartDrawer({
                               size="icon"
                               className="h-7 w-7 bg-white shadow-sm hover:bg-slate-100"
                               onClick={() =>
-                                updateQuantity(item.photoId, item.format, item.quantity + 1)
+                                updateQuantity(item.classId, item.photoId, item.format, item.quantity + 1)
                               }
                             >
                               <Plus className="w-3 h-3" />
@@ -174,7 +176,7 @@ export default function CartDrawer({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 shrink-0"
-                            onClick={() => removeItem(item.photoId, item.format)}
+                            onClick={() => removeItem(item.classId, item.photoId, item.format)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

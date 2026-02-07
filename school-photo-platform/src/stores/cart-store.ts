@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { PhotoFormat } from '@/config/pricing';
 
 export type CartItem = {
+  classId: string;
   photoId: string;
   photoUrl: string;
   photoAlt: string | null;
@@ -15,16 +16,16 @@ export type CartItem = {
 type CartStore = {
   items: CartItem[];
   addItem: (item: Omit<CartItem, 'pricePerUnit'> & { pricePerUnit?: number }) => void;
-  removeItem: (photoId: string, format: PhotoFormat) => void;
-  updateQuantity: (photoId: string, format: PhotoFormat, quantity: number) => void;
+  removeItem: (classId: string, photoId: string, format: PhotoFormat) => void;
+  updateQuantity: (classId: string, photoId: string, format: PhotoFormat, quantity: number) => void;
   clearCart: () => void;
-  getTotalPrice: () => number;
-  getTotalItems: () => number;
-  getItemKey: (photoId: string, format: PhotoFormat) => string;
+  getTotalPrice: (classId?: string) => number;
+  getTotalItems: (classId?: string) => number;
+  getItemKey: (classId: string, photoId: string, format: PhotoFormat) => string;
 };
 
-const getItemKey = (photoId: string, format: PhotoFormat) =>
-  `${photoId}-${format}`;
+const getItemKey = (classId: string, photoId: string, format: PhotoFormat) =>
+  `${classId}-${photoId}-${format}`;
 
 export const useCartStore = create<CartStore>()(
   persist(
@@ -40,6 +41,7 @@ export const useCartStore = create<CartStore>()(
 
           const existingIndex = state.items.findIndex(
             (i) =>
+              i.classId === item.classId &&
               i.photoId === item.photoId &&
               i.format === item.format
           );
@@ -49,9 +51,9 @@ export const useCartStore = create<CartStore>()(
               items: state.items.map((existingItem, index) =>
                 index === existingIndex
                   ? {
-                      ...existingItem,
-                      quantity: existingItem.quantity + item.quantity,
-                    }
+                    ...existingItem,
+                    quantity: existingItem.quantity + item.quantity,
+                  }
                   : existingItem
               ),
             };
@@ -69,25 +71,25 @@ export const useCartStore = create<CartStore>()(
         });
       },
 
-      removeItem: (photoId, format) => {
-        const key = getItemKey(photoId, format);
+      removeItem: (classId, photoId, format) => {
+        const key = getItemKey(classId, photoId, format);
         set((state) => ({
           items: state.items.filter(
-            (i) => getItemKey(i.photoId, i.format) !== key
+            (i) => getItemKey(i.classId, i.photoId, i.format) !== key
           ),
         }));
       },
 
-      updateQuantity: (photoId, format, quantity) => {
+      updateQuantity: (classId, photoId, format, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(photoId, format);
+          get().removeItem(classId, photoId, format);
           return;
         }
 
-        const key = getItemKey(photoId, format);
+        const key = getItemKey(classId, photoId, format);
         set((state) => ({
           items: state.items.map((i) =>
-            getItemKey(i.photoId, i.format) === key
+            getItemKey(i.classId, i.photoId, i.format) === key
               ? { ...i, quantity }
               : i
           ),
@@ -96,18 +98,22 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => set({ items: [] }),
 
-      getTotalPrice: () => {
-        return get().items.reduce(
-          (total, item) => total + item.pricePerUnit * item.quantity,
-          0
-        );
+      getTotalPrice: (classId) => {
+        return get().items
+          .filter(item => !classId || item.classId === classId)
+          .reduce(
+            (total, item) => total + item.pricePerUnit * item.quantity,
+            0
+          );
       },
 
-      getTotalItems: () => {
-        return get().items.reduce(
-          (total, item) => total + item.quantity,
-          0
-        );
+      getTotalItems: (classId) => {
+        return get().items
+          .filter(item => !classId || item.classId === classId)
+          .reduce(
+            (total, item) => total + item.quantity,
+            0
+          );
       },
 
       getItemKey,

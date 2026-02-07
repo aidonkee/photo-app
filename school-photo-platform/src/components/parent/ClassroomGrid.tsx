@@ -16,9 +16,10 @@ type Photo = {
 
 type ClassroomGridProps = {
   photos: Photo[];
+  classId: string;
 };
 
-export default function ClassroomGrid({ photos }: ClassroomGridProps) {
+export default function ClassroomGrid({ photos, classId }: ClassroomGridProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   if (photos.length === 0) {
@@ -56,7 +57,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
               key={photo.id}
               onClick={() => setSelectedPhoto(photo)}
               className="group relative rounded-lg overflow-hidden cursor-pointer border-2 border-slate-200 hover:border-slate-400 transition-all hover:shadow-lg bg-slate-100 w-full"
-              style={{ aspectRatio }} 
+              style={{ aspectRatio }}
             >
               <WatermarkedImage
                 src={photo.thumbnailUrl || photo.watermarkedUrl}
@@ -98,6 +99,7 @@ export default function ClassroomGrid({ photos }: ClassroomGridProps) {
           open={!!selectedPhoto}
           onOpenChange={(open) => !open && setSelectedPhoto(null)}
           photo={selectedPhoto}
+          classId={classId}
         />
       )}
     </>

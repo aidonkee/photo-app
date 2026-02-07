@@ -63,7 +63,7 @@ export async function addWatermark(buffer: Buffer): Promise<{
       <svg xmlns="http://www.w3.org/2000/svg" width="${info.width}" height="${info.height}">
         <defs>
           <pattern id="wm" patternUnits="userSpaceOnUse" width="400" height="400" patternTransform="rotate(-30)">
-            <text x="20" y="200" font-size="48" font-family="Arial, sans-serif" fill="rgba(255,0,0,0.35)">
+            <text x="20" y="200" font-size="48" font-family="Arial, sans-serif" fill="rgba(255,255,255,0.35)">
               sample
             </text>
           </pattern>

@@ -21,11 +21,12 @@ type PageProps = {
 export default function CheckoutPage({ params }: PageProps) {
   const { schoolSlug, classId } = use(params);
   const router = useRouter();
-  const items = useCartStore((state) => state.items);
+  const allItems = useCartStore((state) => state.items);
+  const items = allItems.filter((item) => item.classId === classId);
   const removeItem = useCartStore((state) => state.removeItem);
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
 
-  const totalPrice = getTotalPrice();
+  const totalPrice = getTotalPrice(classId);
 
   React.useEffect(() => {
     if (items.length === 0) {
@@ -98,7 +99,7 @@ export default function CheckoutPage({ params }: PageProps) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                      onClick={() => removeItem(item.photoId, item.format)}
+                      onClick={() => removeItem(item.classId, item.photoId, item.format)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

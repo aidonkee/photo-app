@@ -6,21 +6,11 @@ import { useTranslation } from '@/stores/language-store';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShoppingCart, Plus, Minus, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, CheckCircle2, ChevronLeft, ChevronRight, X, ArrowLeft } from 'lucide-react';
 import {
   PhotoFormat,
   FORMAT_LABELS,
@@ -28,6 +18,7 @@ import {
   getPrice,
   SchoolPricing,
 } from '@/config/pricing';
+import { cn } from '@/lib/utils';
 
 type Photo = {
   id: string;
@@ -46,6 +37,7 @@ type PhotoModalProps = {
   allPhotos?: Photo[];
   schoolPricing?: SchoolPricing | null;
   onPhotoChange?: (photo: Photo) => void;
+  classId: string;
 };
 
 function getWatermarkUrl(originalUrl: string): string {
@@ -62,36 +54,46 @@ export default function PhotoModal({
   allPhotos = [],
   schoolPricing,
   onPhotoChange,
+  classId,
 }: PhotoModalProps) {
   const { t } = useTranslation();
 
   const getDisplayUrl = (p: Photo) => {
     return p.watermarkedUrl;
   };
-  const [format, setFormat] = useState<PhotoFormat>(PhotoFormat.A4);
-  const [quantity, setQuantity] = useState(1);
+
+  const [quantities, setQuantities] = useState<Record<PhotoFormat, number>>({
+    [PhotoFormat.A4]: 0,
+    [PhotoFormat.A5]: 0,
+  });
+
   const [showSuccess, setShowSuccess] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-  const price = getPrice(format, schoolPricing);
-  const totalPrice = price * quantity;
+  const totalPrice = Object.entries(quantities).reduce((acc, [fmt, qty]) => {
+    return acc + getPrice(fmt as PhotoFormat, schoolPricing) * qty;
+  }, 0);
+
+  const totalItemsCount = Object.values(quantities).reduce((acc, qty) => acc + qty, 0);
 
   const currentIndex = useMemo(() => {
     if (!photo) return -1;
     return allPhotos.findIndex(p => p.id === photo.id);
   }, [allPhotos, photo]);
-  
+
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < allPhotos.length - 1;
 
   const displayUrl = getWatermarkUrl(photo.watermarkedUrl);
 
   useEffect(() => {
-    setFormat(PhotoFormat.A4);
-    setQuantity(1);
+    setQuantities({
+      [PhotoFormat.A4]: 0,
+      [PhotoFormat.A5]: 0,
+    });
     setShowSuccess(false);
   }, [photo.id]);
 
@@ -143,14 +145,28 @@ export default function PhotoModal({
     }
   };
 
+  const updateQuantity = (format: PhotoFormat, delta: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [format]: Math.max(0, (prev[format] || 0) + delta)
+    }));
+  };
+
   const handleAddToCart = () => {
-    addItem({
-      photoId: photo.id,
-      photoUrl: displayUrl,
-      photoAlt: photo.alt,
-      format,
-      quantity,
-      pricePerUnit: price,
+    if (totalItemsCount === 0) return;
+
+    Object.entries(quantities).forEach(([fmt, qty]) => {
+      if (qty > 0) {
+        addItem({
+          classId,
+          photoId: photo.id,
+          photoUrl: displayUrl,
+          photoAlt: photo.alt,
+          format: fmt as PhotoFormat,
+          quantity: qty,
+          pricePerUnit: getPrice(fmt as PhotoFormat, schoolPricing),
+        });
+      }
     });
 
     setShowSuccess(true);
@@ -162,208 +178,160 @@ export default function PhotoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 md:max-w-5xl md:w-[900px] md:max-h-[85vh] md:overflow-hidden"
+        className="max-w-full w-full h-[100dvh] p-0 gap-0 border-0 overflow-hidden bg-black flex flex-col"
+        showCloseButton={false}
       >
-        {/* Desktop Navigation Arrows */}
-        {allPhotos.length > 1 && (
-          <>
-            {hasPrev && (
-              <button
-                onClick={goToPrev}
-                className="hidden md:flex absolute -left-16 top-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white hover:bg-slate-100 text-slate-900 rounded-full shadow-lg border border-slate-200 transition-all hover:scale-110"
-                aria-label={t('prev_photo')}
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-            )}
+        <DialogTitle className="sr-only">{t('select_photo')}</DialogTitle>
 
-            {hasNext && (
-              <button
-                onClick={goToNext}
-                className="hidden md:flex absolute -right-16 top-1/2 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white hover:bg-slate-100 text-slate-900 rounded-full shadow-lg border border-slate-200 transition-all hover:scale-110"
-                aria-label={t('next_photo')}
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            )}
-          </>
-        )}
+        {/* Main Photo Container with All Overlays */}
+        <div 
+          className="relative w-full h-full flex items-center justify-center overflow-hidden"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          {/* Photo */}
+          <img
+            src={getDisplayUrl(photo)}
+            alt={photo.alt || t('photo')}
+            className="max-w-full max-h-full object-contain"
+          />
 
-        <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-200">
-          <DialogTitle className="text-lg sm:text-xl font-semibold text-slate-900">
-            {t('select_photo')}
-          </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm text-slate-600">
-            {allPhotos.length > 1 ? (
-              <span>
-                {currentIndex + 1} {t('of')} {allPhotos.length} • {t('use_arrows_or_swipe')}
-              </span>
-            ) : (
-              <span>{t('select_format_quantity')}</span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6 md:h-[calc(85vh-120px)]">
-          {/* Photo Preview */}
-          <div
-            className="space-y-3 relative md:flex md:flex-col md:h-full"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            <div className="bg-slate-100 rounded-md overflow-hidden border border-slate-200 relative md:flex-1 md:flex md:items-center md:justify-center md:min-h-0">
-              <img
-                src={getDisplayUrl(photo)}
-                alt={photo.alt || t('photo')}
-                className="w-full h-auto block md:max-w-full md:max-h-full md:w-auto md:h-auto md:object-contain"
-              />
-
-              {/* Mobile Navigation Arrows */}
-              {allPhotos.length > 1 && (
-                <div className="md:hidden absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
-                  {hasPrev ? (
-                    <button
-                      onClick={goToPrev}
-                      className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
-                      aria-label={t('prev_photo')}
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                  ) : (
-                    <div className="w-10" />
-                  )}
-
-                  {hasNext ? (
-                    <button
-                      onClick={goToNext}
-                      className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-slate-900/70 hover:bg-slate-900 text-white rounded-full shadow-lg active:scale-95 transition-all"
-                      aria-label={t('next_photo')}
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  ) : (
-                    <div className="w-10" />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {allPhotos.length > 1 && (
-              <p className="md:hidden text-center text-xs text-slate-400">
-                {t('swipe_hint')}
-              </p>
-            )}
-          </div>
-
-          {/* Options */}
-          <div className="space-y-4 md:overflow-y-auto md:max-h-full">
-            <div className="space-y-2">
-              <Label htmlFor="format" className="text-sm font-medium text-slate-900">
-                {t('format')}
-              </Label>
-              <Select
-                value={format}
-                onValueChange={(value) => setFormat(value as PhotoFormat)}
-              >
-                <SelectTrigger id="format" className="h-11 border-slate-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(PhotoFormat).map((fmt) => (
-                    <SelectItem key={fmt} value={fmt} className="cursor-pointer py-3">
-                      <div className="flex items-start justify-between w-full gap-4">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm text-slate-900">
-                            {FORMAT_LABELS[fmt]}
-                          </p>
-                        </div>
-                        <span className="font-semibold text-sm text-slate-900 whitespace-nowrap">
-                          {formatPrice(getPrice(fmt, schoolPricing))}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-slate-900">{t('quantity')}</Label>
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-11 w-11 border-slate-300"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={quantity}
-                    onChange={(e) =>
-                      setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                    }
-                    className="w-full text-center text-xl font-semibold border border-slate-300 rounded-md py-2.5 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-11 w-11 border-slate-300"
-                  onClick={() => setQuantity(Math.min(99, quantity + 1))}
-                  disabled={quantity >= 99}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 rounded-md border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">{t('price_per_unit')}</span>
-                <span className="font-medium text-slate-900 tabular-nums">
-                  {formatPrice(price)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">{t('quantity')}:</span>
-                <span className="font-medium text-slate-900 tabular-nums">×{quantity}</span>
-              </div>
-              <div className="pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-900">{t('order_total')}:</span>
-                  <span className="text-2xl font-semibold text-slate-900 tabular-nums">
-                    {formatPrice(totalPrice)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {showSuccess && (
-              <Alert className="bg-slate-900 border-slate-900 text-white">
-                <CheckCircle2 className="h-4 w-4 text-white" />
-                <AlertDescription className="text-white">
-                  {t('added_to_cart')}
-                </AlertDescription>
-              </Alert>
-            )}
+          {/* Top Bar - Back & Close Buttons */}
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4">
+            <Button
+              size="sm"
+              className="bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white gap-1 sm:gap-2 rounded-full shadow-lg border-0 font-medium text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+              onClick={() => onOpenChange(false)}
+            >
+              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{t('back')}</span>
+            </Button>
 
             <Button
-              onClick={handleAddToCart}
-              disabled={showSuccess}
-              className="w-full h-11 text-base bg-slate-900 hover:bg-slate-800"
+              variant="ghost"
+              size="icon"
+              className="bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white rounded-full shadow-lg h-8 w-8 sm:h-10 sm:w-10"
+              onClick={() => onOpenChange(false)}
             >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              {t('add_to_cart')}
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
+          </div>
+
+          {/* Navigation Arrows */}
+          {allPhotos.length > 1 && (
+            <>
+              {hasPrev && (
+                <button
+                  onClick={goToPrev}
+                  className="absolute left-2 sm:left-3 md:left-6 z-40 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white rounded-full transition-all shadow-lg"
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
+                </button>
+              )}
+
+              {hasNext && (
+                <button
+                  onClick={goToNext}
+                  className="absolute right-2 sm:right-3 md:right-6 z-40 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center bg-black/70 hover:bg-black/80 backdrop-blur-sm text-white rounded-full transition-all shadow-lg"
+                  aria-label="Next photo"
+                >
+                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Bottom Controls - Format Selection & Cart */}
+          <div className="absolute bottom-0 left-0 right-0 z-40 p-2 sm:p-4 md:p-6 space-y-2 sm:space-y-3">
+            {/* Format Selection */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-2xl mx-auto">
+              {Object.values(PhotoFormat).map((fmt) => {
+                const qty = quantities[fmt] || 0;
+                const itemPrice = getPrice(fmt, schoolPricing);
+                const isSelected = qty > 0;
+
+                return (
+                  <div
+                    key={fmt}
+                    className={cn(
+                      "flex items-center justify-between p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl transition-all flex-1 shadow-lg backdrop-blur-sm",
+                      isSelected
+                        ? "bg-green-600/90"
+                        : "bg-black/70"
+                    )}
+                  >
+                    <div className="flex flex-col mr-2 sm:mr-3">
+                      <span className="font-bold text-sm sm:text-base md:text-lg text-white">
+                        {FORMAT_LABELS[fmt]}
+                      </span>
+                      <span className="text-xs sm:text-sm md:text-base font-semibold text-white/90">
+                        {formatPrice(itemPrice)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center rounded-lg sm:rounded-xl shadow-sm bg-white/10">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-l-lg sm:rounded-l-xl hover:bg-white/20 text-white"
+                        onClick={() => updateQuantity(fmt, -1)}
+                        disabled={qty <= 0}
+                      >
+                        <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                      <span className="w-8 sm:w-10 md:w-12 text-center font-bold text-base sm:text-lg md:text-xl text-white">
+                        {qty}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-r-lg sm:rounded-r-xl hover:bg-white/20 text-white"
+                        onClick={() => updateQuantity(fmt, 1)}
+                        disabled={qty >= 99}
+                      >
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add to Cart Button */}
+            <div className="flex justify-center">
+              <Button
+                onClick={handleAddToCart}
+                disabled={totalItemsCount === 0 || showSuccess}
+                className={cn(
+                  "w-full sm:max-w-md h-12 sm:h-14 md:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-base md:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
+                  showSuccess 
+                    ? "bg-green-600/90 hover:bg-green-700/90" 
+                    : "bg-black/70 hover:bg-black/80",
+                  totalItemsCount === 0 && "opacity-50"
+                )}
+              >
+                {showSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                    <span>{t('added_to_cart')}</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                    <span>
+                      {t('add_to_cart')}
+                      {totalPrice > 0 && (
+                        <span className="ml-1 sm:ml-2 font-black">
+                          • {formatPrice(totalPrice)}
+                        </span>
+                      )}
+                    </span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

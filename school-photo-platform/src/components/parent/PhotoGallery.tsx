@@ -19,6 +19,7 @@ type Photo = {
 type PhotoGalleryProps = {
   photos: Photo[];
   schoolPricing?: SchoolPricing | null;
+  classId: string;
 };
 
 function useColumnCount() {
@@ -79,6 +80,7 @@ function distributeToColumns(
 export default function PhotoGallery({
   photos,
   schoolPricing,
+  classId,
 }: PhotoGalleryProps) {
   const { t } = useTranslation();
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
@@ -138,6 +140,7 @@ export default function PhotoGallery({
           allPhotos={photos}
           schoolPricing={schoolPricing}
           onPhotoChange={(photo: Photo) => setSelectedPhoto(photo)}
+          classId={classId}
         />
       )}
     </>
