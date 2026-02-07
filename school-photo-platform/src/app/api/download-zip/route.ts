@@ -110,76 +110,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Заказы не найдены' }, { status: 404 });
     }
 
-    // 4) Grouping
-    const ordersByClass: Record<string, any[]> = {};
-    if (schoolId) {
-      for (const order of orders) {
-        const className = sanitizeFolderName(order.classroom?.name || 'Class');
-        if (!ordersByClass[className]) ordersByClass[className] = [];
-        ordersByClass[className].push(order);
-      }
-    } else {
-      ordersByClass['Single_Order'] = orders;
-    }
+    // 4) Download files into zip
+    for (let orderIndex = 0; orderIndex < orders.length; orderIndex++) {
+      const order = orders[orderIndex];
+      const safeClassName = sanitizeFolderName(order.classroom?.name || 'Class');
+      const safeSurname = sanitizeFolderName(order.parentSurname || 'Parent');
+      const items = order.items || [];
 
-    // 5) Download files into zip
-    for (const [className, classOrders] of Object.entries(ordersByClass)) {
-      const rootFolder = schoolId ? zip.folder(className) : zip;
-      if (!rootFolder) continue;
+      const downloadTasks = items.map(async (item: any, itemIndex: number) => {
+        const formatName = sanitizeFolderName(item.format || 'UNSPECIFIED');
+        const formatFolder = zip.folder(formatName);
+        if (!formatFolder) return;
 
-      for (let orderIndex = 0; orderIndex < classOrders.length; orderIndex++) {
-        const order = classOrders[orderIndex];
+        try {
+          const originalUrl: string | undefined = item.photo?.originalUrl;
+          if (!originalUrl) throw new Error('Отсутствует originalUrl у фото');
 
-        const safeSurname = sanitizeFolderName(order.parentSurname || 'Parent');
-        const safeOrderName = `Заказ_${String(orderIndex + 1).padStart(3, '0')}_${safeSurname}`;
+          const storagePath = extractStoragePath(originalUrl);
 
-        const orderFolder = rootFolder.folder(safeOrderName);
-        if (!orderFolder) continue;
+          const { data, error } = await supabaseAdmin.storage
+            .from('school-photos')
+            .download(storagePath);
 
-        const items = order.items || [];
-
-        const downloadTasks = items.map(async (item: any, itemIndex: number) => {
-          const formatFolder = orderFolder.folder(sanitizeFolderName(item.format || 'UNSPECIFIED'));
-          if (!formatFolder) return;
-
-          try {
-            const originalUrl: string | undefined = item.photo?.originalUrl;
-            if (!originalUrl) throw new Error('Отсутствует originalUrl у фото');
-
-            const storagePath = extractStoragePath(originalUrl);
-
-            const { data, error } = await supabaseAdmin.storage
-              .from('school-photos')
-              .download(storagePath);
-
-            if (error || !data) {
-              throw new Error(error?.message || 'Не удалось скачать файл');
-            }
-
-            const arrayBuffer = await data.arrayBuffer();
-            const extension = getExtFromUrl(originalUrl);
-
-            const copies = Math.max(1, item.quantity || 1);
-            for (let copyIndex = 1; copyIndex <= copies; copyIndex++) {
-              const fileName = `photo-${String(itemIndex + 1).padStart(3, '0')}_copy${copyIndex}.${extension}`;
-              formatFolder.file(fileName, arrayBuffer);
-            }
-          } catch (err: any) {
-            console.error(`🔥 Ошибка скачивания фото OrderItem ${item.id}:`, err);
-            formatFolder.file(
-              `ERROR_item_${String(itemIndex + 1).padStart(3, '0')}.txt`,
-              [
-                `OrderItem: ${item.id}`,
-                `PhotoId: ${item.photoId}`,
-                `Путь: ${item.photo?.originalUrl}`,
-                `Ошибка: ${err?.message || String(err)}`,
-              ].join('\n')
-            );
+          if (error || !data) {
+            throw new Error(error?.message || 'Не удалось скачать файл');
           }
-        });
 
-        await Promise.all(downloadTasks);
-      }
+          const arrayBuffer = await data.arrayBuffer();
+          const extension = getExtFromUrl(originalUrl);
+
+          const copies = Math.max(1, item.quantity || 1);
+          for (let copyIndex = 1; copyIndex <= copies; copyIndex++) {
+            // Filename format: Class_Surname_#OrderIndex_photoIndex_copyIndex.ext
+            const fileName = `${safeClassName}_${safeSurname}_#${String(orderIndex + 1).padStart(3, '0')}_photo${String(itemIndex + 1).padStart(3, '0')}_copy${copyIndex}.${extension}`;
+            formatFolder.file(fileName, arrayBuffer);
+          }
+        } catch (err: any) {
+          console.error(`🔥 Ошибка скачивания фото OrderItem ${item.id}:`, err);
+          formatFolder.file(
+            `ERROR_${safeClassName}_${safeSurname}_item_${String(itemIndex + 1).padStart(3, '0')}.txt`,
+            [
+              `OrderItem: ${item.id}`,
+              `PhotoId: ${item.photoId}`,
+              `Путь: ${item.photo?.originalUrl}`,
+              `Ошибка: ${err?.message || String(err)}`,
+            ].join('\n')
+          );
+        }
+      });
+
+      await Promise.all(downloadTasks);
     }
 
     // 6) Generate zip (Buffer)

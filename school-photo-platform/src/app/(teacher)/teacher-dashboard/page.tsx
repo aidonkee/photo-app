@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { getTeacherOrders, getOrderById } from '@/actions/teacher/order-actions';
-import ParentOrdersList from '@/components/teacher/ParentOrdersList';
+import TeacherOrdersTable from '@/components/teacher/TeacherOrdersTable';
 import OrderDetailView from '@/components/teacher/OrderDetailView';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
@@ -27,53 +27,52 @@ async function DashboardContent({ searchParams }: PageProps) {
   const selectedOrder = selectedOrderId
     ? await getOrderById(selectedOrderId)
     : orders.length > 0
-    ? await getOrderById(orders[0].id)
-    : null;
+      ? await getOrderById(orders[0].id)
+      : null;
 
   const hasSelection = !!selectedOrderId;
 
   return (
-    <div className="h-[calc(100vh-65px)] bg-slate-50 overflow-hidden flex">
-      <div
-        className={`
-        w-full md:w-[320px] lg:w-[380px] h-full bg-white border-r border-slate-200 flex-shrink-0
-        ${hasSelection ? 'hidden md:block' : 'block'}
-      `}
-      >
-        <ParentOrdersList orders={orders} />
-      </div>
+    <div className="min-h-[calc(100vh-65px)] bg-slate-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {!hasSelection ? (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Заказы класса
+              </h1>
+              <p className="text-slate-500 font-medium">
+                Проверяйте заказы родителей и отмечайте оплату
+              </p>
+            </div>
 
-      <div
-        className={`
-        flex-1 h-full overflow-y-auto bg-slate-50
-        ${hasSelection ? 'block' : 'hidden md:block'}
-      `}
-      >
-        {selectedOrder ? (
-          <div className="h-full flex flex-col">
-            <div className="md:hidden p-4 bg-white border-b border-slate-200 sticky top-0 z-10 flex items-center gap-2">
+            <TeacherOrdersTable orders={orders} />
+          </div>
+        ) : selectedOrder ? (
+          <div className="space-y-6">
+            <div className="bg-white border-b border-slate-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 sticky top-0 z-20 flex items-center justify-between shadow-sm">
               <Link href="/teacher-dashboard">
-                <Button variant="ghost" size="sm" className="-ml-2 gap-1 text-slate-600">
+                <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-slate-900 font-bold">
                   <ArrowLeft className="w-4 h-4" />
                   Назад к списку
                 </Button>
               </Link>
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-400 uppercase tracking-wider">Проверка заказа:</span>
+                <span className="text-sm font-extrabold text-slate-900">{selectedOrder.parentSurname} {selectedOrder.parentName}</span>
+              </div>
             </div>
 
-            <div className="p-4 lg:p-8 max-w-4xl mx-auto w-full">
+            <div className="max-w-4xl mx-auto">
               <OrderDetailView order={selectedOrder} canEdit={selectedOrder.canEdit ?? false} />
             </div>
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-              <ArrowLeft className="w-8 h-8 md:hidden" />
-              <div className="hidden md:block w-8 h-1 bg-slate-300 rounded-full" />
-            </div>
-            <p className="text-lg font-medium text-slate-600">Выберите заказ для проверки</p>
-            <p className="text-sm mt-2 max-w-xs text-center">
-              Нажмите на родителя в списке слева, чтобы увидеть фотографии и детали заказа.
-            </p>
+          <div className="h-96 flex flex-col items-center justify-center text-slate-400">
+            <p className="text-lg font-medium text-slate-600">Заказ не найден</p>
+            <Link href="/teacher-dashboard" className="mt-4">
+              <Button variant="outline">Вернуться к списку</Button>
+            </Link>
           </div>
         )}
       </div>
