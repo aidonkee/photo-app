@@ -2,7 +2,10 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const SECRET_KEY = process.env.JWT_SECRET;
+if (!SECRET_KEY) {
+  throw new Error('CRITICAL: JWT_SECRET environment variable is not set. Application cannot start securely.');
+}
 const key = new TextEncoder().encode(SECRET_KEY);
 
 export type SessionPayload = {

@@ -20,10 +20,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. ЗАЩИТА ПРИВАТНЫХ МАРШРУТОВ (Если нет сессии - кидаем на вход)
-  const isProtectedRoute = 
-    pathname.startsWith('/dashboard') || 
-    pathname.startsWith('/admins') || 
-    pathname.startsWith('/admin') || 
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/admins') ||
+    pathname.startsWith('/admin') ||
     pathname.startsWith('/teacher');
 
   if (isProtectedRoute && !session) {
@@ -51,8 +51,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 
-  // TEACHER
-  if (pathname.startsWith('/teacher') && role !== 'TEACHER') {
+  // TEACHER (SUPER_ADMIN can also access for debugging)
+  if (pathname.startsWith('/teacher') && role !== 'TEACHER' && role !== 'SUPER_ADMIN') {
     return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 

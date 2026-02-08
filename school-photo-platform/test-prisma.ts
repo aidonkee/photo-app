@@ -8,7 +8,7 @@ async function main() {
         // We expect "Record to update not found", NOT "Unknown argument"
         await prisma.order.update({
             where: { id: '00000000-0000-0000-0000-000000000000' },
-            data: { isPaid: true },
+            data: { isPaid: true } as any,
         });
     } catch (e: any) {
         if (e.code === 'P2025') {

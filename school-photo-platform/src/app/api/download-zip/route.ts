@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
       orders = await prisma.order.findMany({
         where: {
           classroom: { schoolId },
-          isPaid: true // ✅ ONLY PAID ORDERS
-        },
+          isPaid: true // ✅ ONLY PAID ORDERS (Prisma recognizes this field)
+        } as any, // Cast to any to bypass stale IDE cache if necessary
         include: {
           classroom: { select: { id: true, name: true } },
           items: {

@@ -91,7 +91,7 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
         pricePerUnit: Number(item.price),
         photo: item.photo,
       })),
-      isPaid: order.isPaid,
+      isPaid: (order as any).isPaid,
       canEdit: classroom?.isEditAllowed ?? false,
     }));
   } catch (error) {
@@ -164,7 +164,7 @@ export async function getOrderById(orderId: string): Promise<TeacherOrder | null
         pricePerUnit: Number(item.price),
         photo: item.photo,
       })),
-      isPaid: order.isPaid,
+      isPaid: (order as any).isPaid,
       canEdit: classroom?.isEditAllowed ?? false,
     };
   } catch (error) {
@@ -190,12 +190,23 @@ export async function approveOrderAction(orderId: string) {
   }
 
   try {
+    // Fetch order with classroom to check isLocked
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        classroom: {
+          select: { isLocked: true },
+        },
+      },
     });
 
     if (!order || order.classId !== classId) {
       throw new Error('Order not found or access denied');
+    }
+
+    // Check if classroom is locked
+    if (order.classroom.isLocked) {
+      throw new Error('Класс заблокирован. Изменения невозможны.');
     }
 
     await prisma.order.update({
@@ -223,28 +234,42 @@ export async function toggleOrderPaymentStatus(orderId: string, isPaid: boolean)
     throw new Error('Unauthorized');
   }
 
+  // Fetch order with classroom to check ownership and isLocked
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      classroom: {
+        select: { id: true, isLocked: true },
+      },
+    },
+  });
+
+  if (!order) {
+    throw new Error('Order not found');
+  }
+
   // If TEACHER, verify ownership
   if (session.role === 'TEACHER') {
     const classId = session.classId;
     if (!classId) throw new Error('Invalid session: No classroom ID');
 
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      select: { classId: true },
-    });
-
-    if (!order || order.classId !== classId) {
+    if (order.classId !== classId) {
       throw new Error('Access denied');
     }
+  }
+
+  // Check if classroom is locked (unless SUPER_ADMIN)
+  if (order.classroom.isLocked && session.role !== 'SUPER_ADMIN') {
+    throw new Error('Класс заблокирован. Изменения невозможны.');
   }
 
   try {
     const result = await prisma.order.update({
       where: { id: orderId },
-      data: { isPaid },
+      data: { isPaid } as any, // Type assertion to bypass stale Prisma types
     });
 
-    return { success: true, isPaid: result.isPaid };
+    return { success: true, isPaid: (result as any).isPaid };
   } catch (error: any) {
     console.error('Error toggling payment status:', error);
     throw new Error(error.message || 'Failed to update payment status');

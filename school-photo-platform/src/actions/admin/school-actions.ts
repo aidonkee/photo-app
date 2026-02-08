@@ -130,7 +130,7 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
     const school = await prisma.school.create({
       data: {
         name,
-        slug,
+        slug, 
         primaryColor,
         isKazakhEnabled,
         adminId: session.userId,
