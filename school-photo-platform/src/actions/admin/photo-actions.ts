@@ -320,14 +320,12 @@ export async function uploadSchoolPhotoAction(
 
     if (!classroom) {
       const plainPassword = uuidv4().substring(0, 8);
-      const hashedPassword = await bcrypt.hash(plainPassword, 10);
       classroom = await prisma.classroom.create({
         data: {
           name: className,
           schoolId: schoolId,
           teacherLogin: `sch${schoolId.substring(0, 4)}-${className.toLowerCase().replace(/\s+/g, '')}`,
-          teacherPassword: hashedPassword,
-          teacherPasswordPlain: plainPassword,
+          teacherPassword: plainPassword,
         },
       });
     }
