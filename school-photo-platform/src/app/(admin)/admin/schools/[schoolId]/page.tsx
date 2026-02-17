@@ -4,6 +4,7 @@ import { getSchoolById } from '@/actions/admin/school-actions';
 import { getClassrooms } from '@/actions/admin/classroom-actions';
 import ClassroomForm from '@/components/admin/ClassroomForm';
 import SchoolLinkSection from '@/components/admin/SchoolLinkSection';
+import { signSchoolAccess } from '@/lib/auth';
 import { KeyRound, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,9 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
   const classrooms = await getClassrooms(schoolId);
   const totalPhotos = classrooms.reduce((acc, curr) => acc + (curr._count?.photos || 0), 0);
   const totalOrders = classrooms.reduce((acc, curr) => acc + (curr._count?.orders || 0), 0);
+
+  // Generate secure token for school access
+  const schoolToken = await signSchoolAccess(school.slug);
 
   // Функция маскировки логина
   const maskLogin = (login: string) => {
@@ -110,8 +114,7 @@ export default async function SchoolDetailsPage({ params }: PageProps) {
           </div>
         </div>
       </div>
-
-      <SchoolLinkSection slug={school.slug} />
+      <SchoolLinkSection slug={school.slug} token={schoolToken} />
 
       {/* Stats:  Очень компактные карточки */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">

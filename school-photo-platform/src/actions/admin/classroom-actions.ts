@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 
 // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
@@ -147,6 +148,7 @@ export async function createClassroomAction(
     }
 
     const plainPassword = generatePassword();
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
     const teacherLogin = await generateTeacherLogin(school.slug, name);
 
     const classroom = await prisma.classroom.create({
@@ -154,7 +156,7 @@ export async function createClassroomAction(
         name: name.trim(),
         schoolId,
         teacherLogin,
-        teacherPassword: plainPassword,
+        teacherPassword: hashedPassword,
         isEditAllowed: false,
         isLocked: false,
       },
@@ -261,6 +263,7 @@ export async function findOrCreateClassroom(schoolId: string, className: string)
   // Create if not exists
   if (!classroom) {
     const plainPassword = generatePassword();
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
     const teacherLogin = await generateTeacherLogin(school.slug, normalizedName);
 
     classroom = await prisma.classroom.create({
@@ -268,7 +271,7 @@ export async function findOrCreateClassroom(schoolId: string, className: string)
         name: normalizedName,
         schoolId,
         teacherLogin,
-        teacherPassword: plainPassword,
+        teacherPassword: hashedPassword,
         isEditAllowed: false,
         isLocked: false,
       },

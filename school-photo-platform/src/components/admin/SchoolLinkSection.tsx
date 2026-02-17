@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Check, Copy, ExternalLink, Globe } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-export default function SchoolLinkSection({ slug }: { slug: string }) {
+export default function SchoolLinkSection({ slug, token }: { slug: string; token: string }) {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
 
@@ -18,7 +18,7 @@ export default function SchoolLinkSection({ slug }: { slug: string }) {
     }
   }, []);
 
-  const fullUrl = `${origin}/s/${slug}`;
+  const fullUrl = `${origin}/s/${slug}?t=${token}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(fullUrl);
@@ -36,13 +36,13 @@ export default function SchoolLinkSection({ slug }: { slug: string }) {
               Публичная ссылка для родителей
             </Label>
             <div className="flex gap-2">
-              <Input 
-                value={fullUrl} 
-                readOnly 
+              <Input
+                value={fullUrl}
+                readOnly
                 className="bg-white font-mono text-slate-600"
               />
-              <Button 
-                onClick={handleCopy} 
+              <Button
+                onClick={handleCopy}
                 className={copied ? "bg-slate-900 hover:bg-slate-800" : ""}
                 variant="default"
               >

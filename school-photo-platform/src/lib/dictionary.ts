@@ -13,7 +13,7 @@ export const dictionary = {
     back_to: 'Назад к',
     submit: 'Отправить',
     close: 'Закрыть',
-    
+
     // School Landing
     school_not_found: 'Школа не найдена',
     photo_gallery: 'Фотогалерея',
@@ -23,7 +23,7 @@ export const dictionary = {
     photos_coming_soon: 'Фотографии скоро будут доступны. Пожалуйста, зайдите позже.',
     view_gallery: 'Посмотреть галерею',
     photos_word: 'фото',
-    
+
     // Cart & Checkout
     cart_empty: 'Корзина пуста',
     cart_title: 'Корзина',
@@ -42,7 +42,7 @@ export const dictionary = {
     photos_selected: 'фото',
     pay: 'Оплатить',
     processing: 'Оформляем...',
-    
+
     // Photo Gallery
     select_photo: 'Выбор фотографии',
     select_format_quantity: 'Выберите формат и количество',
@@ -55,7 +55,7 @@ export const dictionary = {
     swipe_hint: '👆 Свайп влево/вправо для навигации',
     of: 'из',
     photo: 'Фотография',
-    
+
     // Forms
     first_name: 'Имя',
     last_name: 'Фамилия',
@@ -69,12 +69,12 @@ export const dictionary = {
     phone_optional: 'Номер телефона (необязательно)',
     phone_placeholder: '+7 (___) ___-__-__',
     required_field: 'Обязательное поле',
-    
+
     // Pricing
     format: 'Формат',
     quantity: 'Количество',
     price_per_unit: 'Цена за единицу:',
-    
+
     // Teacher Dashboard
     teacher_dashboard_title: 'Панель учителя',
     classroom: 'Класс',
@@ -82,43 +82,41 @@ export const dictionary = {
     orders: 'Заказы',
     pending_orders: 'Ожидающие заказы',
     approved_orders: 'Одобренные заказы',
-    
+
     // Status
     pending: 'Ожидает',
     approved: 'Одобрено',
     locked: 'Заблокировано',
     completed: 'Завершено',
-    
+
     // Photo Formats
     format_a4: 'Формат A4',
     format_a5: 'Формат A5',
-    format_magnet: 'Фото-магнит',
-    format_digital: 'Цифровая копия',
-    
+
     // School
     choose_classroom: 'Выберите класс',
     school_info: 'Информация о школе',
-    
+
     // Watermark
     watermark_notice: 'Водяной знак будет удален при печати',
-    
+
     // Actions
     approve_order: 'Одобрить заказ',
     request_edit: 'Запросить редактирование',
     view_order: 'Просмотреть заказ',
     prev_photo: 'Предыдущее фото',
     next_photo: 'Следующее фото',
-    
+
     // Messages
     order_confirmation: 'Вы получите подтверждение на email',
     contact_info: 'Контактная информация',
     order_summary: 'Сводка заказа',
     order_error: 'Ошибка при оформлении заказа',
-    
+
     // Legal
     terms_agreement: 'Нажимая кнопку, вы соглашаетесь с правилами сервиса и обработкой персональных данных.',
   },
-  
+
   kk: {
     // Common
     loading: 'Жүктелуде...',
@@ -131,7 +129,7 @@ export const dictionary = {
     back_to: 'Артқа',
     submit: 'Жіберу',
     close: 'Жабу',
-    
+
     // School Landing
     school_not_found: 'Мектеп табылмады',
     photo_gallery: 'Фотогалерея',
@@ -141,7 +139,7 @@ export const dictionary = {
     photos_coming_soon: 'Фотосуреттер жақында қолжетімді болады. Кейінірек кіріңіз.',
     view_gallery: 'Галереяны қарау',
     photos_word: 'фото',
-    
+
     // Cart & Checkout
     cart_empty: 'Себет бос',
     cart_title: 'Себет',
@@ -160,7 +158,7 @@ export const dictionary = {
     photos_selected: 'фото',
     pay: 'Төлеу',
     processing: 'Өңделуде...',
-    
+
     // Photo Gallery
     select_photo: 'Фото таңдау',
     select_format_quantity: 'Пішім мен санын таңдаңыз',
@@ -173,7 +171,7 @@ export const dictionary = {
     swipe_hint: '👆 Навигация үшін солға/оңға сырғытыңыз',
     of: 'ішінен',
     photo: 'Фотосурет',
-    
+
     // Forms
     first_name: 'Аты',
     last_name: 'Тегі',
@@ -187,12 +185,12 @@ export const dictionary = {
     phone_optional: 'Телефон нөмірі (міндетті емес)',
     phone_placeholder: '+7 (___) ___-__-__',
     required_field: 'Міндетті өріс',
-    
+
     // Pricing
     format: 'Пішім',
     quantity: 'Саны',
     price_per_unit: 'Бірлік бағасы:',
-    
+
     // Teacher Dashboard
     teacher_dashboard_title: 'Мұғалім панелі',
     classroom: 'Сынып',
@@ -200,39 +198,37 @@ export const dictionary = {
     orders: 'Тапсырыстар',
     pending_orders: 'Күтілуде',
     approved_orders: 'Бекітілген',
-    
+
     // Status
     pending: 'Күтілуде',
     approved: 'Бекітілді',
     locked: 'Бұғатталған',
     completed: 'Аяқталды',
-    
+
     // Photo Formats
     format_a4: 'A4 пішімі',
     format_a5: 'A5 пішімі',
-    format_magnet: 'Фото-магнит',
-    format_digital: 'Цифрлық көшірме',
-    
+
     // School
     choose_classroom: 'Сыныпты таңдаңыз',
     school_info: 'Мектеп туралы ақпарат',
-    
+
     // Watermark
     watermark_notice: 'Су белгісі басып шығарғанда алынады',
-    
+
     // Actions
     approve_order: 'Тапсырысты бекіту',
     request_edit: 'Өңдеуді сұрау',
     view_order: 'Тапсырысты қарау',
     prev_photo: 'Алдыңғы фото',
     next_photo: 'Келесі фото',
-    
+
     // Messages
     order_confirmation: 'Сізге email арқылы растау жіберіледі',
     contact_info: 'Байланыс ақпараты',
     order_summary: 'Тапсырыс қорытындысы',
     order_error: 'Тапсырысты рәсімдеу кезінде қате',
-    
+
     // Legal
     terms_agreement: 'Түймені басу арқылы сіз қызмет ережелерімен және жеке деректерді өңдеумен келісесіз.',
   },

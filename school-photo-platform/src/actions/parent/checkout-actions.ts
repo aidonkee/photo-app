@@ -48,8 +48,28 @@ export async function submitOrderAction(
   });
 
   if (!parsed.success) {
-    console.error('Zod validation error:', parsed.error.flatten());
-    return { error: 'Некорректные данные заказа' };
+    const flatErrors = parsed.error.flatten();
+    console.error('Zod validation error:', JSON.stringify(flatErrors, null, 2));
+
+    // Surface specific field errors for debugging
+    const fieldErrors = flatErrors.fieldErrors;
+
+    // Check for format-specific errors
+    if (fieldErrors.cartItems) {
+      const formatIssue = parsed.error.issues.find(
+        (issue) => issue.path.includes('format')
+      );
+      if (formatIssue) {
+        console.error('Format validation failed:', formatIssue);
+        return { error: `Недопустимый формат фото. Пожалуйста, очистите корзину и добавьте фото заново.` };
+      }
+    }
+
+    if (fieldErrors.parentDetails) {
+      return { error: 'Пожалуйста, заполните все обязательные поля (ФИО)' };
+    }
+
+    return { error: 'Некорректные данные заказа. Попробуйте очистить корзину и оформить заново.' };
   }
 
   const {

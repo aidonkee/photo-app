@@ -1,6 +1,6 @@
 'use server';
 
-// import bcrypt from 'bcryptjs'; <--- УДАЛЕНО
+import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { createSession, deleteSession } from '@/lib/auth';
@@ -41,11 +41,8 @@ export async function teacherLoginAction(prevState: any, formData: FormData) {
       };
     }
 
-    // Verify password (DIRECT COMPARISON for plain text passwords)
-    // const isValidPassword = await bcrypt.compare(teacherPassword, classroom.teacherPassword); <--- УБРАЛИ
-    
-    // Сравниваем просто как строки
-    const isValidPassword = teacherPassword === classroom.teacherPassword;
+    // Verify password
+    const isValidPassword = await bcrypt.compare(teacherPassword, classroom.teacherPassword);
 
     if (!isValidPassword) {
       return {

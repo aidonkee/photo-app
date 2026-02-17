@@ -23,9 +23,10 @@ type CheckoutFormProps = {
 export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const items = useCartStore((state) => state.items);
+  const allItems = useCartStore((state) => state.items);
+  const items = allItems.filter(item => item.classId === classId);
   const clearCart = useCartStore((state) => state.clearCart);
-  const totalPrice = useCartStore((state) => state.getTotalPrice());
+  const totalPrice = useCartStore((state) => state.getTotalPrice(classId));
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
@@ -61,7 +62,7 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
       }
 
       setSuccess(true);
-      clearCart();
+      clearCart(classId);
 
       setTimeout(() => {
         router.push(`/s/${schoolSlug}/success?orderId=${result.orderId}`);

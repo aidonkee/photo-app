@@ -178,7 +178,7 @@ export default function PhotoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="!max-w-none !w-screen !h-screen !p-0 !gap-0 !border-0 !rounded-none overflow-hidden bg-black flex flex-col"
+        className="!max-w-none !w-screen !h-[100dvh] !p-0 !gap-0 !border-0 !rounded-none overflow-hidden bg-black flex flex-col"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">{t('select_photo')}</DialogTitle>
@@ -198,23 +198,23 @@ export default function PhotoModal({
           />
 
           {/* Top Bar - Back & Close Buttons */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4">
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4 pt-[calc(0.5rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/60 to-transparent">
             <Button
               size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white gap-1 sm:gap-2 rounded-full shadow-lg border-0 font-medium text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+              className="bg-red-600 hover:bg-red-700 text-white gap-2 rounded-full shadow-lg border-0 font-bold text-sm h-10 px-4"
               onClick={() => onOpenChange(false)}
             >
-              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">{t('back')}</span>
+              <ArrowLeft className="w-5 h-5" />
+              <span>{t('back')}</span>
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg h-8 w-8 sm:h-10 sm:w-10"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg h-10 w-10"
               onClick={() => onOpenChange(false)}
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-5 h-5" />
             </Button>
           </div>
 
@@ -244,7 +244,7 @@ export default function PhotoModal({
           )}
 
           {/* Bottom Controls - Format Selection & Cart */}
-          <div className="absolute bottom-0 left-0 right-0 z-40 p-2 sm:p-4 md:p-6 space-y-2 sm:space-y-3">
+          <div className="absolute bottom-0 left-0 right-0 z-50 p-2 sm:p-4 md:p-6 pb-[calc(0.5rem+env(safe-area-inset-bottom))] space-y-2 sm:space-y-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
             {/* Format Selection */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-2xl mx-auto">
               {Object.values(PhotoFormat).map((fmt) => {

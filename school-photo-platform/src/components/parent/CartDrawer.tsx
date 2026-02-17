@@ -80,7 +80,7 @@ export default function CartDrawer({
         </SheetHeader>
 
         {showCheckout ? (
-          <ScrollArea className="flex-1 px-6">
+          <div className="flex-1 overflow-y-auto px-6">
             <div className="space-y-6 py-6">
               <div className="bg-slate-50 p-4 rounded-lg border w-full">
                 <div className="flex justify-between font-medium mb-2">
@@ -96,10 +96,10 @@ export default function CartDrawer({
 
               <CheckoutForm classId={classId} schoolSlug={schoolSlug} />
             </div>
-          </ScrollArea>
+          </div>
         ) : (
           <div className="flex flex-col flex-1 min-h-0">
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-y-auto">
               <div className="p-6 space-y-4">
                 {items.length === 0 ? (
                   <Alert>
@@ -186,18 +186,18 @@ export default function CartDrawer({
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
-            <div className="pt-4 pb-6 mt-auto bg-white border-t border-slate-200 shrink-0 z-10">
+            <div className="px-6 pt-4 pb-8 bg-white border-t border-slate-100 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-lg font-medium text-slate-700">{t('order_total')}:</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-base font-medium text-slate-600">{t('order_total')}:</p>
+                <p className="text-2xl font-bold text-slate-900 tabular-nums">
                   {formatPrice(totalPrice)}
                 </p>
               </div>
 
               <Button
-                className="w-full h-12 text-base bg-slate-900 hover:bg-slate-800 text-white rounded-xl"
+                className="w-full h-14 text-base font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-xl active:scale-[0.98] transition-all"
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
               >

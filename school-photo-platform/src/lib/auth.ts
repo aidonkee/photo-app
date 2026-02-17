@@ -68,6 +68,7 @@ export async function deleteSession() {
   cookieStore.delete('session_token');
 }
 
+
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
@@ -75,4 +76,28 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
 
   return await decrypt(token);
+}
+
+/**
+ * Sign a school access token
+ */
+export async function signSchoolAccess(slug: string) {
+  return await new SignJWT({ slug })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .sign(key);
+}
+
+/**
+ * Verify a school access token
+ */
+export async function verifySchoolAccess(slug: string, token: string) {
+  try {
+    const { payload } = await jwtVerify(token, key, {
+      algorithms: ['HS256'],
+    });
+    return (payload as { slug: string }).slug === slug;
+  } catch (error) {
+    return false;
+  }
 }

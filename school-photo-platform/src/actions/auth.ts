@@ -86,14 +86,14 @@ export async function loginTeacherAction(prevState: any, formData: FormData) {
       };
     }
 
-    // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-    // Убрали bcrypt, поставили обычное сравнение строк
-    if (teacherPassword !== classroom.teacherPassword) {
+    // Verify password using bcrypt
+    const isValidPassword = await bcrypt.compare(teacherPassword, classroom.teacherPassword);
+
+    if (!isValidPassword) {
       return {
         error: 'Invalid login or password',
       };
     }
-    // -------------------------
 
     // Create session
     await createSession(

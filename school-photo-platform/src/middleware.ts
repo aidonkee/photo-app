@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { decrypt } from '@/lib/auth';
+import { decrypt, verifySchoolAccess } from '@/lib/auth';
 
 type ExtendedRole = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER';
 
@@ -26,13 +26,41 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/teacher');
 
-  if (isProtectedRoute && !session) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // 3. ЗАЩИТА ПУБЛИЧНЫХ СТРАНИЦ ШКОЛ (/s/...)
+  if (pathname.startsWith('/s/')) {
+    const parts = pathname.split('/');
+    const schoolSlug = parts[2]; // /s/[schoolSlug]
+
+    if (schoolSlug) {
+      const token = request.nextUrl.searchParams.get('t');
+      const accessCookie = request.cookies.get(`sc_${schoolSlug}`)?.value;
+
+      // Если есть токен в URL - проверяем его
+      if (token) {
+        const isValid = await verifySchoolAccess(schoolSlug, token);
+        if (isValid) {
+          const response = NextResponse.next();
+          response.cookies.set(`sc_${schoolSlug}`, 'true', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+          });
+          return response;
+        }
+      }
+
+      // Если нет токена или он невалидный, проверяем куку
+      if (!accessCookie) {
+        // Если нет ни токена, ни куки - доступ запрещен
+        // Можно редиректить на 404 или главную
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    }
   }
 
-  // Если маршрут не защищенный (например публичная галерея /s/...), пропускаем
-  if (!isProtectedRoute) {
-    return NextResponse.next();
+  if (isProtectedRoute && !session) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // 3. ПРОВЕРКА РОЛЕЙ (Если сессия есть, проверяем права)
@@ -66,5 +94,6 @@ export const config = {
     '/admin/:path*',
     '/teacher/:path*', // Убедись что папка называется teacher или teacher-dashboard
     '/login',
+    '/s/:path*',
   ],
 };

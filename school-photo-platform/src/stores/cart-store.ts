@@ -18,7 +18,7 @@ type CartStore = {
   addItem: (item: Omit<CartItem, 'pricePerUnit'> & { pricePerUnit?: number }) => void;
   removeItem: (classId: string, photoId: string, format: PhotoFormat) => void;
   updateQuantity: (classId: string, photoId: string, format: PhotoFormat, quantity: number) => void;
-  clearCart: () => void;
+  clearCart: (classId?: string) => void;
   getTotalPrice: (classId?: string) => number;
   getTotalItems: (classId?: string) => number;
   getItemKey: (classId: string, photoId: string, format: PhotoFormat) => string;
@@ -96,7 +96,15 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: (classId) => {
+        if (classId) {
+          set((state) => ({
+            items: state.items.filter((i) => i.classId !== classId),
+          }));
+        } else {
+          set({ items: [] });
+        }
+      },
 
       getTotalPrice: (classId) => {
         return get().items
