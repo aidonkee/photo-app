@@ -70,8 +70,8 @@ export default function PhotoModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
 
   const totalPrice = Object.entries(quantities).reduce((acc, [fmt, qty]) => {
     return acc + getPrice(fmt as PhotoFormat, schoolPricing) * qty;
@@ -124,24 +124,42 @@ export default function PhotoModal({
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
   };
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
 
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    const xDistance = touchStart.x - touchEnd.x;
+    const yDistance = touchStart.y - touchEnd.y;
+    const isHorizontalSwipe = Math.abs(xDistance) > Math.abs(yDistance);
 
-    if (isLeftSwipe) {
-      goToNext();
-    } else if (isRightSwipe) {
-      goToPrev();
+    if (isHorizontalSwipe) {
+      const isLeftSwipe = xDistance > minSwipeDistance;
+      const isRightSwipe = xDistance < -minSwipeDistance;
+
+      if (isLeftSwipe) {
+        goToNext();
+      } else if (isRightSwipe) {
+        goToPrev();
+      }
+    } else {
+      // Swipe Up (start.y > end.y means finger moved up)
+      const isSwipeUp = yDistance > minSwipeDistance;
+
+      if (isSwipeUp) {
+        onOpenChange(false);
+      }
     }
   };
 
