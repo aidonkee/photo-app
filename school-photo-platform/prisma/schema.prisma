@@ -106,6 +106,7 @@ model Classroom {
   // Teacher Credentials
   teacherLogin    String   @unique
   teacherPassword String
+  teacherPasswordPlain String?  // Plain text for admin display
   
   // Teacher Permissions
   isEditAllowed   Boolean  @default(false)

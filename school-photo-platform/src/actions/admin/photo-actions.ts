@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -318,12 +319,15 @@ export async function uploadSchoolPhotoAction(
     });
 
     if (!classroom) {
+      const plainPassword = uuidv4().substring(0, 8);
+      const hashedPassword = await bcrypt.hash(plainPassword, 10);
       classroom = await prisma.classroom.create({
         data: {
           name: className,
           schoolId: schoolId,
           teacherLogin: `sch${schoolId.substring(0, 4)}-${className.toLowerCase().replace(/\s+/g, '')}`,
-          teacherPassword: uuidv4().substring(0, 8),
+          teacherPassword: hashedPassword,
+          teacherPasswordPlain: plainPassword,
         },
       });
     }

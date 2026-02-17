@@ -131,10 +131,10 @@ export default async function TeachersCredentialsPage({ params }: PageProps) {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <code className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-xs font-mono text-slate-700">
-                              {classroom.teacherPassword || '••••••'}
+                              {classroom.teacherPasswordPlain || '••••••'}
                             </code>
-                            {classroom.teacherPassword && (
-                              <CopyButton text={classroom.teacherPassword} />
+                            {classroom.teacherPasswordPlain && (
+                              <CopyButton text={classroom.teacherPasswordPlain} />
                             )}
                           </div>
                         </TableCell>

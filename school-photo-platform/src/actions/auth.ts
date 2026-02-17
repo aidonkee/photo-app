@@ -86,8 +86,18 @@ export async function loginTeacherAction(prevState: any, formData: FormData) {
       };
     }
 
-    // Verify password using bcrypt
-    const isValidPassword = await bcrypt.compare(teacherPassword, classroom.teacherPassword);
+    // Verify password — try bcrypt first, then plain text fallback
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(teacherPassword, classroom.teacherPassword);
+    } catch {
+      isValidPassword = false;
+    }
+
+    // Fallback: direct comparison for classrooms with plaintext passwords
+    if (!isValidPassword) {
+      isValidPassword = teacherPassword === classroom.teacherPassword;
+    }
 
     if (!isValidPassword) {
       return {
