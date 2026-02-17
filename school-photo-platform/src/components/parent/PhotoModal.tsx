@@ -198,23 +198,23 @@ export default function PhotoModal({
           />
 
           {/* Top Bar - Back & Close Buttons */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4 pt-[calc(0.5rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/60 to-transparent">
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 pt-[calc(2rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
             <Button
               size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white gap-2 rounded-full shadow-lg border-0 font-bold text-sm h-10 px-4"
+              className="pointer-events-auto bg-red-600 hover:bg-red-700 text-white gap-2 rounded-full shadow-lg border-0 font-bold text-base h-12 px-6"
               onClick={() => onOpenChange(false)}
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-6 h-6" />
               <span>{t('back')}</span>
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg h-10 w-10"
+              className="pointer-events-auto bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg h-12 w-12"
               onClick={() => onOpenChange(false)}
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </Button>
           </div>
 
@@ -244,9 +244,9 @@ export default function PhotoModal({
           )}
 
           {/* Bottom Controls - Format Selection & Cart */}
-          <div className="absolute bottom-0 left-0 right-0 z-50 p-2 sm:p-4 md:p-6 pb-[calc(0.5rem+env(safe-area-inset-bottom))] space-y-2 sm:space-y-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 z-50 p-4 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
             {/* Format Selection */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-2xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
               {Object.values(PhotoFormat).map((fmt) => {
                 const qty = quantities[fmt] || 0;
                 const itemPrice = getPrice(fmt, schoolPricing);
@@ -256,17 +256,17 @@ export default function PhotoModal({
                   <div
                     key={fmt}
                     className={cn(
-                      "flex items-center justify-between p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl transition-all flex-1 shadow-lg backdrop-blur-md border-2 border-black",
+                      "flex items-center justify-between p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all flex-1 shadow-lg backdrop-blur-md border-2 border-black",
                       isSelected
                         ? "bg-green-100"
                         : "bg-white/90"
                     )}
                   >
-                    <div className="flex flex-col mr-2 sm:mr-3">
-                      <span className="font-extrabold text-sm sm:text-base md:text-lg text-black">
+                    <div className="flex flex-col mr-3">
+                      <span className="font-extrabold text-base sm:text-lg text-black">
                         {FORMAT_LABELS[fmt]}
                       </span>
-                      <span className="text-xs sm:text-sm md:text-base font-bold text-black/80">
+                      <span className="text-sm sm:text-base font-bold text-black/80">
                         {formatPrice(itemPrice)}
                       </span>
                     </div>
@@ -275,23 +275,23 @@ export default function PhotoModal({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-l-lg sm:rounded-l-xl hover:bg-black/10 text-black"
+                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-l-lg sm:rounded-l-xl hover:bg-black/10 text-black"
                         onClick={() => updateQuantity(fmt, -1)}
                         disabled={qty <= 0}
                       >
-                        <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Minus className="w-5 h-5" />
                       </Button>
-                      <span className="w-8 sm:w-10 md:w-12 text-center font-extrabold text-base sm:text-lg md:text-xl text-black">
+                      <span className="w-10 sm:w-12 text-center font-extrabold text-lg sm:text-xl text-black">
                         {qty}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-r-lg sm:rounded-r-xl hover:bg-black/10 text-black"
+                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-r-lg sm:rounded-r-xl hover:bg-black/10 text-black"
                         onClick={() => updateQuantity(fmt, 1)}
                         disabled={qty >= 99}
                       >
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Plus className="w-5 h-5" />
                       </Button>
                     </div>
                   </div>
@@ -305,7 +305,7 @@ export default function PhotoModal({
                 onClick={handleAddToCart}
                 disabled={totalItemsCount === 0 || showSuccess}
                 className={cn(
-                  "w-full sm:max-w-md h-12 sm:h-14 md:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-base md:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
+                  "w-full sm:max-w-md h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
                   showSuccess
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700",
@@ -314,16 +314,16 @@ export default function PhotoModal({
               >
                 {showSuccess ? (
                   <>
-                    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                    <CheckCircle2 className="w-6 h-6 mr-2" />
                     <span>{t('added_to_cart')}</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                    <ShoppingCart className="w-6 h-6 mr-2" />
                     <span className="font-extrabold">
                       {t('add_to_cart')}
                       {totalPrice > 0 && (
-                        <span className="ml-1 sm:ml-2">
+                        <span className="ml-2">
                           • {formatPrice(totalPrice)}
                         </span>
                       )}

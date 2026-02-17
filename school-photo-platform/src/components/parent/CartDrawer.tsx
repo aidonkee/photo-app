@@ -18,6 +18,7 @@ import {
   Plus,
   Minus,
   ArrowLeft,
+  Info,
 } from 'lucide-react';
 import { formatPrice, FORMAT_LABELS, SchoolPricing } from '@/config/pricing';
 import CheckoutForm from '@/components/parent/CheckoutForm';
@@ -78,6 +79,28 @@ export default function CartDrawer({
               : t('checkout_check_photos')}
           </SheetDescription>
         </SheetHeader>
+
+        {!showCheckout && (
+          (() => {
+            const otherItemsCount = allItems
+              .filter(i => i.classId !== classId)
+              .reduce((acc, i) => acc + i.quantity, 0);
+
+            if (otherItemsCount > 0) {
+              return (
+                <div className="px-6 pt-4">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-3">
+                    <Info className="w-5 h-5 text-amber-600 shrink-0" />
+                    <p className="text-sm text-amber-800">
+                      {t('cart_other_items_warning')} ({otherItemsCount})
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()
+        )}
 
         {showCheckout ? (
           <div className="flex-1 overflow-y-auto px-6">
