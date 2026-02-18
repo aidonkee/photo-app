@@ -34,3 +34,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Build and Run with Docker
+
+- Build
+
+```bash
+docker build --secret id=my_env,src=.env -t photo-app .
+```
+
+- Run
+
+```bash
+docker run --env-file prod.env -p 3000:3000 photo-app
+```
+
+> [!NOTE]
+> prod.env is the same as .env, but without 'export' keyword
