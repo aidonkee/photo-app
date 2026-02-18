@@ -5,28 +5,39 @@ import { decrypt, verifySchoolAccess } from '@/lib/auth';
 type ExtendedRole = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER';
 
 export async function middleware(request: NextRequest) {
-  const session = request.cookies.get('session_token')?.value;
   const { pathname } = request.nextUrl;
+  const session = request.cookies.get('session_token')?.value;
 
-  // 1. ЛОГИКА ДЛЯ СТРАНИЦЫ ВХОДА (Если уже вошел - кидаем в дашборд)
-  if (pathname.startsWith('/login')) {
-    if (session) {
-      const payload = await decrypt(session);
-      if (payload?.role === 'SUPER_ADMIN') return NextResponse.redirect(new URL('/dashboard', request.url));
-      if (payload?.role === 'ADMIN') return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-      if (payload?.role === 'TEACHER') return NextResponse.redirect(new URL('/teacher-dashboard', request.url)); // Проверь правильность пути!
+  // ---- SAFE decrypt (не валимся от битой cookie) ----
+  let payload: any = null;
+  let shouldDeleteSession = false;
+  if (session) {
+    try {
+      payload = await decrypt(session);
+    } catch {
+      // cookie битая/устарела => помечаем на удаление, продолжаем как гость
+      payload = null;
+      shouldDeleteSession = true;
     }
-    return NextResponse.next();
   }
 
-  // 2. ЗАЩИТА ПРИВАТНЫХ МАРШРУТОВ (Если нет сессии - кидаем на вход)
-  const isProtectedRoute =
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/admins') ||
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/teacher');
+  // Хелпер: прицепляет удаление битой cookie к любому ответу
+  function finalize(response: NextResponse): NextResponse {
+    if (shouldDeleteSession) {
+      response.cookies.delete('session_token');
+    }
+    return response;
+  }
 
-  // 3. ЗАЩИТА ПУБЛИЧНЫХ СТРАНИЦ ШКОЛ (/s/...)
+  // 1) /login: если уже вошел - кидаем в нужный дашборд
+  if (pathname.startsWith('/login')) {
+    if (payload?.role === 'SUPER_ADMIN') return finalize(NextResponse.redirect(new URL('/dashboard', request.url)));
+    if (payload?.role === 'ADMIN') return finalize(NextResponse.redirect(new URL('/admin/dashboard', request.url)));
+    if (payload?.role === 'TEACHER') return finalize(NextResponse.redirect(new URL('/teacher-dashboard', request.url)));
+    return finalize(NextResponse.next());
+  }
+
+  // 2) Публичные страницы школ (/s/...)
   if (pathname.startsWith('/s/')) {
     const parts = pathname.split('/');
     const schoolSlug = parts[2]; // /s/[schoolSlug]
@@ -35,7 +46,7 @@ export async function middleware(request: NextRequest) {
       const token = request.nextUrl.searchParams.get('t');
       const accessCookie = request.cookies.get(`sc_${schoolSlug}`)?.value;
 
-      // Если есть токен в URL - проверяем его
+      // Если есть токен — валидируем и ставим куку доступа
       if (token) {
         const isValid = await verifySchoolAccess(schoolSlug, token);
         if (isValid) {
@@ -46,45 +57,55 @@ export async function middleware(request: NextRequest) {
             maxAge: 60 * 60 * 24 * 7, // 7 days
             path: '/',
           });
-          return response;
+          return finalize(response);
         }
       }
 
-      // Если нет токена или он невалидный, проверяем куку
+      // Если токена нет/невалидный — проверяем куку доступа
       if (!accessCookie) {
-        // Если нет ни токена, ни куки - доступ запрещен
-        // Можно редиректить на 404 или главную
-        return NextResponse.redirect(new URL('/', request.url));
+        return finalize(NextResponse.redirect(new URL('/', request.url)));
       }
     }
+
+    // /s/... не требует админской сессии — пропускаем дальше
+    return finalize(NextResponse.next());
   }
 
-  if (isProtectedRoute && !session) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // 3) Приватные роуты (админка/учитель/суперадмин)
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/admins') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/teacher');
+
+  if (isProtectedRoute && !payload) {
+    return finalize(NextResponse.redirect(new URL('/login', request.url)));
   }
 
-  // 3. ПРОВЕРКА РОЛЕЙ (Если сессия есть, проверяем права)
-  const payload = await decrypt(session!);
-  if (!payload) return NextResponse.redirect(new URL('/login', request.url));
+  // Если это не protected — пропускаем
+  if (!isProtectedRoute) {
+    return finalize(NextResponse.next());
+  }
 
+  // 4) Проверка ролей
   const role = payload.role as ExtendedRole;
 
-  // SUPER ADMIN
+  // SUPER_ADMIN
   if ((pathname.startsWith('/dashboard') || pathname.startsWith('/admins')) && role !== 'SUPER_ADMIN') {
-    return NextResponse.redirect(new URL('/unauthorized', request.url)); // Или на 404
+    return finalize(NextResponse.redirect(new URL('/unauthorized', request.url)));
   }
 
-  // ADMIN (Может заходить в /admin, но SUPER_ADMIN тоже может)
+  // ADMIN (и SUPER_ADMIN тоже)
   if (pathname.startsWith('/admin') && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
+    return finalize(NextResponse.redirect(new URL('/unauthorized', request.url)));
   }
 
-  // TEACHER (SUPER_ADMIN can also access for debugging)
+  // TEACHER (и SUPER_ADMIN тоже)
   if (pathname.startsWith('/teacher') && role !== 'TEACHER' && role !== 'SUPER_ADMIN') {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
+    return finalize(NextResponse.redirect(new URL('/unauthorized', request.url)));
   }
 
-  return NextResponse.next();
+  return finalize(NextResponse.next());
 }
 
 export const config = {
@@ -92,8 +113,9 @@ export const config = {
     '/dashboard/:path*',
     '/admins/:path*',
     '/admin/:path*',
-    '/teacher/:path*', // Убедись что папка называется teacher или teacher-dashboard
+    '/teacher/:path*',
     '/login',
     '/s/:path*',
   ],
 };
+
