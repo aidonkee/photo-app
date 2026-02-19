@@ -6,16 +6,56 @@ type ExtendedRole = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = request.cookies.get('session_token')?.value;
+  const sessionToken = request.cookies.get('session_token')?.value;
 
-  // ---- SAFE decrypt (не валимся от битой cookie) ----
+  // ---- 1) /s/ маршруты (публичные): отдельная логика, админскую сессию не трогаем вообще ----
+  if (pathname.startsWith('/s/')) {
+    const parts = pathname.split('/');
+    const schoolSlug = parts[2]; // /s/[schoolSlug]
+
+    if (schoolSlug) {
+      const token = request.nextUrl.searchParams.get('t');
+      const accessCookie = request.cookies.get(`sc_${schoolSlug}`)?.value;
+
+      // Если есть токен — валидируем и ставим куку доступа
+      if (token) {
+        const isValid = await verifySchoolAccess(schoolSlug, token);
+        if (isValid) {
+          const response = NextResponse.next();
+          response.cookies.set(`sc_${schoolSlug}`, 'true', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+          });
+          return response;
+        }
+      }
+
+      // Если токена нет/невалидный — проверяем куку доступа
+      if (!accessCookie) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // ---- 2) Работа с сессией для остальных маршрутов ----
   let payload: any = null;
   let shouldDeleteSession = false;
-  if (session) {
+
+  if (sessionToken) {
     try {
-      payload = await decrypt(session);
-    } catch {
-      // cookie битая/устарела => помечаем на удаление, продолжаем как гость
+      // Вызываем decrypt только если sessionToken — не пустая строка
+      payload = sessionToken ? await decrypt(sessionToken) : null;
+
+      // Если токен был, но расшифровать не удалось (вернул null) — помечаем на удаление
+      if (sessionToken && !payload) {
+        shouldDeleteSession = true;
+      }
+    } catch (error) {
+      // На случай критических ошибок decrypt (хотя внутри него обычно try-catch)
+      console.error('Middleware decrypt error:', error);
       payload = null;
       shouldDeleteSession = true;
     }
@@ -37,40 +77,6 @@ export async function middleware(request: NextRequest) {
     return finalize(NextResponse.next());
   }
 
-  // 2) Публичные страницы школ (/s/...)
-  if (pathname.startsWith('/s/')) {
-    const parts = pathname.split('/');
-    const schoolSlug = parts[2]; // /s/[schoolSlug]
-
-    if (schoolSlug) {
-      const token = request.nextUrl.searchParams.get('t');
-      const accessCookie = request.cookies.get(`sc_${schoolSlug}`)?.value;
-
-      // Если есть токен — валидируем и ставим куку доступа
-      if (token) {
-        const isValid = await verifySchoolAccess(schoolSlug, token);
-        if (isValid) {
-          const response = NextResponse.next();
-          response.cookies.set(`sc_${schoolSlug}`, 'true', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 * 7, // 7 days
-            path: '/',
-          });
-          return finalize(response);
-        }
-      }
-
-      // Если токена нет/невалидный — проверяем куку доступа
-      if (!accessCookie) {
-        return finalize(NextResponse.redirect(new URL('/', request.url)));
-      }
-    }
-
-    // /s/... не требует админской сессии — пропускаем дальше
-    return finalize(NextResponse.next());
-  }
-
   // 3) Приватные роуты (админка/учитель/суперадмин)
   const isProtectedRoute =
     pathname.startsWith('/dashboard') ||
@@ -79,6 +85,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/teacher');
 
   if (isProtectedRoute && !payload) {
+    // Если сессия битая или отсутствует на защищенном роуте — редирект на логин + удаление куки
     return finalize(NextResponse.redirect(new URL('/login', request.url)));
   }
 
@@ -87,7 +94,7 @@ export async function middleware(request: NextRequest) {
     return finalize(NextResponse.next());
   }
 
-  // 4) Проверка ролей
+  // 4) Проверка ролей (payload гарантированно есть)
   const role = payload.role as ExtendedRole;
 
   // SUPER_ADMIN
