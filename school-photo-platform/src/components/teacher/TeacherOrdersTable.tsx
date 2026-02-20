@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Table,
@@ -34,60 +34,35 @@ type TeacherOrdersTableProps = {
 export default function TeacherOrdersTable({ orders }: TeacherOrdersTableProps) {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
-    const [isPending, startTransition] = useTransition();
 
-    const filteredOrders = orders.filter((order) => {
+    const [optimisticOrders, addOptimisticOrder] = useOptimistic(
+        orders,
+        (state: TeacherOrder[], { orderId, isPaid }: { orderId: string, isPaid: boolean }) => {
+            return state.map((order) =>
+                order.id === orderId ? { ...order, isPaid } : order
+            );
+        }
+    );
+
+    const filteredOrders = optimisticOrders.filter((order) => {
         const fullName = `${order.parentName} ${order.parentSurname}`.toLowerCase();
         return fullName.includes(searchTerm.toLowerCase());
     });
 
-    const handlePaymentToggle = (orderId: string, checked: boolean) => {
-        startTransition(async () => {
-            try {
-                await toggleOrderPaymentStatus(orderId, checked);
-                toast.success(checked ? 'Оплачено' : 'Не оплачено');
-                router.refresh();
-            } catch (err: any) {
-                toast.error('Ошибка обновления оплаты');
-                console.error(err);
-            }
-        });
-    };
+    const handlePaymentToggle = async (orderId: string, checked: boolean) => {
+        // Оптимистичное обновление UI сразу в родителе
+        addOptimisticOrder({ orderId, isPaid: checked });
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'PENDING':
-                return (
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1.5 px-2">
-                        <Clock className="w-3 h-3" />
-                        Ожидает
-                    </Badge>
-                );
-            case 'APPROVED_BY_TEACHER':
-                return (
-                    <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 gap-1.5 px-2">
-                        <CheckCircle className="w-3 h-3" />
-                        Одобрено
-                    </Badge>
-                );
-            case 'LOCKED':
-                return (
-                    <Badge variant="secondary" className="bg-slate-50 text-slate-600 border-slate-200 gap-1.5 px-2">
-                        <Package className="w-3 h-3" />
-                        В печати
-                    </Badge>
-                );
-            default:
-                return <Badge variant="outline">{status}</Badge>;
+        try {
+            await toggleOrderPaymentStatus(orderId, checked);
+            router.refresh();
+        } catch (err: any) {
+            toast.error('Ошибка обновления оплаты');
+            console.error(err);
         }
     };
 
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat('ru-KZ', {
-            style: 'currency',
-            currency: 'KZT',
-            maximumFractionDigits: 0,
-        }).format(amount);
+    // Moving formatting and badges deeper to sub-component or keeping here as helpers
 
     return (
         <div className="space-y-4">
@@ -135,56 +110,12 @@ export default function TeacherOrdersTable({ orders }: TeacherOrdersTableProps) 
                                 </TableRow>
                             ) : (
                                 filteredOrders.map((order) => (
-                                    <TableRow key={order.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <TableCell className="py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
-                                                    {order.parentSurname.charAt(0)}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-slate-900">
-                                                        {order.parentSurname} {order.parentName}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-center font-medium text-slate-700">
-                                            {order.items.length} шт.
-                                        </TableCell>
-                                        <TableCell className="font-bold text-slate-900">
-                                            {formatCurrency(order.totalAmount)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center space-x-2">
-                                                <Switch
-                                                    id={`payment-${order.id}`}
-                                                    checked={order.isPaid}
-                                                    onCheckedChange={(checked: boolean) => handlePaymentToggle(order.id, checked)}
-                                                    disabled={isPending}
-                                                />
-                                                <Label
-                                                    htmlFor={`payment-${order.id}`}
-                                                    className={`text-xs font-medium cursor-pointer ${order.isPaid ? 'text-green-600' : 'text-slate-400'}`}
-                                                >
-                                                    {order.isPaid ? 'Оплачено' : 'Не оплачено'}
-                                                </Label>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {getStatusBadge(order.status)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 gap-1.5 border-slate-200 hover:border-slate-300 hover:bg-slate-50 font-medium text-slate-700"
-                                                onClick={() => router.push(`/teacher-dashboard?orderId=${order.id}`)}
-                                            >
-                                                <ExternalLink className="w-3.5 h-3.5" />
-                                                Открыть
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                                    <OrderRow
+                                        key={order.id}
+                                        order={order}
+                                        onToggle={handlePaymentToggle}
+                                        router={router}
+                                    />
                                 ))
                             )}
                         </TableBody>
@@ -192,5 +123,107 @@ export default function TeacherOrdersTable({ orders }: TeacherOrdersTableProps) 
                 </div>
             </div>
         </div>
+    );
+}
+
+function OrderRow({
+    order,
+    onToggle,
+    router
+}: {
+    order: TeacherOrder;
+    onToggle: (id: string, checked: boolean) => Promise<void>;
+    router: ReturnType<typeof useRouter>;
+}) {
+    const [isPending, startTransition] = useTransition();
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'PENDING':
+                return (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1.5 px-2">
+                        <Clock className="w-3 h-3" />
+                        Ожидает
+                    </Badge>
+                );
+            case 'APPROVED_BY_TEACHER':
+                return (
+                    <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 gap-1.5 px-2">
+                        <CheckCircle className="w-3 h-3" />
+                        Одобрено
+                    </Badge>
+                );
+            case 'LOCKED':
+                return (
+                    <Badge variant="secondary" className="bg-slate-50 text-slate-600 border-slate-200 gap-1.5 px-2">
+                        <Package className="w-3 h-3" />
+                        В печати
+                    </Badge>
+                );
+            default:
+                return <Badge variant="outline">{status}</Badge>;
+        }
+    };
+
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat('ru-KZ', {
+            style: 'currency',
+            currency: 'KZT',
+            maximumFractionDigits: 0,
+        }).format(amount);
+
+    return (
+        <TableRow className="hover:bg-slate-50/50 transition-colors">
+            <TableCell className="py-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
+                        {order.parentSurname.charAt(0)}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-slate-900">
+                            {order.parentSurname} {order.parentName}
+                        </span>
+                    </div>
+                </div>
+            </TableCell>
+            <TableCell className="text-center font-medium text-slate-700">
+                {order.items.length} шт.
+            </TableCell>
+            <TableCell className="font-bold text-slate-900">
+                {formatCurrency(order.totalAmount)}
+            </TableCell>
+            <TableCell>
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id={`payment-${order.id}`}
+                        checked={order.isPaid}
+                        onCheckedChange={(checked: boolean) => {
+                            startTransition(() => onToggle(order.id, checked));
+                        }}
+                        disabled={isPending}
+                    />
+                    <Label
+                        htmlFor={`payment-${order.id}`}
+                        className={`text-xs font-medium cursor-pointer ${order.isPaid ? 'text-green-600' : 'text-slate-400'}`}
+                    >
+                        {order.isPaid ? 'Оплачено' : 'Не оплачено'}
+                    </Label>
+                </div>
+            </TableCell>
+            <TableCell>
+                {getStatusBadge(order.status)}
+            </TableCell>
+            <TableCell className="text-right">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 border-slate-200 hover:border-slate-300 hover:bg-slate-50 font-medium text-slate-700"
+                    onClick={() => router.push(`/teacher-dashboard?orderId=${order.id}`)}
+                >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Открыть
+                </Button>
+            </TableCell>
+        </TableRow>
     );
 }

@@ -14,6 +14,7 @@ type Photo = {
   alt: string | null;
   width: number;
   height: number;
+  fileName: string | null;
 };
 
 type PhotoGalleryProps = {
@@ -124,7 +125,7 @@ export default function PhotoGallery({
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                 <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">
-                  #{String(originalIndex + 1).padStart(2, '0')}
+                  {photo.fileName || `#${String(originalIndex + 1).padStart(2, '0')}`}
                 </div>
               </button>
             ))}

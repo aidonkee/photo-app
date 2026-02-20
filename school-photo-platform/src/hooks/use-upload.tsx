@@ -11,7 +11,7 @@ import { getSupabaseClient, getPublicUrl } from '@/lib/supabase/client';
 const BUCKET_NAME = 'school-photos';
 const CONCURRENT_UPLOADS = 10;
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; 
+const RETRY_DELAY = 1000;
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
@@ -207,6 +207,7 @@ export function useUpload() {
               fileSize: file.size,
               mimeType: file.type,
               alt: file.name.replace(/\.[^/.]+$/, ''),
+              fileName: file.name,
             });
 
             if (result.success) { // && result.photoId) {

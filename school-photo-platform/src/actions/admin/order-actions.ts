@@ -95,6 +95,7 @@ export async function getOrderDetails(orderId: string) {
                 watermarkedUrl: true,
                 thumbnailUrl: true,
                 alt: true,
+                fileName: true,
                 width: true,
                 height: true,
               },

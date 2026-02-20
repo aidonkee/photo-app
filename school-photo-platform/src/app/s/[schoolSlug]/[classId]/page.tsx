@@ -28,6 +28,7 @@ type Photo = {
   alt: string | null;
   width: number;
   height: number;
+  fileName: string | null;
   uploadedAt: string | Date;
 };
 
@@ -213,24 +214,6 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
           </ErrorBoundary>
         </main>
 
-        {/* Floating Cart Button - обёрнут в ErrorBoundary */}
-        <ErrorBoundary fallback={<CartErrorFallback />}>
-          {getTotalItems > 0 && (
-            <div className="fixed bottom-6 right-6 z-50">
-              <Button
-                onClick={() => setCartOpen(true)}
-                size="lg"
-                className="h-16 px-6 bg-slate-900 hover:bg-slate-800 shadow-2xl gap-3 text-lg"
-              >
-                <ShoppingCart className="w-6 h-6" />
-                {t('cart_title')}
-                <Badge className="bg-white text-slate-900 hover:bg-white ml-2">
-                  {getTotalItems}
-                </Badge>
-              </Button>
-            </div>
-          )}
-        </ErrorBoundary>
 
         {/* Cart Drawer - обёрнут в ErrorBoundary */}
         <ErrorBoundary fallback={null}>

@@ -80,7 +80,9 @@ export default function CheckoutForm({ classId, schoolSlug }: CheckoutFormProps)
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <h3 className="text-xl font-bold text-slate-900 mb-2">{t('order_success')}</h3>
-        <p className="text-slate-500 text-sm">{t('order_redirecting')}</p>
+        <p className="text-slate-600 font-medium mb-1">Ваши фотографии отправлены на печать.</p>
+        <p className="text-slate-500 text-sm">Сдайте деньги учителю или ответственному за сбор денег.</p>
+        <p className="text-slate-400 text-xs mt-4">{t('order_redirecting')}</p>
       </div>
     );
   }

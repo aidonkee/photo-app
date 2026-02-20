@@ -28,6 +28,7 @@ type Photo = {
   id: string;
   watermarkedUrl: string;
   alt: string | null;
+  fileName: string | null;
   width?: number;
   height?: number;
 };
@@ -241,17 +242,17 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
               {/* === ОБЫЧНЫЙ РЕЖИМ (Кнопка удаления) === */}
               {!selectionMode && (
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                   {/* Обертка для кнопки удаления из пропсов, чтобы она была поверх фото */}
-                   <div className="bg-white/90 rounded-full shadow-sm backdrop-blur-sm">
-                      <DeletePhotoButton photoId={photo.id} />
-                   </div>
+                  {/* Обертка для кнопки удаления из пропсов, чтобы она была поверх фото */}
+                  <div className="bg-white/90 rounded-full shadow-sm backdrop-blur-sm">
+                    <DeletePhotoButton photoId={photo.id} />
+                  </div>
                 </div>
               )}
-              
+
               {/* Инфо (Номер фото / Имя) */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-xs text-white font-medium truncate">
-                  {photo.alt || 'Без названия'}
+                  {photo.fileName || photo.alt || 'Без названия'}
                 </p>
               </div>
             </div>

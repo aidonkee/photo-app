@@ -143,6 +143,7 @@ model Photo {
   width          Int
   height         Int
   fileSize       Int
+  fileName       String?
   mimeType       String   @default("image/jpeg")
   
   // SEO/Search

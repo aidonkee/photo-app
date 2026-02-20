@@ -25,6 +25,7 @@ export type TeacherOrder = {
       alt: string | null;
       width: number;
       height: number;
+      fileName: string | null;
     };
   }[];
   isPaid: boolean;
@@ -66,7 +67,8 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
                 alt: true,
                 width: true,
                 height: true,
-              },
+                fileName: true,
+              } as any,
             },
           },
         },
@@ -76,7 +78,7 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
       },
     });
 
-    return orders.map((order) => ({
+    return (orders as any[]).map((order) => ({
       id: order.id,
       parentName: order.parentName,
       parentSurname: order.parentSurname,
@@ -84,7 +86,7 @@ export async function getTeacherOrders(): Promise<TeacherOrder[]> {
       status: order.status,
       totalAmount: Number(order.totalSum),
       createdAt: order.createdAt,
-      items: order.items.map((item) => ({
+      items: order.items.map((item: any) => ({
         id: item.id,
         quantity: item.quantity,
         format: item.format,
@@ -138,7 +140,8 @@ export async function getOrderById(orderId: string): Promise<TeacherOrder | null
                 alt: true,
                 width: true,
                 height: true,
-              },
+                fileName: true,
+              } as any,
             },
           },
         },
@@ -157,7 +160,7 @@ export async function getOrderById(orderId: string): Promise<TeacherOrder | null
       status: order.status,
       totalAmount: Number(order.totalSum),
       createdAt: order.createdAt,
-      items: order.items.map((item) => ({
+      items: (order as any).items.map((item: any) => ({
         id: item.id,
         quantity: item.quantity,
         format: item.format,

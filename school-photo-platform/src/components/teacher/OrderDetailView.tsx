@@ -210,8 +210,8 @@ export default function OrderDetailView({ order, canEdit }: OrderDetailViewProps
                 <div className="p-4 flex flex-col justify-between flex-1">
                   <div>
                     <div className="flex justify-between items-start mb-2 gap-3">
-                      <h4 className="font-medium text-slate-900 text-base line-clamp-2">
-                        {item.photo.alt || `Фотография №${index + 1}`}
+                      <h4 className="font-bold text-slate-900 text-base line-clamp-2">
+                        {item.photo.fileName || item.photo.alt || `Фотография №${index + 1}`}
                       </h4>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-slate-600 text-xs whitespace-nowrap">

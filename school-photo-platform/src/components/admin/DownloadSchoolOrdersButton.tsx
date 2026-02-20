@@ -2,19 +2,25 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, CheckCircle2, PackageOpen } from 'lucide-react';
+import { Download, Loader2, CheckCircle2, FileSpreadsheet } from 'lucide-react';
+import { exportOrdersToExcel } from '@/actions/admin/order-export-actions';
 import { toast } from 'sonner';
 
 type DownloadSchoolOrdersButtonProps = {
   schoolId: string;
+  classId?: string; // Optional class filtering
   totalOrders: number;
+  hideZip?: boolean; // Hide the ZIP download button
 };
 
 export default function DownloadSchoolOrdersButton({
   schoolId,
-  totalOrders
+  classId,
+  totalOrders,
+  hideZip = false
 }: DownloadSchoolOrdersButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleDownload = async () => {
@@ -32,7 +38,7 @@ export default function DownloadSchoolOrdersButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ schoolId }),
+        body: JSON.stringify({ schoolId, classId }),
       });
 
       if (!response.ok) {
@@ -45,7 +51,7 @@ export default function DownloadSchoolOrdersButton({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `school-orders-${schoolId.slice(0, 8)}.zip`;
+      link.download = `orders-${(classId || schoolId).slice(0, 8)}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -66,28 +72,76 @@ export default function DownloadSchoolOrdersButton({
     }
   };
 
+  const handleExportExcel = async () => {
+    if (totalOrders === 0) {
+      toast.error('Нет заказов для экспорта');
+      return;
+    }
+
+    setIsExportingExcel(true);
+    try {
+      const data = await exportOrdersToExcel(schoolId, classId);
+      const isZip = !classId;
+      const mimeType = isZip ? 'application/zip' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const extension = isZip ? 'zip' : 'xlsx';
+
+      const blob = new Blob([new Uint8Array(data)], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `orders-excel-${(classId || schoolId).slice(0, 8)}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success(isZip ? 'Архив с Excel-отчетами скачан' : 'Excel-отчет скачан');
+    } catch (error: any) {
+      toast.error(error.message || 'Ошибка экспорта');
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
   return (
-    <Button
-      onClick={handleDownload}
-      disabled={isDownloading || totalOrders === 0}
-      className="gap-2 bg-slate-900 text-white hover:bg-slate-800"
-    >
-      {isDownloading ? (
-        <>
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        onClick={handleExportExcel}
+        disabled={isExportingExcel || totalOrders === 0}
+        variant="outline"
+        className="gap-2 border-slate-200 hover:bg-slate-50 text-slate-700 h-10"
+      >
+        {isExportingExcel ? (
           <Loader2 className="w-4 h-4 animate-spin" />
-          Подготовка архива...
-        </>
-      ) : isSuccess ? (
-        <>
-          <CheckCircle2 className="w-4 h-4" />
-          Скачано
-        </>
-      ) : (
-        <>
-          <PackageOpen className="w-4 h-4" />
-          Скачать оплаченные ({totalOrders})
-        </>
+        ) : (
+          <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+        )}
+        Excel отчет
+      </Button>
+
+      {!hideZip && (
+        <Button
+          onClick={handleDownload}
+          disabled={isDownloading || totalOrders === 0}
+          className="gap-2 bg-slate-900 text-white hover:bg-slate-800 h-10"
+        >
+          {isDownloading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Подготовка...
+            </>
+          ) : isSuccess ? (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              Готово
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              ZIP архив ({totalOrders})
+            </>
+          )}
+        </Button>
       )}
-    </Button>
+    </div>
   );
 }

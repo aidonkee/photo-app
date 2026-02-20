@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       .resize(300, 300, { fit: "cover", position: "center" })
       .jpeg({ quality: 70 })
       .toBuffer();
-    
+
     const thumbnailTask = (async () => {
       return uploadFile(thumbnailBuffer, thumbnailPath, "image/jpeg");
     })();
@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
         fileSize: originalBuffer.length,
         mimeType: file.type,
         alt: file.name,
-      },
+        fileName: file.name,
+      } as any,
     });
 
     return NextResponse.json({ success: true, id: photo.id });

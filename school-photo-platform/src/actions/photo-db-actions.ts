@@ -44,6 +44,7 @@ type PhotoRecordInput = {
   fileSize: number;
   mimeType: string;
   alt?: string | null;
+  fileName?: string | null;
 };
 
 /**
@@ -52,7 +53,7 @@ type PhotoRecordInput = {
 export async function processAndSavePhoto(data: PhotoRecordInput) {
   // 1. Authentication check
   const session = await getSession();
-  
+
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
     throw new Error('Unauthorized: Admin access required');
   }
@@ -84,20 +85,20 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
     throw new Error('Invalid photo data: missing required fields');
   }
 
-  pgmq.send(prisma, 'process-uploads', {type: 'process-photo', data: data})
+  pgmq.send(prisma, 'process-uploads', { type: 'process-photo', data: { ...data, fileName: data.fileName || data.alt } })
 
   fetch(`${siteConfig.url}/api/worker`, {
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${process.env.CRON_SECRET}` }
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${process.env.CRON_SECRET}` }
   }).catch(err => console.error('Trigger failed', err));
 
   return {
-      success: true,
-      // photoId: photo.id,
-      // watermarkedUrl,
-      // thumbnailUrl,
+    success: true,
+    // photoId: photo.id,
+    // watermarkedUrl,
+    // thumbnailUrl,
   };
-  
+
 }
 
 /**
@@ -105,7 +106,7 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
  */
 export async function revalidateClassroomPhotos(classId: string, schoolId: string) {
   const session = await getSession();
-  
+
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
     throw new Error('Unauthorized');
   }
@@ -113,7 +114,7 @@ export async function revalidateClassroomPhotos(classId: string, schoolId: strin
   try {
     revalidatePath(`/admin/schools/${schoolId}/classrooms/${classId}`);
     revalidatePath(`/admin/schools/${schoolId}`);
-    
+
     return { success: true };
   } catch (error) {
     console.error('Failed to revalidate paths:', error);

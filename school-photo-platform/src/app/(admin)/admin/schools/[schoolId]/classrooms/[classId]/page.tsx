@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Image, Users } from 'lucide-react';
 
+
 type PageProps = {
   params: Promise<{
     schoolId: string;
@@ -16,6 +17,7 @@ type PageProps = {
 
 import DeleteButton from '@/components/admin/DeleteButton';
 import { deleteClassroomAction } from '@/actions/admin/classroom-actions';
+import DownloadSchoolOrdersButton from '@/components/admin/DownloadSchoolOrdersButton';
 
 export default async function ClassroomPage({ params }: PageProps) {
   const { schoolId, classId } = await params;
@@ -44,7 +46,12 @@ export default async function ClassroomPage({ params }: PageProps) {
               {classroom._count?.photos || 0} фотографий
             </p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <DownloadSchoolOrdersButton
+              schoolId={schoolId}
+              classId={classId}
+              totalOrders={classroom._count?.orders || 0}
+            />
             <DeleteButton
               id={classId}
               entityName="Класс"

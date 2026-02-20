@@ -19,27 +19,22 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ schoolS
           <div className="mx-auto w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 className="w-10 h-10 text-slate-900" />
           </div>
-          
+
           <div>
             <h1 className="text-2xl font-bold text-slate-900 mb-2">
               Заказ принят!
             </h1>
-            <p className="text-slate-600">
-              Спасибо! Ваш заказ был успешно оформлен.
+            <p className="text-lg font-medium text-slate-800 leading-relaxed">
+              Ваши фотографии отправлены на печать.
+            </p>
+            <p className="text-slate-600 mt-2">
+              Сдайте деньги учителю или ответственному за сбор денег.
             </p>
             {orderId && (
-               <p className="text-sm text-slate-400 mt-2 font-mono bg-slate-100 py-1 px-2 rounded inline-block">
-                 Номер заказа: {orderId.slice(0, 8)}...
-               </p>
+              <p className="text-xs text-slate-400 mt-6 font-mono bg-slate-100 py-1 px-2 rounded inline-block">
+                ID: {orderId.slice(0, 8)}
+              </p>
             )}
-          </div>
-
-          <div className="bg-slate-50 p-4 rounded-lg text-left text-sm text-slate-700 space-y-2">
-            <p className="font-semibold">Что делать дальше?</p>
-            <ul className="list-disc pl-4 space-y-1">
-              <li>Пожалуйста, передайте оплату классному руководителю.</li>
-              <li>Как только учитель подтвердит оплату, фотографии будут отправлены в печать.</li>
-            </ul>
           </div>
 
           <Link href={`/s/${schoolSlug}`} className="block">

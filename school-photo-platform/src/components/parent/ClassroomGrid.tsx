@@ -12,6 +12,7 @@ type Photo = {
   alt: string | null;
   width: number;
   height: number;
+  fileName: string | null;
 };
 
 type ClassroomGridProps = {

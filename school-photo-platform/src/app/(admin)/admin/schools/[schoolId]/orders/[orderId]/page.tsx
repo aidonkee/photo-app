@@ -154,8 +154,8 @@ export default async function OrderDetailsPage({ params }: PageProps) {
                         </p>
                       </div>
                     </div>
-                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-slate-900 px-2 py-0.5 rounded text-[10px] font-mono font-medium border border-slate-200">
-                      {String(index + 1).padStart(2, '0')}
+                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-slate-900 px-2 py-0.5 rounded text-[10px] font-mono font-bold border border-slate-200 shadow-sm z-10">
+                      {item.photo.fileName || `#${String(index + 1).padStart(2, '0')}`}
                     </div>
                   </div>
                 ))}

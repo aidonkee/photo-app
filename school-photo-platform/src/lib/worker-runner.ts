@@ -84,6 +84,7 @@ async function processMsg(
     height: any;
     classId: any;
     alt: any;
+    fileName: string;
   },
   prisma: PrismaClient,
 ) {
@@ -148,7 +149,7 @@ async function processMsg(
       });
     if (wmError)
       if (wmError.message !== "The resource already exists")
-          throw new Error(`Failed to upload watermarked: ${wmError.message}`);
+        throw new Error(`Failed to upload watermarked: ${wmError.message}`);
 
     console.log("📤 Uploading thumbnail:", thumbnailPath);
     const { error: thumbError } = await supabase.storage
@@ -185,8 +186,9 @@ async function processMsg(
         fileSize: watermarkedBuffer.length,
         mimeType: "image/jpeg",
         alt: data.alt || null,
+        fileName: data.fileName || null,
         tags: [],
-      },
+      } as any,
     });
 
     console.log("✅ Photo saved to DB:", photo.id);

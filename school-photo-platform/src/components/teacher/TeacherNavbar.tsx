@@ -21,12 +21,12 @@ import {
   Menu,
   CheckSquare
 } from 'lucide-react';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetTrigger, 
-  SheetTitle, 
-  SheetHeader 
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetHeader
 } from '@/components/ui/sheet';
 
 type TeacherNavbarProps = {
@@ -42,6 +42,11 @@ export default function TeacherNavbar({
 }: TeacherNavbarProps) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     {
@@ -76,7 +81,7 @@ export default function TeacherNavbar({
         <div className="flex items-center justify-between h-16">
           {/* Лого и инфо о классе */}
           <div className="flex items-center gap-3">
-             {/* Скрываем лого на очень маленьких экранах, оставляем текст */}
+            {/* Скрываем лого на очень маленьких экранах, оставляем текст */}
             <div className="flex flex-col">
               <h1 className="text-base font-bold text-slate-900 leading-tight">
                 {classroomName || 'Кабинет учителя'}
@@ -104,7 +109,7 @@ export default function TeacherNavbar({
 
           {/* Профиль и Мобильное меню */}
           <div className="flex items-center gap-2">
-            
+
             {/* Десктоп Дропдаун */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="hidden md:flex">
@@ -142,7 +147,7 @@ export default function TeacherNavbar({
                 <SheetHeader>
                   <SheetTitle className="text-left">Меню</SheetTitle>
                 </SheetHeader>
-                
+
                 <div className="flex flex-col gap-2 mt-6">
                   {navItems.map((item) => (
                     <Link key={item.href} href={item.href}>

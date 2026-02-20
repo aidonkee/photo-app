@@ -10,7 +10,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Plus, Minus, CheckCircle2, ChevronLeft, ChevronRight, X, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, CheckCircle2, ChevronLeft, ChevronRight, X, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import CartDrawer from './CartDrawer';
 import {
   PhotoFormat,
   FORMAT_LABELS,
@@ -28,6 +30,8 @@ type Photo = {
   alt: string | null;
   width: number;
   height: number;
+  fileName: string | null;
+  uploadedAt?: string | Date;
 };
 
 type PhotoModalProps = {
@@ -57,6 +61,12 @@ export default function PhotoModal({
   classId,
 }: PhotoModalProps) {
   const { t } = useTranslation();
+  const params = useParams();
+  const schoolSlug = params?.schoolSlug as string;
+
+  const [cartOpen, setCartOpen] = useState(false);
+  const cartItems = useCartStore((state) => state.items);
+  const totalCartPrice = useCartStore((state) => state.getTotalPrice(classId));
 
   const getDisplayUrl = (p: Photo) => {
     return p.watermarkedUrl;
@@ -179,7 +189,7 @@ export default function PhotoModal({
           classId,
           photoId: photo.id,
           photoUrl: displayUrl,
-          photoAlt: photo.alt,
+          photoAlt: photo.fileName || photo.alt,
           format: fmt as PhotoFormat,
           quantity: qty,
           pricePerUnit: getPrice(fmt as PhotoFormat, schoolPricing),
@@ -190,7 +200,7 @@ export default function PhotoModal({
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
-    }, 2000);
+    }, 10000);
   };
 
   return (
@@ -225,6 +235,12 @@ export default function PhotoModal({
               <ArrowLeft className="w-6 h-6" />
               <span>{t('back')}</span>
             </Button>
+
+            <div className="pointer-events-none flex flex-col items-center">
+              <span className="text-blue-400 font-mono font-bold text-sm bg-black/40 px-1 py-0.5 rounded-full backdrop-blur-md border border-white/20">
+                {photo.fileName || `#${String(currentIndex + 1).padStart(2, '0')}`}
+              </span>
+            </div>
 
             <Button
               variant="ghost"
@@ -317,13 +333,13 @@ export default function PhotoModal({
               })}
             </div>
 
-            {/* Add to Cart Button */}
-            <div className="flex justify-center">
+            {/* Bottom Actions: Add to Cart & View Cart */}
+            <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto w-full">
               <Button
                 onClick={handleAddToCart}
                 disabled={totalItemsCount === 0 || showSuccess}
                 className={cn(
-                  "w-full sm:max-w-md h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
+                  "h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
                   showSuccess
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700",
@@ -332,24 +348,44 @@ export default function PhotoModal({
               >
                 {showSuccess ? (
                   <>
-                    <CheckCircle2 className="w-6 h-6 mr-2" />
+                    <CheckCircle2 className="w-6 h-6 mr-1" />
                     <span>{t('added_to_cart')}</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-6 h-6 mr-2" />
-                    <span className="font-extrabold">
-                      {t('add_to_cart')}
-                      {totalPrice > 0 && (
-                        <span className="ml-2">
-                          • {formatPrice(totalPrice)}
-                        </span>
-                      )}
-                    </span>
+                    <Plus className="w-6 h-6 mr-1" />
+                    <span className="font-extrabold">{t('add_to_cart')}</span>
                   </>
                 )}
               </Button>
+
+              <Button
+                onClick={() => setCartOpen(true)}
+                className="h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-2"
+              >
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-[10px] uppercase tracking-wider opacity-70">Корзина</span>
+                  <span className="font-extrabold">{formatPrice(totalCartPrice)}</span>
+                </div>
+                <div className="relative">
+                  <ShoppingBag className="w-6 h-6" />
+                  {cartItems.filter(i => i.classId === classId).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                      {cartItems.filter(i => i.classId === classId).length}
+                    </span>
+                  )}
+                </div>
+              </Button>
             </div>
+
+            {/* Cart Drawer Instance inside Modal */}
+            <CartDrawer
+              open={cartOpen}
+              onOpenChange={setCartOpen}
+              classId={classId}
+              schoolSlug={schoolSlug}
+              schoolPricing={schoolPricing}
+            />
           </div>
         </div>
       </DialogContent>

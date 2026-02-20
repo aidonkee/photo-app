@@ -109,13 +109,14 @@ export async function getClassroomPhotos(classId: string) {
             width: true,
             height: true,
             uploadedAt: true,
-          },
+            fileName: true,
+          } as any,
           orderBy: {
             uploadedAt: 'asc',
           },
         },
       },
-    });
+    }) as any;
 
     if (
       !classroom ||

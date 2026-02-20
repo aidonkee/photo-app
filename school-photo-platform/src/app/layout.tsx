@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 
 import { Toaster } from "@/components/ui/sonner";
+import GlobalCartOverlay from "@/components/parent/GlobalCartOverlay";
 
 export default function RootLayout({
   children,
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <GlobalCartOverlay />
       </body>
     </html>
   );

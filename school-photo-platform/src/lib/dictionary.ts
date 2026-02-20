@@ -29,7 +29,7 @@ export const dictionary = {
     cart_title: 'Корзина',
     cart_your_empty: 'Ваша корзина пуста.',
     add_to_cart: 'Добавить в корзину',
-    added_to_cart: 'Успешно добавлено в корзину!',
+    added_to_cart: 'Успешно',
     cart_other_items_warning: 'В корзине есть фото из других классов (они сохранены)',
     checkout_title: 'Оформление заказа',
     checkout_fill_data: 'Заполните данные для заказа.',

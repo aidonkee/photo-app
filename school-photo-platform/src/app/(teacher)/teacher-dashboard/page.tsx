@@ -19,9 +19,13 @@ type PageProps = {
   }>;
 };
 
+import { getTeacherDashboardData } from '@/actions/teacher/dashboard-actions';
+import DownloadSchoolOrdersButton from '@/components/admin/DownloadSchoolOrdersButton';
+
 async function DashboardContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const orders = await getTeacherOrders();
+  const dashboardData = await getTeacherDashboardData();
 
   const selectedOrderId = params.orderId;
   const selectedOrder = selectedOrderId
@@ -37,13 +41,21 @@ async function DashboardContent({ searchParams }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!hasSelection ? (
           <div className="space-y-6">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Заказы класса
-              </h1>
-              <p className="text-slate-500 font-medium">
-                Проверяйте заказы родителей и отмечайте оплату
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Заказы класса
+                </h1>
+                <p className="text-slate-500 font-medium">
+                  Проверяйте заказы родителей и отмечайте оплату
+                </p>
+              </div>
+              <DownloadSchoolOrdersButton
+                schoolId={dashboardData.school.id}
+                classId={dashboardData.classroom.id}
+                totalOrders={dashboardData.stats.totalOrders}
+                hideZip={true}
+              />
             </div>
 
             <TeacherOrdersTable orders={orders} />
