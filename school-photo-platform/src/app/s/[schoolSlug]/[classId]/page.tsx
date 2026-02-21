@@ -172,7 +172,15 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
         </div>
       }
     >
-      <div className="min-h-screen bg-slate-50">
+      <div
+        className="min-h-screen bg-slate-50 select-none"
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        style={{
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+        }}
+      >
         {/* Header */}
         <header className="py-8 px-4 border-b border-slate-200 bg-white">
           <div className="max-w-7xl mx-auto">
@@ -190,7 +198,7 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
               </Link>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between font-bold">
               <div>
                 <h1 className="text-3xl font-bold text-slate-900">
                   {classroom.name}

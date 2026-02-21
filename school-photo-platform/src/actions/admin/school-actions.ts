@@ -130,7 +130,7 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
     const school = await prisma.school.create({
       data: {
         name,
-        slug, 
+        slug,
         primaryColor,
         isKazakhEnabled,
         adminId: session.userId,
@@ -233,7 +233,19 @@ export async function deleteSchoolAction(schoolId: string) {
       throw new Error('Доступ запрещен');
     }
 
-    // ✅ Cascade delete allowed
+    // ✅ Manual cleanup: Delete OrderItems first because they reference Photos 
+    // without a cascade delete in the current schema.
+    await prisma.orderItem.deleteMany({
+      where: {
+        photo: {
+          classroom: {
+            schoolId: schoolId
+          }
+        }
+      }
+    });
+
+    // ✅ Cascade delete allowed for other relations (Classrooms, Photos, Orders)
     await prisma.school.delete({
       where: { id: schoolId },
     });

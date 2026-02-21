@@ -3,14 +3,16 @@ import { getSchools } from '@/actions/admin/school-actions';
 import SchoolForm from '@/components/admin/SchoolForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building2, 
-  Users, 
+import {
+  Building2,
+  Users,
   ArrowRight,
   CheckCircle,
   XCircle
 } from 'lucide-react';
 import { Metadata } from 'next';
+import DeleteButton from '@/components/admin/DeleteButton';
+import { deleteSchoolAction } from '@/actions/admin/school-actions';
 
 export const metadata: Metadata = {
   title: 'Мои Школы | Фотограф',
@@ -55,61 +57,73 @@ export default async function SchoolsPage() {
               Начните с создания вашей первой школы, чтобы загружать фотографии.
             </p>
             <div className="inline-block">
-               <SchoolForm />
+              <SchoolForm />
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {schools.map((school) => (
-            <Link key={school.id} href={`/admin/schools/${school.id}`} className="block h-full">
-              <Card className="group h-full border border-slate-200 shadow-none hover:border-slate-900 transition-all duration-200 cursor-pointer bg-white">
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1.5 overflow-hidden">
-                      <CardTitle className="text-base font-bold text-slate-900 truncate group-hover:underline underline-offset-4 decoration-1">
-                        {school.name}
-                      </CardTitle>
-                      <div className="flex">
-                        <code className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 truncate">
-                          /{school.slug}
-                        </code>
+            <div key={school.id} className="relative group">
+              <Link href={`/admin/schools/${school.id}`} className="block h-full">
+                <Card className="h-full border border-slate-200 shadow-none hover:border-slate-900 transition-all duration-200 cursor-pointer bg-white">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1.5 overflow-hidden">
+                        <CardTitle className="text-base font-bold text-slate-900 truncate group-hover:underline underline-offset-4 decoration-1">
+                          {school.name}
+                        </CardTitle>
+                        <div className="flex">
+                          <code className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 truncate">
+                            /{school.slug}
+                          </code>
+                        </div>
+                      </div>
+
+                      {/* Status Badge: Compact Outline */}
+                      {school.isActive ? (
+                        <Badge variant="outline" className="border-slate-900 text-slate-900 text-[10px] h-5 px-1.5 rounded-sm font-normal whitespace-nowrap">
+                          <CheckCircle className="w-2.5 h-2.5 mr-1" />
+                          Активна
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-slate-300 text-slate-400 text-[10px] h-5 px-1.5 rounded-sm font-normal whitespace-nowrap">
+                          <XCircle className="w-2.5 h-2.5 mr-1" />
+                          Скрыта
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="p-4 pt-2">
+                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-medium">{school._count.classrooms}</span>
+                        <span className="text-slate-400">
+                          {school._count.classrooms === 1 ? 'класс' : 'классов'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center text-[10px] font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0 duration-200">
+                        УПРАВЛЕНИЕ
+                        <ArrowRight className="w-3 h-3 ml-1" />
                       </div>
                     </div>
-                    
-                    {/* Status Badge: Compact Outline */}
-                    {school.isActive ? (
-                      <Badge variant="outline" className="border-slate-900 text-slate-900 text-[10px] h-5 px-1.5 rounded-sm font-normal whitespace-nowrap">
-                        <CheckCircle className="w-2.5 h-2.5 mr-1" />
-                        Активна
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="border-slate-300 text-slate-400 text-[10px] h-5 px-1.5 rounded-sm font-normal whitespace-nowrap">
-                        <XCircle className="w-2.5 h-2.5 mr-1" />
-                        Скрыта
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="p-4 pt-2">
-                  <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="font-medium">{school._count.classrooms}</span>
-                      <span className="text-slate-400">
-                        {school._count.classrooms === 1 ? 'класс' : 'классов'}
-                      </span>
-                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
 
-                    <div className="flex items-center text-[10px] font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0 duration-200">
-                      УПРАВЛЕНИЕ
-                      <ArrowRight className="w-3 h-3 ml-1" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+              {/* Кнопка удаления (абсолютно позиционирована) */}
+              <div className="absolute top-2 right-2 flex gap-2 translate-x-1 -translate-y-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-200 z-10">
+                <DeleteButton
+                  id={school.id}
+                  entityName="Школу"
+                  deleteAction={deleteSchoolAction}
+                  className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border-red-200 h-7 px-2 text-[10px]"
+                />
+              </div>
+            </div>
           ))}
         </div>
       )}

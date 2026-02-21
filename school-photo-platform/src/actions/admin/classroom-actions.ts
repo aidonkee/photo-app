@@ -202,7 +202,17 @@ export async function deleteClassroomAction(classId: string) {
       throw new Error('Access denied');
     }
 
-    // ✅ Cascade delete allowed
+    // ✅ Manual cleanup: Delete OrderItems first because they reference Photos 
+    // without a cascade delete in the current schema.
+    await prisma.orderItem.deleteMany({
+      where: {
+        photo: {
+          classId: classId
+        }
+      }
+    });
+
+    // ✅ Cascade delete allowed for other relations (Photos, Orders)
     await prisma.classroom.delete({
       where: { id: classId },
     });

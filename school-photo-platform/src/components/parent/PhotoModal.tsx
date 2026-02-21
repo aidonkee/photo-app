@@ -219,14 +219,22 @@ export default function PhotoModal({
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          {/* Photo */}
-          <img
-            src={getDisplayUrl(photo)}
-            alt={photo.alt || t('photo')}
-            className="max-w-full max-h-full object-contain select-none pointer-events-none"
-            onContextMenu={(e) => e.preventDefault()}
-            draggable={false}
-          />
+          {/* Photo with Overlay */}
+          <div className="relative max-w-full max-h-full flex items-center justify-center">
+            <img
+              src={getDisplayUrl(photo)}
+              alt={photo.alt || t('photo')}
+              className="max-w-full max-h-full object-contain select-none"
+              onContextMenu={(e) => e.preventDefault()}
+              draggable={false}
+            />
+            {/* Guard layer to prevent saving/copying */}
+            <div
+              className="absolute inset-0 z-10"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+            />
+          </div>
 
           {/* Top Bar - Back & Close Buttons */}
           <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 pt-[calc(2rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/80 to-transparent pointer-events-none">

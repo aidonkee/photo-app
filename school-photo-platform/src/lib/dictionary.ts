@@ -41,7 +41,7 @@ export const dictionary = {
     total_to_pay: 'Всего к оплате:',
     you_selected: 'Вы выбрали',
     photos_selected: 'фото',
-    pay: 'Оплатить',
+    pay: 'Заказать',
     processing: 'Оформляем...',
 
     // Photo Gallery
@@ -158,7 +158,7 @@ export const dictionary = {
     total_to_pay: 'Төлеу сомасы:',
     you_selected: 'Сіз таңдадыңыз',
     photos_selected: 'фото',
-    pay: 'Төлеу',
+    pay: 'Тапсырыс беру',
     processing: 'Өңделуде...',
 
     // Photo Gallery
