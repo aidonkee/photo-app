@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { PhotoFormat } from '@/config/pricing';
 
 export type CartItem = {
+  schoolSlug: string;
   classId: string;
   photoId: string;
   photoUrl: string;
@@ -41,6 +42,7 @@ export const useCartStore = create<CartStore>()(
 
           const existingIndex = state.items.findIndex(
             (i) =>
+              i.schoolSlug === item.schoolSlug &&
               i.classId === item.classId &&
               i.photoId === item.photoId &&
               i.format === item.format

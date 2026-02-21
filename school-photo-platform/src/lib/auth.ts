@@ -1,6 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 const SECRET_KEY = process.env.JWT_SECRET;
 if (!SECRET_KEY) {
@@ -80,23 +79,47 @@ export async function getSession(): Promise<SessionPayload | null> {
 
 /**
  * Sign a school access token
+ * Generates a short 16-character HMAC signature for the slug
  */
 export async function signSchoolAccess(slug: string) {
-  return await new SignJWT({ slug })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .sign(key);
+  const msgUint8 = new TextEncoder().encode(slug);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgUint8);
+
+  // Convert buffer to hex and truncate to 16 chars (8 bytes of entropy)
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 16);
 }
 
 /**
  * Verify a school access token
+ * Supports both new short HMAC signatures and legacy JWT tokens
  */
 export async function verifySchoolAccess(slug: string, token: string) {
+  if (!token) return false;
+
   try {
-    const { payload } = await jwtVerify(token, key, {
-      algorithms: ['HS256'],
-    });
-    return (payload as { slug: string }).slug === slug;
+    // 1. Try verify as new short signature
+    const expectedShort = await signSchoolAccess(slug);
+    if (token === expectedShort) return true;
+
+    // 2. Fallback to legacy JWT verification if it looks like a JWT
+    if (token.includes('.')) {
+      const { payload } = await jwtVerify(token, key, {
+        algorithms: ['HS256'],
+      });
+      return (payload as { slug: string }).slug === slug;
+    }
+
+    return false;
   } catch (error) {
     return false;
   }

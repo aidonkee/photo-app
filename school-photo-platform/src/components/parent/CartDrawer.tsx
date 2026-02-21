@@ -83,7 +83,7 @@ export default function CartDrawer({
         {!showCheckout && (
           (() => {
             const otherItemsCount = allItems
-              .filter(i => i.classId !== classId)
+              .filter(i => i.schoolSlug === schoolSlug && i.classId !== classId)
               .reduce((acc, i) => acc + i.quantity, 0);
 
             if (otherItemsCount > 0) {

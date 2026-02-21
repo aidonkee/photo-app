@@ -115,13 +115,15 @@ export default function PhotoGallery({
               <button
                 key={photo.id}
                 onClick={() => setSelectedPhoto(photo)}
+                onContextMenu={(e) => e.preventDefault()}
                 className="block w-full relative group cursor-zoom-in rounded-xl overflow-hidden border border-slate-200 bg-slate-100 transition-all duration-300 focus:ring-2 focus:ring-slate-900 focus:outline-none"
               >
                 <img
                   src={getDisplayUrl(photo)}
                   alt={photo.alt || t('photo')}
-                  className="w-full h-auto object-contain block"
+                  className="w-full h-auto object-contain block select-none pointer-events-none"
                   loading="lazy"
+                  draggable={false}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                 <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-10">

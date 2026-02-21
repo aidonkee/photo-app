@@ -186,6 +186,7 @@ export default function PhotoModal({
     Object.entries(quantities).forEach(([fmt, qty]) => {
       if (qty > 0) {
         addItem({
+          schoolSlug,
           classId,
           photoId: photo.id,
           photoUrl: displayUrl,
@@ -222,7 +223,9 @@ export default function PhotoModal({
           <img
             src={getDisplayUrl(photo)}
             alt={photo.alt || t('photo')}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain select-none pointer-events-none"
+            onContextMenu={(e) => e.preventDefault()}
+            draggable={false}
           />
 
           {/* Top Bar - Back & Close Buttons */}
