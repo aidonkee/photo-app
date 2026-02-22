@@ -63,7 +63,11 @@ export async function POST(request: NextRequest) {
 
     // 2) Params
     const reqBody = await request.json();
-    const { orderId, schoolId } = reqBody as { orderId?: string; schoolId?: string };
+    const { orderId, schoolId, excludedOrderIds } = reqBody as {
+      orderId?: string;
+      schoolId?: string;
+      excludedOrderIds?: string[];
+    };
 
     if (!orderId && !schoolId) {
       return NextResponse.json({ error: 'orderId или schoolId обязателен' }, { status: 400 });
@@ -93,8 +97,7 @@ export async function POST(request: NextRequest) {
       orders = await prisma.order.findMany({
         where: {
           classroom: { schoolId },
-          isPaid: true // ✅ ONLY PAID ORDERS (Prisma recognizes this field)
-        } as any, // Cast to any to bypass stale IDE cache if necessary
+        },
         include: {
           classroom: { select: { id: true, name: true } },
           items: {
@@ -108,6 +111,15 @@ export async function POST(request: NextRequest) {
 
     if (!orders.length) {
       return NextResponse.json({ error: 'Заказы не найдены' }, { status: 404 });
+    }
+
+    // Filter out excluded orders
+    if (excludedOrderIds && excludedOrderIds.length > 0) {
+      orders = orders.filter((o: any) => !excludedOrderIds.includes(o.id));
+    }
+
+    if (!orders.length) {
+      return NextResponse.json({ error: 'Все заказы исключены' }, { status: 404 });
     }
 
     // 4) Download files into zip

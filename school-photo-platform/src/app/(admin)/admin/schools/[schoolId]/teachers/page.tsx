@@ -24,6 +24,7 @@ import {
   Download,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import HeadTeacherAccessCard from '@/components/admin/HeadTeacherAccessCard';
 
 type PageProps = {
   params: Promise<{
@@ -77,6 +78,13 @@ export default async function TeachersCredentialsPage({ params }: PageProps) {
             Эти данные конфиденциальны. Передавайте их только через защищенные каналы связи.
           </AlertDescription>
         </Alert>
+
+        {/* Head Teacher Configuration */}
+        <HeadTeacherAccessCard
+          schoolId={school.id}
+          initialLogin={school.headTeacherLogin}
+          initialPassword={school.headTeacherPassword}
+        />
 
         {/* Credentials Table */}
         <Card className="border border-slate-200 shadow-none bg-white">

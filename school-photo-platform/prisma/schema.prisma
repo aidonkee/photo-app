@@ -83,6 +83,10 @@ model School {
   publicLinkEnabled Boolean  @default(true)
   isKazakhEnabled   Boolean  @default(false)
   
+  // Head Teacher Credentials
+  headTeacherLogin    String?  @unique
+  headTeacherPassword String?
+  
   // ✅ ОБНОВЛЕНО:  Только A4 и A5
   priceA4        Int         @default(1500)  // A4 формат
   priceA5        Int         @default(1000)  // A5 формат

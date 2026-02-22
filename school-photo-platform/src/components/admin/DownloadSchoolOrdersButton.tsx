@@ -11,13 +11,15 @@ type DownloadSchoolOrdersButtonProps = {
   classId?: string; // Optional class filtering
   totalOrders: number;
   hideZip?: boolean; // Hide the ZIP download button
+  excludedOrderIds?: string[];
 };
 
 export default function DownloadSchoolOrdersButton({
   schoolId,
   classId,
   totalOrders,
-  hideZip = false
+  hideZip = false,
+  excludedOrderIds = []
 }: DownloadSchoolOrdersButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
@@ -38,7 +40,7 @@ export default function DownloadSchoolOrdersButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ schoolId, classId }),
+        body: JSON.stringify({ schoolId, classId, excludedOrderIds }),
       });
 
       if (!response.ok) {
@@ -80,7 +82,7 @@ export default function DownloadSchoolOrdersButton({
 
     setIsExportingExcel(true);
     try {
-      const data = await exportOrdersToExcel(schoolId, classId);
+      const data = await exportOrdersToExcel(schoolId, classId, excludedOrderIds);
       const isZip = !classId;
       const mimeType = isZip ? 'application/zip' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       const extension = isZip ? 'zip' : 'xlsx';

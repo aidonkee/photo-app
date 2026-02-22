@@ -5,15 +5,19 @@ import { getSession } from '@/lib/auth';
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 
-export async function exportOrdersToExcel(schoolId: string, classId?: string) {
+export async function exportOrdersToExcel(schoolId: string, classId?: string, excludedOrderIds?: string[]) {
     const session = await getSession();
 
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN' && session.role !== 'TEACHER')) {
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN' && session.role !== 'TEACHER' && session.role !== 'HEAD_TEACHER')) {
         throw new Error('Unauthorized');
     }
 
     if (session.role === 'TEACHER' && session.classId !== classId) {
         throw new Error('Access denied: You can only export your own classroom');
+    }
+
+    if (session.role === 'HEAD_TEACHER' && session.userId !== schoolId) {
+        throw new Error('Access denied: You can only export your own school');
     }
 
     const school = await prisma.school.findUnique({
@@ -42,6 +46,15 @@ export async function exportOrdersToExcel(schoolId: string, classId?: string) {
     });
 
     if (!school) throw new Error('School not found');
+
+    // Filter out excluded orders from each classroom
+    if (excludedOrderIds && excludedOrderIds.length > 0) {
+        for (const classroom of school.classrooms) {
+            classroom.orders = classroom.orders.filter(
+                (order: any) => !excludedOrderIds.includes(order.id)
+            );
+        }
+    }
 
     // Helper to generate a worksheet for a classroom
     const addClassroomToWorkbook = (workbook: ExcelJS.Workbook, classroom: any) => {

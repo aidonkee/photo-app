@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useActionState } from 'react';
-import { loginAdminAction, loginTeacherAction } from '@/actions/auth';
+import { loginAdminAction } from '@/actions/auth';
+import { loginHeadTeacherAction } from '@/actions/head-teacher/auth-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -15,8 +16,8 @@ export default function LoginPage() {
     loginAdminAction,
     null
   );
-  const [teacherState, teacherFormAction, teacherPending] = useActionState(
-    loginTeacherAction,
+  const [headTeacherState, headTeacherFormAction, headTeacherPending] = useActionState(
+    loginHeadTeacherAction,
     null
   );
 
@@ -37,9 +38,9 @@ export default function LoginPage() {
               <UserCog className="w-5 h-5" />
               Администратор
             </TabsTrigger>
-            <TabsTrigger value="teacher" className="flex items-center gap-2 text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
+            <TabsTrigger value="head-teacher" className="flex items-center gap-2 text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
               <GraduationCap className="w-5 h-5" />
-              Учитель
+              Завуч
             </TabsTrigger>
           </TabsList>
 
@@ -102,60 +103,60 @@ export default function LoginPage() {
             </form>
           </TabsContent>
 
-          {/* Teacher Login Tab */}
-          <TabsContent value="teacher" className="mt-0">
-            <form action={teacherFormAction} className="space-y-5">
+          {/* Head Teacher Login Tab */}
+          <TabsContent value="head-teacher" className="mt-0">
+            <form action={headTeacherFormAction} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="teacher-login" className="text-sm font-medium">
-                  Логин учителя
+                <Label htmlFor="head-teacher-login" className="text-sm font-medium">
+                  Логин завуча
                 </Label>
                 <Input
-                  id="teacher-login"
-                  name="teacherLogin"
+                  id="head-teacher-login"
+                  name="headTeacherLogin"
                   type="text"
-                  placeholder="Введите ваш логин учителя"
+                  placeholder="Введите ваш логин завуча"
                   required
-                  disabled={teacherPending}
+                  disabled={headTeacherPending}
                   autoComplete="username"
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="teacher-password" className="text-sm font-medium">
+                <Label htmlFor="head-teacher-password" className="text-sm font-medium">
                   Пароль
                 </Label>
                 <Input
-                  id="teacher-password"
-                  name="teacherPassword"
+                  id="head-teacher-password"
+                  name="headTeacherPassword"
                   type="password"
                   placeholder="Введите ваш пароль"
                   required
-                  disabled={teacherPending}
+                  disabled={headTeacherPending}
                   autoComplete="current-password"
                   className="h-11"
                 />
               </div>
 
-              {teacherState?.error && (
+              {headTeacherState?.error && (
                 <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{teacherState.error}</AlertDescription>
+                  <AlertDescription>{headTeacherState.error}</AlertDescription>
                 </Alert>
               )}
 
               <Button
                 type="submit"
                 className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-base font-medium"
-                disabled={teacherPending}
+                disabled={headTeacherPending}
               >
-                {teacherPending ? (
+                {headTeacherPending ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Вход...
                   </span>
                 ) : (
-                  'Войти как учитель'
+                  'Войти как завуч'
                 )}
               </Button>
             </form>

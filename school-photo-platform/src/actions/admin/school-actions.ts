@@ -331,3 +331,52 @@ export async function getSchoolStats() {
     throw new Error('Не удалось загрузить статистику');
   }
 }
+
+/**
+ * Обновить логин и пароль завуча
+ */
+export async function updateHeadTeacherCredentials(schoolId: string, formData: FormData) {
+  const session = await getSession();
+
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    return { error: 'Нет доступа' };
+  }
+
+  const headTeacherLogin = formData.get('headTeacherLogin') as string;
+  const headTeacherPassword = formData.get('headTeacherPassword') as string;
+
+  try {
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+    });
+
+    if (!school) return { error: 'Школа не найдена' };
+    if (session.role === 'ADMIN' && school.adminId !== session.userId) {
+      return { error: 'Доступ запрещен' };
+    }
+
+    if (headTeacherLogin) {
+      const existingUsingLogin = await prisma.school.findFirst({
+        where: { headTeacherLogin, id: { not: schoolId } },
+      });
+
+      if (existingUsingLogin) {
+        return { error: 'Этот логин уже используется в другой школе' };
+      }
+    }
+
+    await prisma.school.update({
+      where: { id: schoolId },
+      data: {
+        headTeacherLogin: headTeacherLogin || null,
+        headTeacherPassword: headTeacherPassword || null,
+      },
+    });
+
+    revalidatePath(`/admin/schools/${schoolId}/teachers`);
+    return { success: true, message: 'Доступы завуча успешно обновлены' };
+  } catch (error) {
+    console.error('Ошибка обновления доступов завуча:', error);
+    return { error: 'Не удалось обновить данные. Попробуйте снова.' };
+  }
+}

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { decrypt, verifySchoolAccess } from '@/lib/auth';
 
-type ExtendedRole = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER';
+type ExtendedRole = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER' | 'HEAD_TEACHER';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -74,15 +74,17 @@ export async function middleware(request: NextRequest) {
     if (payload?.role === 'SUPER_ADMIN') return finalize(NextResponse.redirect(new URL('/dashboard', request.url)));
     if (payload?.role === 'ADMIN') return finalize(NextResponse.redirect(new URL('/admin/dashboard', request.url)));
     if (payload?.role === 'TEACHER') return finalize(NextResponse.redirect(new URL('/teacher-dashboard', request.url)));
+    if (payload?.role === 'HEAD_TEACHER') return finalize(NextResponse.redirect(new URL('/head-teacher/dashboard', request.url)));
     return finalize(NextResponse.next());
   }
 
-  // 3) Приватные роуты (админка/учитель/суперадмин)
+  // 3) Приватные роуты (админка/учитель/суперадмин/завуч)
   const isProtectedRoute =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admins') ||
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/teacher');
+    pathname.startsWith('/teacher') ||
+    pathname.startsWith('/head-teacher');
 
   if (isProtectedRoute && !payload) {
     // Если сессия битая или отсутствует на защищенном роуте — редирект на логин + удаление куки
@@ -112,6 +114,11 @@ export async function middleware(request: NextRequest) {
     return finalize(NextResponse.redirect(new URL('/unauthorized', request.url)));
   }
 
+  // HEAD_TEACHER (и SUPER_ADMIN тоже)
+  if (pathname.startsWith('/head-teacher') && role !== 'HEAD_TEACHER' && role !== 'SUPER_ADMIN') {
+    return finalize(NextResponse.redirect(new URL('/unauthorized', request.url)));
+  }
+
   return finalize(NextResponse.next());
 }
 
@@ -121,6 +128,7 @@ export const config = {
     '/admins/:path*',
     '/admin/:path*',
     '/teacher/:path*',
+    '/head-teacher/:path*',
     '/login',
     '/s/:path*',
   ],
