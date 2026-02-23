@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { uploadFileDirect, getPublicUrl } from '@/lib/storage';
 
 // ✅ ОБНОВЛЕНО:  Только A4 и A5
 function validatePricing(formData: FormData): {
@@ -103,6 +104,8 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
   const primaryColor = (formData.get('primaryColor') as string) || '#f97316';
   const isKazakhEnabled = formData.get('isKazakhEnabled') === 'on';
 
+  const conditionsImageFile = formData.get('conditionsImage') as File | null;
+
   // Валидация цен
   const pricing = validatePricing(formData);
   if ('error' in pricing) {
@@ -127,12 +130,26 @@ export async function createSchoolAction(prevState: any, formData: FormData) {
       return { error: 'Школа с таким slug уже существует' };
     }
 
+    let conditionsImageUrl = null;
+    if (conditionsImageFile && conditionsImageFile.size > 0) {
+      if (!conditionsImageFile.type.startsWith('image/')) {
+        return { error: 'Условия заказа должны быть картинкой' };
+      }
+      const ext = conditionsImageFile.name.split('.').pop() || 'jpg';
+      const path = `schools/${slug}/conditions-${Date.now()}.${ext}`;
+      const buffer = Buffer.from(await conditionsImageFile.arrayBuffer());
+
+      await uploadFileDirect(path, buffer, conditionsImageFile.type, true);
+      conditionsImageUrl = getPublicUrl(path);
+    }
+
     const school = await prisma.school.create({
       data: {
         name,
         slug,
         primaryColor,
         isKazakhEnabled,
+        conditionsImageUrl,
         adminId: session.userId,
         isActive: true,
         priceA4: pricing.priceA4,
@@ -169,6 +186,7 @@ export async function updateSchoolAction(
 
   const name = formData.get('name') as string;
   const primaryColor = formData.get('primaryColor') as string;
+  const conditionsImageFile = formData.get('conditionsImage') as File | null;
 
   // Валидация цен
   const pricing = validatePricing(formData);
@@ -188,11 +206,25 @@ export async function updateSchoolAction(
       return { error: 'Доступ запрещен' };
     }
 
+    let conditionsImageUrl = existingSchool.conditionsImageUrl;
+    if (conditionsImageFile && conditionsImageFile.size > 0) {
+      if (!conditionsImageFile.type.startsWith('image/')) {
+        return { error: 'Условия заказа должны быть картинкой' };
+      }
+      const ext = conditionsImageFile.name.split('.').pop() || 'jpg';
+      const path = `schools/${existingSchool.slug}/conditions-${Date.now()}.${ext}`;
+      const buffer = Buffer.from(await conditionsImageFile.arrayBuffer());
+
+      await uploadFileDirect(path, buffer, conditionsImageFile.type, true);
+      conditionsImageUrl = getPublicUrl(path);
+    }
+
     await prisma.school.update({
       where: { id: schoolId },
       data: {
         name,
         primaryColor: primaryColor || existingSchool.primaryColor,
+        conditionsImageUrl,
         priceA4: pricing.priceA4,
         priceA5: pricing.priceA5,
       },

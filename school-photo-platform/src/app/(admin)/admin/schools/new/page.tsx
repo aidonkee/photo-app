@@ -120,6 +120,24 @@ export default function NewSchoolPage() {
               </div>
             </div>
 
+            {/* Conditions Image URL */}
+            <div className="space-y-1.5">
+              <Label htmlFor="conditionsImage" className="text-xs font-medium text-slate-700">
+                Картинка с "Условиями заказа" (необязательно)
+              </Label>
+              <Input
+                id="conditionsImage"
+                name="conditionsImage"
+                type="file"
+                accept="image/*"
+                disabled={isPending}
+                className="h-10 text-sm border-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100"
+              />
+              <p className="text-[10px] text-slate-400">
+                Это изображение будет показано родителям при нажатии на кнопку "Условия заказа"
+              </p>
+            </div>
+
             {/* Pricing Section */}
             <div className="border-t border-slate-200 pt-4">
               <div className="flex items-center gap-2 mb-4">
@@ -238,7 +256,7 @@ export default function NewSchoolPage() {
               <Alert className="bg-slate-900 text-white border-slate-900">
                 <CheckCircle2 className="h-4 w-4 text-white" />
                 <AlertDescription className="ml-2 text-xs text-white">
-                  {'message' in state && state.message} Перенаправление... 
+                  {'message' in state && state.message} Перенаправление...
                 </AlertDescription>
               </Alert>
             )}
@@ -263,7 +281,7 @@ export default function NewSchoolPage() {
                 {isPending ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Создание... 
+                    Создание...
                   </span>
                 ) : (
                   'Создать школу'

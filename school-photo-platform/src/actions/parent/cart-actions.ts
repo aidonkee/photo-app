@@ -21,6 +21,7 @@ export async function getSchoolAndClasses(slug: string) {
         slug: true,
         primaryColor: true,
         logoUrl: true,
+        conditionsImageUrl: true,
         isKazakhEnabled: true,
         priceA4: true,
         priceA5: true,

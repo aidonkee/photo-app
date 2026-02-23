@@ -18,6 +18,7 @@ export const schoolSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Слаг должен содержать только строчные буквы, цифры и дефисы'),
   primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Должен быть корректный HEX цвет'),
   logoUrl: z.string().url().optional().or(z.literal('')),
+  conditionsImageUrl: z.string().url().optional().or(z.literal('')),
 });
 
 export const classroomSchema = z.object({
@@ -28,7 +29,7 @@ export const checkoutSchema = z.object({
   name: z.string().min(3, 'Введите полные фамилию и имя ученика'),
   email: z.string().email('Пожалуйста, введите корректный адрес электронной почты').optional().or(z.literal('')),
   // Это позволит полю быть пустым и не ругаться на формат
-  phone: z.string().optional().or(z.literal('')), 
+  phone: z.string().optional().or(z.literal('')),
 });
 export const editRequestSchema = z.object({
   reason: z.string().min(10, 'Пожалуйста, укажите не менее 10 символов, объясняющих проблему'),

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, Image, ArrowRight } from 'lucide-react';
+import { Users, Image, ArrowRight, Info } from 'lucide-react';
 import { useTranslation } from '@/stores/language-store';
 
 type Classroom = {
@@ -18,6 +18,7 @@ type School = {
   slug: string;
   name: string;
   primaryColor: string;
+  conditionsImageUrl?: string | null;
   classrooms: Classroom[];
 };
 
@@ -65,9 +66,20 @@ export default function SchoolClassroomsClient({ school }: SchoolClassroomsClien
 
   return (
     <>
-      <h2 className="text-3xl font-bold text-slate-900 mb-8 text-center">
-        {t('choose_your_class')}
-      </h2>
+      <div className="flex flex-col items-center mb-8 gap-4">
+        {school.conditionsImageUrl && (
+          <div className="w-full max-w-2xl mx-auto rounded-xl overflow-hidden shadow-sm border border-slate-200">
+            <img
+              src={school.conditionsImageUrl}
+              alt="Условия заказа"
+              className="w-full h-auto object-contain block"
+            />
+          </div>
+        )}
+        <h2 className="text-3xl font-bold text-slate-900 text-center">
+          {t('choose_your_class')}
+        </h2>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {school.classrooms.map((classroom) => (
           <Link

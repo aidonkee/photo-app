@@ -70,6 +70,7 @@ model School {
   // Branding
   primaryColor   String      @default("#f97316")
   logoUrl        String?
+  conditionsImageUrl String?
   
   // Ownership
   adminId        String
