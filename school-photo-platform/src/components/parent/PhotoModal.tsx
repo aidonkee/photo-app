@@ -240,7 +240,7 @@ export default function PhotoModal({
           <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 pt-[calc(2rem+env(safe-area-inset-top))] bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
             <Button
               size="sm"
-              className="pointer-events-auto !bg-blue-900 hover:!bg-blue-950 text-white gap-2 rounded-full shadow-lg border-0 font-bold text-base h-12 px-6"
+              className="pointer-events-auto !bg-slate-900 hover:!bg-slate-800 text-white gap-2 rounded-full shadow-lg border-0 font-bold text-base h-12 px-6"
               onClick={() => onOpenChange(false)}
             >
               <ArrowLeft className="w-6 h-6" />
@@ -248,14 +248,14 @@ export default function PhotoModal({
             </Button>
 
             <div className="pointer-events-none flex flex-col items-center">
-              <span className="text-blue-400 font-mono font-bold text-sm bg-black/40 px-1 py-0.5 rounded-full backdrop-blur-md border border-white/20">
-                {photo.fileName || `#${String(currentIndex + 1).padStart(2, '0')}`}
+              <span className="text-white font-mono font-bold text-sm bg-black/40 px-3 py-1 rounded-full backdrop-blur-md border border-white/20">
+                {photo.fileName ? photo.fileName.replace(/\.[^/.]+$/, "") : `#${String(currentIndex + 1).padStart(2, '0')}`}
               </span>
             </div>
 
             <Button
               size="icon"
-              className="pointer-events-auto !bg-blue-900 hover:!bg-blue-950 !text-white rounded-full shadow-lg h-12 w-12"
+              className="pointer-events-auto !bg-slate-900 hover:!bg-slate-800 !text-white rounded-full shadow-lg h-12 w-12"
               onClick={() => onOpenChange(false)}
             >
               <X className="w-6 h-6" />
@@ -290,7 +290,7 @@ export default function PhotoModal({
           {/* Bottom Controls - Format Selection & Cart */}
           <div className="absolute bottom-0 left-0 right-0 z-50 p-4 pb-[calc(2rem+env(safe-area-inset-bottom))] space-y-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
             {/* Format Selection */}
-            <div className="flex flex-row gap-2 sm:gap-3 justify-center max-w-2xl mx-auto">
+            <div className="flex flex-row gap-2 sm:gap-3 justify-center max-w-2xl mx-auto w-full">
               {Object.values(PhotoFormat).map((fmt) => {
                 const qty = quantities[fmt] || 0;
                 const itemPrice = getPrice(fmt, schoolPricing);
@@ -300,38 +300,38 @@ export default function PhotoModal({
                   <div
                     key={fmt}
                     className={cn(
-                      "flex items-center justify-between p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all shadow-md sm:shadow-lg backdrop-blur-md border-2 border-black w-auto sm:flex-1",
+                      "flex items-center justify-between p-2 sm:p-4 rounded-xl sm:rounded-2xl transition-all shadow-md sm:shadow-lg backdrop-blur-md border-[1.5px] sm:border-2 border-black flex-1 min-w-0",
                       isSelected
                         ? "bg-green-100"
                         : "bg-white/90"
                     )}
                   >
-                    <div className="flex flex-col mr-3 sm:mr-3">
-                      <span className="font-extrabold text-sm sm:text-lg text-black leading-tight whitespace-nowrap">
+                    <div className="flex flex-col mr-1 sm:mr-3 min-w-0">
+                      <span className="font-extrabold text-[11px] sm:text-lg text-black leading-tight truncate">
                         {FORMAT_LABELS[fmt]}
                       </span>
-                      <span className="text-xs sm:text-base font-bold text-black/80 whitespace-nowrap">
+                      <span className="text-[10px] sm:text-base font-bold text-black/80 truncate">
                         {formatPrice(itemPrice)}
                       </span>
                     </div>
 
-                    <div className="flex items-center rounded-lg sm:rounded-xl shadow-sm bg-black/5 border border-black/10">
+                    <div className="flex items-center rounded-lg sm:rounded-xl shadow-sm bg-black/5 border border-black/10 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 sm:h-10 sm:w-10 rounded-l-lg sm:rounded-l-xl hover:bg-black/10 text-black px-0"
+                        className="h-6 w-6 sm:h-10 sm:w-10 rounded-l-lg sm:rounded-l-xl hover:bg-black/10 text-black px-0 shrink-0"
                         onClick={() => updateQuantity(fmt, -1)}
                         disabled={qty <= 0}
                       >
                         <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
-                      <span className="w-6 sm:w-10 text-center font-extrabold text-sm sm:text-lg text-black">
+                      <span className="w-5 sm:w-10 text-center font-extrabold text-xs sm:text-lg text-black">
                         {qty}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 sm:h-10 sm:w-10 rounded-r-lg sm:rounded-r-xl hover:bg-black/10 text-black px-0"
+                        className="h-6 w-6 sm:h-10 sm:w-10 rounded-r-lg sm:rounded-r-xl hover:bg-black/10 text-black px-0 shrink-0"
                         onClick={() => updateQuantity(fmt, 1)}
                         disabled={qty >= 99}
                       >
@@ -344,12 +344,12 @@ export default function PhotoModal({
             </div>
 
             {/* Bottom Actions: Add to Cart & View Cart */}
-            <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto w-full">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 max-w-2xl mx-auto w-full">
               <Button
                 onClick={handleAddToCart}
                 disabled={totalItemsCount === 0 || showSuccess}
                 className={cn(
-                  "h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white",
+                  "h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm text-white px-2 sm:px-4",
                   showSuccess
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700",
@@ -358,29 +358,29 @@ export default function PhotoModal({
               >
                 {showSuccess ? (
                   <>
-                    <CheckCircle2 className="w-6 h-6 mr-1" />
-                    <span>{t('added_to_cart')}</span>
+                    <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 mr-1 shrink-0" />
+                    <span className="text-[11px] sm:text-lg whitespace-normal leading-tight">{t('added_to_cart')}</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="w-6 h-6 mr-1" />
-                    <span className="font-extrabold">{t('add_to_cart')}</span>
+                    <Plus className="w-4 h-4 sm:w-6 sm:h-6 mr-1 shrink-0" />
+                    <span className="font-extrabold text-[11px] sm:text-lg whitespace-normal leading-tight">{t('add_to_cart')}</span>
                   </>
                 )}
               </Button>
 
               <Button
                 onClick={() => setCartOpen(true)}
-                className="h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-2"
+                className="h-14 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold shadow-2xl transition-all backdrop-blur-sm bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4"
               >
-                <div className="flex flex-col items-start leading-tight">
-                  <span className="text-[10px] uppercase tracking-wider opacity-70">Корзина</span>
-                  <span className="font-extrabold">{formatPrice(totalCartPrice)}</span>
+                <div className="flex flex-col items-start leading-tight min-w-0">
+                  <span className="text-[10px] uppercase tracking-wider opacity-70 truncate w-full text-left">Корзина</span>
+                  <span className="font-extrabold text-[11px] sm:text-lg truncate w-full text-left">{formatPrice(totalCartPrice)}</span>
                 </div>
-                <div className="relative">
-                  <ShoppingBag className="w-6 h-6" />
+                <div className="relative shrink-0">
+                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
                   {cartItems.filter(i => i.classId === classId).length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center">
                       {cartItems.filter(i => i.classId === classId).length}
                     </span>
                   )}

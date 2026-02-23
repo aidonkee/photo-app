@@ -135,7 +135,7 @@ export default function PhotoGallery({
                 </div>
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 z-10" />
                 <div className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white px-2 py-1 rounded text-[10px] font-mono font-bold shadow-sm z-30">
-                  {photo.fileName || `#${String(originalIndex + 1).padStart(2, '0')}`}
+                  {photo.fileName ? photo.fileName.replace(/\.[^/.]+$/, "") : `#${String(originalIndex + 1).padStart(2, '0')}`}
                 </div>
               </button>
             ))}

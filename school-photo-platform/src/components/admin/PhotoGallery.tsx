@@ -249,10 +249,9 @@ export default function PhotoGallery({ photos, classId }: PhotoGalleryProps) {
                 </div>
               )}
 
-              {/* Инфо (Номер фото / Имя) */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-xs text-white font-medium truncate">
-                  {photo.fileName || photo.alt || 'Без названия'}
+                  {photo.fileName ? photo.fileName.replace(/\.[^/.]+$/, "") : (photo.alt || 'Без названия')}
                 </p>
               </div>
             </div>
