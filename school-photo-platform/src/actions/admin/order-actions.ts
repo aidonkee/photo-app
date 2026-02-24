@@ -216,3 +216,79 @@ export async function toggleOrderPaymentStatus(orderId: string, isPaid: boolean)
     throw new Error(error.message || 'Не удалось обновить статус оплаты');
   }
 }
+
+/**
+ * Удалить все заказы школы
+ */
+export async function deleteAllSchoolOrdersAction(schoolId: string) {
+  const session = await getSession();
+
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    throw new Error('Нет доступа');
+  }
+
+  try {
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+    });
+
+    if (!school) {
+      throw new Error('Школа не найдена');
+    }
+
+    if (session.role === 'ADMIN' && school.adminId !== session.userId) {
+      throw new Error('Доступ запрещен');
+    }
+
+    await prisma.order.deleteMany({
+      where: {
+        classroom: {
+          schoolId: schoolId,
+        },
+      },
+    });
+
+    // We do not need to revalidate multiple specific URLs, but rather the dashboard
+    return { success: true };
+  } catch (error: any) {
+    console.error('Ошибка удаления всех заказов:', error);
+    throw new Error(error.message || 'Не удалось удалить заказы');
+  }
+}
+
+/**
+ * Удалить выбранные заказы
+ */
+export async function deleteSelectedOrdersAction(schoolId: string, orderIds: string[]) {
+  const session = await getSession();
+
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    throw new Error('Нет доступа');
+  }
+
+  try {
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+    });
+
+    if (!school) {
+      throw new Error('Школа не найдена');
+    }
+
+    if (session.role === 'ADMIN' && school.adminId !== session.userId) {
+      throw new Error('Доступ запрещен');
+    }
+
+    await prisma.order.deleteMany({
+      where: {
+        id: { in: orderIds },
+        classroom: { schoolId: schoolId },
+      },
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Ошибка удаления выбранных заказов:', error);
+    throw new Error(error.message || 'Не удалось удалить выбранные заказы');
+  }
+}

@@ -63,25 +63,38 @@ export async function exportOrdersToExcel(schoolId: string, classId?: string, ex
 
         worksheet.columns = [
             { header: 'Родитель', key: 'parent', width: 25 },
-            { header: 'Статус', key: 'status', width: 15 },
             { header: 'Файл', key: 'file', width: 30 },
             { header: 'Формат', key: 'format', width: 10 },
             { header: 'Кол-во', key: 'quantity', width: 8 },
             { header: 'Сумма (₸)', key: 'total', width: 12 },
+            { header: 'Статус / Примечание', key: 'status', width: 25 },
         ];
 
+        let totalSum = 0;
         classroom.orders.forEach((order: any) => {
             order.items.forEach((item: any) => {
+                const subtotal = Number(item.subtotal);
+                totalSum += subtotal;
                 worksheet.addRow({
                     parent: `${order.parentName} ${order.parentSurname}`,
-                    status: order.isPaid ? 'Оплачено' : 'Не оплачено',
                     file: item.photo.fileName || item.photo.alt || 'N/A',
                     format: item.format,
                     quantity: item.quantity,
-                    total: Number(item.subtotal)
+                    total: subtotal,
+                    status: ''
                 });
             });
         });
+
+        const totalRow = worksheet.addRow({
+            parent: 'ИТОГО:',
+            file: '',
+            format: '',
+            quantity: '',
+            total: totalSum,
+            status: ''
+        });
+        totalRow.font = { bold: true };
 
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).fill = {

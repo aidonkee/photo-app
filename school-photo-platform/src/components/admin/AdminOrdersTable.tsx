@@ -11,9 +11,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Eye, MinusCircle, PlusCircle } from 'lucide-react';
+import { Eye, MinusCircle, PlusCircle, Trash2, CheckCircle, Circle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import DownloadSchoolOrdersButton from '@/components/admin/DownloadSchoolOrdersButton';
+import { deleteSelectedOrdersAction, deleteAllSchoolOrdersAction } from '@/actions/admin/order-actions';
+import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<string, string> = {
     PENDING: 'Ожидает',
@@ -41,6 +44,51 @@ type AdminOrdersTableProps = {
 
 export default function AdminOrdersTable({ orders, schoolId, schoolName }: AdminOrdersTableProps) {
     const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isDeleting, setIsDeleting] = useState(false);
+    const router = useRouter();
+
+    const toggleSelect = (orderId: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(orderId)) {
+                next.delete(orderId);
+            } else {
+                next.add(orderId);
+            }
+            return next;
+        });
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!confirm('Вы уверены, что хотите удалить выбранные заказы? Это действие необратимо.')) return;
+        setIsDeleting(true);
+        try {
+            await deleteSelectedOrdersAction(schoolId, Array.from(selectedIds));
+            toast.success('Заказы успешно удалены');
+            setSelectedIds(new Set());
+            router.refresh();
+        } catch (error) {
+            toast.error('Не удалось удалить заказы');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleDeleteAll = async () => {
+        if (!confirm('Вы уверены, что хотите удалить ВСЕ заказы школы? Это действие полностью очистит список заказов.')) return;
+        setIsDeleting(true);
+        try {
+            await deleteAllSchoolOrdersAction(schoolId);
+            toast.success('Все заказы школы удалены');
+            setSelectedIds(new Set());
+            router.refresh();
+        } catch (error) {
+            toast.error('Не удалось удалить заказы');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const toggleExclude = (orderId: string) => {
         setExcludedIds(prev => {
@@ -88,11 +136,35 @@ export default function AdminOrdersTable({ orders, schoolId, schoolName }: Admin
                         )}
                     </p>
                 </div>
-                <DownloadSchoolOrdersButton
-                    schoolId={schoolId}
-                    totalOrders={activeCount}
-                    excludedOrderIds={Array.from(excludedIds)}
-                />
+                <div className="flex gap-2">
+                    {selectedIds.size > 0 && (
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteSelected}
+                            disabled={isDeleting}
+                            className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border border-red-200"
+                        >
+                            {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                            Удалить ({selectedIds.size})
+                        </Button>
+                    )}
+                    {orders.length > 0 && selectedIds.size === 0 && (
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteAll}
+                            disabled={isDeleting}
+                            className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                        >
+                            {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                            Удалить Все
+                        </Button>
+                    )}
+                    <DownloadSchoolOrdersButton
+                        schoolId={schoolId}
+                        totalOrders={activeCount}
+                        excludedOrderIds={Array.from(excludedIds)}
+                    />
+                </div>
             </div>
 
             <div className="rounded-lg border bg-white shadow-sm">
@@ -100,6 +172,9 @@ export default function AdminOrdersTable({ orders, schoolId, schoolName }: Admin
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-12"></TableHead>
+                            <TableHead className="w-12 text-center" title="Удалить">
+                                <Trash2 className="w-4 h-4 text-slate-400 mx-auto" />
+                            </TableHead>
                             <TableHead>Класс</TableHead>
                             <TableHead>Родитель</TableHead>
                             <TableHead>Сумма</TableHead>
@@ -112,10 +187,11 @@ export default function AdminOrdersTable({ orders, schoolId, schoolName }: Admin
                     <TableBody>
                         {orders.map((order) => {
                             const isExcluded = excludedIds.has(order.id);
+                            const isSelected = selectedIds.has(order.id);
                             return (
                                 <TableRow
                                     key={order.id}
-                                    className={isExcluded ? 'opacity-40 bg-slate-50' : ''}
+                                    className={isExcluded ? 'opacity-40 bg-slate-50' : (isSelected ? 'bg-red-50/50' : '')}
                                 >
                                     <TableCell>
                                         <Button
@@ -134,6 +210,18 @@ export default function AdminOrdersTable({ orders, schoolId, schoolName }: Admin
                                                 <MinusCircle className="w-5 h-5" />
                                             )}
                                         </Button>
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <button
+                                            onClick={() => toggleSelect(order.id)}
+                                            className="text-slate-300 hover:text-red-500 transition-colors"
+                                        >
+                                            {isSelected ? (
+                                                <CheckCircle className="w-5 h-5 text-red-500" />
+                                            ) : (
+                                                <Circle className="w-5 h-5" />
+                                            )}
+                                        </button>
                                     </TableCell>
                                     <TableCell className="font-medium">{order.classroom.name}</TableCell>
                                     <TableCell>{order.parentName} {order.parentSurname}</TableCell>
