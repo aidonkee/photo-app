@@ -195,6 +195,10 @@ model Order {
   submittedAt    DateTime?
   completedAt    DateTime?
   
+  // Moderation
+  moderatedByRole String?
+  moderatedAt     DateTime?
+  
   @@index([classId])
   @@index([status])
   @@index([createdAt])
