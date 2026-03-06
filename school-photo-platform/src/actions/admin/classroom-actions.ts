@@ -298,3 +298,47 @@ export async function findOrCreateClassroom(schoolId: string, className: string)
     isNew: false,
   };
 }
+/**
+ * 🆕 Update classroom name
+ */
+export async function updateClassroomNameAction(
+  classId: string,
+  schoolId: string,
+  formData: FormData
+) {
+  const session = await getSession();
+
+  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+    return { error: 'Unauthorized access' };
+  }
+
+  const name = formData.get('name') as string;
+
+  if (!name || name.trim().length === 0) {
+    return { error: 'Classroom name is required' };
+  }
+
+  try {
+    const classroom = await prisma.classroom.findUnique({
+      where: { id: classId },
+      include: { school: true },
+    });
+
+    if (!classroom) return { error: 'Classroom not found' };
+    if (session.role === 'ADMIN' && classroom.school.adminId !== session.userId) {
+      return { error: 'Access denied' };
+    }
+
+    await prisma.classroom.update({
+      where: { id: classId },
+      data: { name: name.trim() },
+    });
+
+    revalidatePath(`/admin/schools/${schoolId}`);
+
+    return { success: true, message: 'Classroom renamed successfully' };
+  } catch (error) {
+    console.error('Error updating classroom name:', error);
+    return { error: 'Failed to update classroom name. Please try again.' };
+  }
+}

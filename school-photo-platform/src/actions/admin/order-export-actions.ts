@@ -58,50 +58,57 @@ export async function exportOrdersToExcel(schoolId: string, classId?: string, ex
 
     // Helper to generate a worksheet for a classroom
     const addClassroomToWorkbook = (workbook: ExcelJS.Workbook, classroom: any) => {
-        const sheetName = classroom.name.replace(/[\[\]\?\*\\\/: ]/g, '_').slice(0, 31);
+        const sheetName = classroom.name.replace(/[\[\]\?\*\\\\\\/: ]/g, '_').slice(0, 31);
         const worksheet = workbook.addWorksheet(sheetName);
 
-        worksheet.columns = [
-            { header: 'Родитель', key: 'parent', width: 25 },
-            { header: 'Файл', key: 'file', width: 30 },
-            { header: 'Формат', key: 'format', width: 10 },
-            { header: 'Кол-во', key: 'quantity', width: 8 },
-            { header: 'Сумма (₸)', key: 'total', width: 12 },
-            { header: 'Статус / Примечание', key: 'status', width: 25 },
-        ];
+        // Set column widths without using the headers setter
+        worksheet.getColumn(1).width = 25; // Родитель
+        worksheet.getColumn(2).width = 30; // Файл
+        worksheet.getColumn(3).width = 10; // Формат
+        worksheet.getColumn(4).width = 8;  // Кол-во
+        worksheet.getColumn(5).width = 12; // Сумма
+        worksheet.getColumn(6).width = 25; // Статус
 
+        // --- Row 1: Class name title ---
+        const titleRow = worksheet.getRow(1);
+        titleRow.height = 40;
+        const titleCell = titleRow.getCell(1);
+        titleCell.value = classroom.name;
+        worksheet.mergeCells('A1:F1');
+        titleCell.font = { name: 'Arial', size: 22, bold: true, color: { argb: 'FF000000' } };
+        titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+        titleRow.commit();
+
+        // --- Row 2: Column headers ---
+        const headerRow = worksheet.getRow(2);
+        headerRow.values = ['Родитель', 'Файл', 'Формат', 'Кол-во', 'Сумма (₸)', 'Статус / Примечание'];
+        headerRow.font = { bold: true };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE0E0E0' }
+        };
+        headerRow.commit();
+
+        // --- Data rows starting from row 3 ---
         let totalSum = 0;
         classroom.orders.forEach((order: any) => {
             order.items.forEach((item: any) => {
                 const subtotal = Number(item.subtotal);
                 totalSum += subtotal;
-                worksheet.addRow({
-                    parent: `${order.parentName} ${order.parentSurname}`,
-                    file: item.photo.fileName || item.photo.alt || 'N/A',
-                    format: item.format,
-                    quantity: item.quantity,
-                    total: subtotal,
-                    status: ''
-                });
+                worksheet.addRow([
+                    `${order.parentName} ${order.parentSurname}`,
+                    item.photo.fileName || item.photo.alt || 'N/A',
+                    item.format,
+                    item.quantity,
+                    subtotal,
+                    ''
+                ]);
             });
         });
 
-        const totalRow = worksheet.addRow({
-            parent: 'ИТОГО:',
-            file: '',
-            format: '',
-            quantity: '',
-            total: totalSum,
-            status: ''
-        });
+        const totalRow = worksheet.addRow(['ИТОГО:', '', '', '', totalSum, '']);
         totalRow.font = { bold: true };
-
-        worksheet.getRow(1).font = { bold: true };
-        worksheet.getRow(1).fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFE0E0E0' }
-        };
 
         return sheetName;
     };
