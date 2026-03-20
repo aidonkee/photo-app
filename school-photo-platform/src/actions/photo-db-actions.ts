@@ -2,7 +2,7 @@
 
 import { siteConfig } from '@/config/site';
 import { revalidatePath } from 'next/cache';
-import prisma from '@/lib/prisma';
+import prisma, { ensureQueue } from '@/lib/prisma';
 import { pgmq } from 'prisma-pgmq'
 import { getSession } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
@@ -85,6 +85,7 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
     throw new Error('Invalid photo data: missing required fields');
   }
 
+  await ensureQueue();
   await pgmq.send(prisma, 'process-uploads', { type: 'process-photo', data: { ...data, fileName: data.fileName || data.alt } })
 
   await fetch(`${siteConfig.url}/api/worker`, {

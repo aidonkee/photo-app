@@ -33,8 +33,10 @@ type PageProps = {
 
 export default async function SchoolDetailsPage({ params }: PageProps) {
   const { schoolId } = await params;
-  const school = await getSchoolById(schoolId);
-  const classrooms = await getClassrooms(schoolId);
+  const [school, classrooms] = await Promise.all([
+    getSchoolById(schoolId),
+    getClassrooms(schoolId),
+  ]);
   const totalPhotos = classrooms.reduce((acc, curr) => acc + (curr._count?.photos || 0), 0);
   const totalOrders = classrooms.reduce((acc, curr) => acc + (curr._count?.orders || 0), 0);
 

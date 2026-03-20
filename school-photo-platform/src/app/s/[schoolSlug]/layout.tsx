@@ -1,6 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getSchoolAndClasses } from '@/actions/parent/cart-actions';
+import { getCachedSchoolAndClasses } from '@/lib/school-cache';
 import PublicSchoolLayout from '@/components/layouts/PublicSchoolLayout';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 
@@ -13,7 +13,7 @@ type LayoutProps = {
 
 export async function generateMetadata({ params }: LayoutProps) {
   const { schoolSlug } = await params;
-  const school = await getSchoolAndClasses(schoolSlug);
+  const school = await getCachedSchoolAndClasses(schoolSlug);
 
   if (!school) {
     return {
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: LayoutProps) {
 
 export default async function SchoolLayout({ children, params }: LayoutProps) {
   const { schoolSlug } = await params;
-  const school = await getSchoolAndClasses(schoolSlug);
+  const school = await getCachedSchoolAndClasses(schoolSlug);
 
   if (!school) {
     notFound();

@@ -9,12 +9,18 @@ declare global {
   var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 
-const prisma = globalThis.prismaGlobal ??  prismaClientSingleton();
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
-try {
-  await pgmq.createQueue(prisma, 'process-uploads');
-} catch (error) {
-  // console.error('Failed to create queue:', error);
+// Ленивая инициализация очереди — вызывается только когда очередь реально нужна
+let queueReady = false;
+export async function ensureQueue() {
+  if (queueReady) return;
+  try {
+    await pgmq.createQueue(prisma, 'process-uploads');
+    queueReady = true;
+  } catch (error) {
+    // Queue may already exist, that's okay
+  }
 }
 
 export default prisma;

@@ -24,9 +24,11 @@ type PageProps = {
 
 async function DashboardContent({ searchParams }: PageProps) {
   const params = await searchParams;
-  const orders = await getTeacherOrders();
-  const dashboardData = await getTeacherDashboardData();
-  const photos = await getClassroomPhotos();
+  const [orders, dashboardData, photos] = await Promise.all([
+    getTeacherOrders(),
+    getTeacherDashboardData(),
+    getClassroomPhotos(),
+  ]);
 
   const selectedOrderId = params.orderId;
   const selectedOrder = selectedOrderId
