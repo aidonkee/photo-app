@@ -1,12 +1,15 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { getTeacherOrders, getOrderById } from '@/actions/teacher/order-actions';
+import { getClassroomPhotos, getTeacherDashboardData } from '@/actions/teacher/dashboard-actions';
 import TeacherOrdersTable from '@/components/teacher/TeacherOrdersTable';
 import OrderDetailView from '@/components/teacher/OrderDetailView';
+import TeacherOrderCreator from '@/components/teacher/TeacherOrderCreator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Metadata } from 'next';
+import DownloadSchoolOrdersButton from '@/components/admin/DownloadSchoolOrdersButton';
 
 export const metadata: Metadata = {
   title: 'Проверка заказов',
@@ -19,13 +22,11 @@ type PageProps = {
   }>;
 };
 
-import { getTeacherDashboardData } from '@/actions/teacher/dashboard-actions';
-import DownloadSchoolOrdersButton from '@/components/admin/DownloadSchoolOrdersButton';
-
 async function DashboardContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const orders = await getTeacherOrders();
   const dashboardData = await getTeacherDashboardData();
+  const photos = await getClassroomPhotos();
 
   const selectedOrderId = params.orderId;
   const selectedOrder = selectedOrderId
@@ -50,15 +51,46 @@ async function DashboardContent({ searchParams }: PageProps) {
                   Проверяйте заказы родителей и отмечайте оплату
                 </p>
               </div>
-              <DownloadSchoolOrdersButton
-                schoolId={dashboardData.school.id}
-                classId={dashboardData.classroom.id}
-                totalOrders={dashboardData.stats.totalOrders}
-                hideZip={true}
-              />
+              <div className="flex items-center gap-3">
+                <Link href="/teacher-dashboard/create">
+                  <Button variant="outline" className="text-slate-600 font-bold gap-2 shadow-sm border-slate-200">
+                    Стандартный
+                  </Button>
+                </Link>
+                <DownloadSchoolOrdersButton
+                  schoolId={dashboardData.school.id}
+                  classId={dashboardData.classroom.id}
+                  totalOrders={dashboardData.stats.totalOrders}
+                  hideZip={true}
+                />
+              </div>
             </div>
 
-            <TeacherOrdersTable orders={orders} />
+            <div className="bg-slate-100/50 p-4 sm:p-6 rounded-3xl border border-slate-200/60 shadow-inner">
+               <div className="flex items-center gap-2 mb-6">
+                 <div className="w-10 h-10 rounded-xl bg-green-600 text-white flex items-center justify-center shadow-lg shadow-green-200">
+                    <Plus className="w-6 h-6" />
+                 </div>
+                 <div>
+                    <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Быстрое добавление</h2>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rapid Entry Mode</p>
+                 </div>
+               </div>
+               
+               <TeacherOrderCreator 
+                  photos={photos} 
+                  schoolPricing={dashboardData.school as any} 
+                  isContinuous={true}
+               />
+            </div>
+
+            <div className="space-y-4 pt-8">
+               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-slate-400" />
+                  Последние заказы
+               </h2>
+               <TeacherOrdersTable orders={orders} />
+            </div>
           </div>
         ) : selectedOrder ? (
           <div className="space-y-6">

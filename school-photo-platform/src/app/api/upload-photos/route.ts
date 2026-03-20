@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import { uploadFile, getPublicUrl } from "@/lib/storage";
@@ -94,6 +95,10 @@ export async function POST(request: NextRequest) {
         fileName: file.name,
       } as any,
     });
+    
+    // ✅ Revalidate classroom paths
+    revalidatePath(`/admin/schools/any/classrooms/${classId}`); 
+    revalidatePath(`/s/any/${classId}`);
 
     return NextResponse.json({ success: true, id: photo.id });
   } catch (error: any) {

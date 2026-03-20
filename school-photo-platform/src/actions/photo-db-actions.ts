@@ -85,9 +85,9 @@ export async function processAndSavePhoto(data: PhotoRecordInput) {
     throw new Error('Invalid photo data: missing required fields');
   }
 
-  pgmq.send(prisma, 'process-uploads', { type: 'process-photo', data: { ...data, fileName: data.fileName || data.alt } })
+  await pgmq.send(prisma, 'process-uploads', { type: 'process-photo', data: { ...data, fileName: data.fileName || data.alt } })
 
-  fetch(`${siteConfig.url}/api/worker`, {
+  await fetch(`${siteConfig.url}/api/worker`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${process.env.CRON_SECRET}` }
   }).catch(err => console.error('Trigger failed', err));

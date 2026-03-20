@@ -30,6 +30,8 @@ export async function getTeacherDashboardData() {
             name: true,
             slug: true,
             primaryColor: true,
+            priceA4: true,
+            priceA5: true,
           },
         },
         _count: {
@@ -56,15 +58,15 @@ export async function getTeacherDashboardData() {
     });
 
     const totalRevenue = orders.reduce(
-      (sum, order) => sum + (Number(order.totalSum) || 0), // ИСПРАВЛЕНО: totalSum + конвертация Decimal
+      (sum: number, order: any) => sum + (Number(order.totalSum) || 0), // ИСПРАВЛЕНО: totalSum + конвертация Decimal
       0
     );
 
-    const pendingOrders = orders.filter((o) => o.status === 'PENDING').length;
+    const pendingOrders = orders.filter((o: any) => o.status === 'PENDING').length;
     
     // ИСПРАВЛЕНО: статус в твоем Enum называется 'APPROVED_BY_TEACHER'
     const approvedOrders = orders.filter(
-      (o) => o.status === 'APPROVED_BY_TEACHER'
+      (o: any) => o.status === 'APPROVED_BY_TEACHER'
     ).length;
 
     // Get pending edit requests
@@ -118,7 +120,7 @@ export async function getClassroomPhotos() {
   try {
     const photos = await prisma.photo.findMany({
       where: { classId },
-      orderBy: { uploadedAt: 'desc' },
+      orderBy: { uploadedAt: 'asc' },
       select: {
         id: true,
         watermarkedUrl: true,
@@ -126,6 +128,7 @@ export async function getClassroomPhotos() {
         alt: true,
         width: true,
         height: true,
+        fileName: true,
         uploadedAt: true,
       },
     });

@@ -2,14 +2,12 @@
 
 import React, { useState, use } from 'react';
 import Link from 'next/link';
-import { useCartStore } from '@/stores/cart-store';
 import { useTranslation } from '@/stores/language-store';
 import { getClassroomPhotos } from '@/actions/parent/cart-actions';
 import PhotoGallery from '@/components/parent/PhotoGallery';
-import CartDrawer from '@/components/parent/CartDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ShoppingCart, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, RefreshCw } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
@@ -76,8 +74,6 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
   const [classroom, setClassroom] = useState<ClassroomData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
-  const getTotalItems = useCartStore((state) => state.getTotalItems(classId));
 
   React.useEffect(() => {
     async function loadData() {
@@ -222,17 +218,6 @@ export default function ClassroomGalleryPage({ params }: PageProps) {
           </ErrorBoundary>
         </main>
 
-
-        {/* Cart Drawer - обёрнут в ErrorBoundary */}
-        <ErrorBoundary fallback={null}>
-          <CartDrawer
-            open={cartOpen}
-            onOpenChange={setCartOpen}
-            classId={classId}
-            schoolSlug={schoolSlug}
-            schoolPricing={schoolPricing}
-          />
-        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );

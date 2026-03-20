@@ -3,13 +3,14 @@
 import React, { useActionState } from 'react';
 import { loginAdminAction } from '@/actions/auth';
 import { loginHeadTeacherAction } from '@/actions/head-teacher/auth-actions';
+import { teacherLoginAction } from '@/actions/teacher/auth-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserCog, GraduationCap, AlertCircle } from 'lucide-react';
+import { UserCog, GraduationCap, Users, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const [adminState, adminFormAction, adminPending] = useActionState(
@@ -18,6 +19,10 @@ export default function LoginPage() {
   );
   const [headTeacherState, headTeacherFormAction, headTeacherPending] = useActionState(
     loginHeadTeacherAction,
+    null
+  );
+  const [teacherState, teacherFormAction, teacherPending] = useActionState(
+    teacherLoginAction,
     null
   );
 
@@ -32,15 +37,19 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <Tabs defaultValue="admin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
-            <TabsTrigger value="admin" className="flex items-center gap-2 text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
-              <UserCog className="w-5 h-5" />
-              Администратор
+        <Tabs defaultValue="teacher" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-12">
+            <TabsTrigger value="teacher" className="flex items-center gap-2 text-sm sm:text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+              Клас.рук
             </TabsTrigger>
-            <TabsTrigger value="head-teacher" className="flex items-center gap-2 text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
-              <GraduationCap className="w-5 h-5" />
+            <TabsTrigger value="head-teacher" className="flex items-center gap-2 text-sm sm:text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
+              <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
               Завуч
+            </TabsTrigger>
+            <TabsTrigger value="admin" className="flex items-center gap-2 text-sm sm:text-base data-[state=active]:bg-slate-900 data-[state=active]:text-white">
+              <UserCog className="w-4 h-4 sm:w-5 sm:h-5" />
+              Админ
             </TabsTrigger>
           </TabsList>
 
@@ -98,6 +107,63 @@ export default function LoginPage() {
                   </span>
                 ) : (
                   'Войти как администратор'
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+
+          {/* Teacher Login Tab */}
+          <TabsContent value="teacher" className="mt-0">
+            <form action={teacherFormAction} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="teacher-login" className="text-sm font-medium">
+                  Логин учителя
+                </Label>
+                <Input
+                  id="teacher-login"
+                  name="teacherLogin"
+                  type="text"
+                  placeholder="Например: school-1b"
+                  required
+                  disabled={teacherPending}
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="teacher-password" className="text-sm font-medium">
+                  Пароль
+                </Label>
+                <Input
+                  id="teacher-password"
+                  name="teacherPassword"
+                  type="password"
+                  placeholder="Введите ваш пароль"
+                  required
+                  disabled={teacherPending}
+                  className="h-11"
+                />
+              </div>
+
+              {teacherState?.error && (
+                <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{teacherState.error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-base font-medium"
+                disabled={teacherPending}
+              >
+                {teacherPending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Вход...
+                  </span>
+                ) : (
+                  'Войти как классный руководитель'
                 )}
               </Button>
             </form>

@@ -174,6 +174,7 @@ export async function uploadPhotoAction(
           fileSize: size,
           mimeType: 'image/jpeg',
           alt: file.name.replace(/\.[^/.]+$/, ''),
+          fileName: file.name,
           tags: [],
         },
       });
